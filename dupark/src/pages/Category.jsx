@@ -46,10 +46,10 @@ function ProjectCard({ project, category }) {
           />
         )}
       </div>
-      <p style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: '0.5rem' }}>
+      <p style={{ fontSize: '0.85rem', fontWeight: 600, marginTop: '0.5rem' }}>
         {project.title}
       </p>
-      <p style={{ fontSize: '0.7rem', color: '#888', marginTop: '0.2rem' }}>
+      <p style={{ fontSize: '0.7rem', color: '#888' }}>
         {project.client}, {project.year}
       </p>
     </div>
@@ -70,7 +70,7 @@ export default function Category() {
   }, [category])
 
   return (
-    <main style={{ paddingTop: '5rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
+    <main style={{ paddingTop: '5rem', paddingLeft: '1.25rem', paddingRight: '1.25rem', minHeight:'calc(100vh - 5rem)', }}>
       <div className="project-grid">
         {projects.map((project) => (
           <ProjectCard key={project._id} project={project} category={category} />

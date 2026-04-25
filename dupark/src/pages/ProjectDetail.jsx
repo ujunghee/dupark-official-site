@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
+import './ProjectDetail.css'
+
+function toEmbedUrl(url) {
+  if (!url) return null
+  // YouTube: watch?v= 또는 youtu.be/ → embed/
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`
+  // Vimeo: vimeo.com/ID → player.vimeo.com/video/ID
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  // 그 외 URL 그대로
+  return url
+}
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -8,69 +21,68 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     client
-      .fetch(`*[_type == "project" && _id == $id][0]`, { id })
+      .fetch(
+        `*[_type == "project" && _id == $id][0]{
+          title, client, year, description, videoUrl,
+          "videoFileUrl": videoFile.asset->url,
+          "category": category->title,
+          coverImage,
+          images
+        }`,
+        { id }
+      )
       .then(setProject)
   }, [id])
 
   if (!project) return null
 
   return (
-    <main style={{
-      paddingTop: '5rem',
-      display: 'grid',
-      gridTemplateColumns: '280px 1fr',
-      minHeight: '100vh',
-    }}>
-      {/* 왼쪽 sticky 텍스트 */}
-      <div style={{
-        position: 'sticky',
-        top: '5rem',
-        height: 'fit-content',
-        padding: '2rem',
-      }}>
-        <p style={{
-          fontSize: '0.65rem',
-          letterSpacing: '0.15em',
-          color: '#888',
-          marginBottom: '1rem',
-          textTransform: 'uppercase',
-        }}>
-          {project.category}
-        </p>
-        <h1 style={{
-          fontSize: '1.1rem',
-          fontWeight: 700,
-          lineHeight: 1.3,
-          marginBottom: '1rem',
-        }}>
-          {project.title}
-        </h1>
-        <p style={{ fontSize: '0.8rem', color: '#555', marginBottom: '0.4rem' }}>
-          {project.client}
-        </p>
-        <p style={{ fontSize: '0.8rem', color: '#888' }}>
-          {project.year}
-        </p>
-      </div>
+    <main className="detail-layout">
+      {/* ── 왼쪽: sticky 정보 ── */}
+      <aside className="detail-info">
+        {project.category && (
+          <p className="detail-category">{project.category} / WORK</p>
+        )}
+        <h1 className="detail-title">{project.title}</h1>
+        {project.client && (
+          <p className="detail-client">{project.client}</p>
+        )}
+        {project.description && (
+          <p className="detail-desc">{project.description}</p>
+        )}
+        {project.year && (
+          <div className="detail-year-block">
+            <p className="detail-label">YEAR</p>
+            <p className="detail-year">{project.year}</p>
+          </div>
+        )}
+      </aside>
 
-      {/* 오른쪽 이미지 그리드 */}
-      <div style={{
-        padding: '2rem',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '0.5rem',
-        alignContent: 'start',
-      }}>
+      {/* ── 오른쪽: 영상 + 이미지 2열 그리드 ── */}
+      <div className="detail-grid">
+        {/* 영상: 파일 업로드 우선, 없으면 외부 URL */}
+        {(project.videoFileUrl || project.videoUrl) && (
+          <div className="detail-video-wrap">
+            {project.videoFileUrl ? (
+              <video src={project.videoFileUrl} controls playsInline className="detail-video" />
+            ) : (
+              <iframe
+                src={toEmbedUrl(project.videoUrl)}
+                className="detail-video"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+        )}
+
+        {/* 이미지 목록 */}
         {project.images?.map((img, i) => (
           <img
             key={i}
-            src={urlFor(img).width(600).url()}
+            src={urlFor(img).width(900).url()}
             alt={`${project.title} ${i + 1}`}
-            style={{
-              width: '100%',
-              aspectRatio: '3/4',
-              objectFit: 'cover',
-            }}
+            className="detail-img"
           />
         ))}
       </div>

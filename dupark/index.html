@@ -5,6 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>dupark</title>
+    <!-- 새로고침 시 스크롤 복원 방지: 모든 JS보다 먼저 실행 -->
+    <script>history.scrollRestoration = 'manual'; window.scrollTo(0, 0);</script>
   </head>
   <body>
     <div id="root"></div>

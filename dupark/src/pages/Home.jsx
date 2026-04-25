@@ -1,37 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import './Home.css'
 
 const MOBILE_BREAKPOINT = 768
 
 function MobileCategoryItem({ cat }) {
   const navigate = useNavigate()
   return (
-    <div
-      onClick={() => navigate(`/${cat.slug}`)}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '56vw',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        borderBottom: '1px solid #222',
-      }}
-    >
-      {cat.coverImage
-        ? <img src={urlFor(cat.coverImage).width(800).url()} alt={cat.title}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        : <div style={{ position: 'absolute', inset: 0, background: '#111' }} />
-      }
-      <div style={{
-        position: 'absolute', bottom: '1.2rem', left: '1.2rem',
-        color: '#fff', fontSize: '0.75rem', fontWeight: 700,
-        letterSpacing: '0.1em', mixBlendMode: 'difference',
-      }}>
-        {cat.title}
+    <div onClick={() => navigate(`/${cat.slug}`)} style={{ cursor: 'pointer' }}>
+      <div className="mobile-cat-label">{cat.title}</div>
+      <div className="mobile-cat-img">
+        {cat.coverImage
+          ? <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
+          : <div style={{ position: 'absolute', inset: 0, background: '#222' }} />
+        }
       </div>
     </div>
   )
@@ -47,35 +33,20 @@ function CategoryCard({ cat }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="category-card"
-      style={{ flexShrink: 0, width: '36vw', cursor: 'pointer' }}
     >
-      <div style={{
-        fontSize: '0.7rem', fontWeight: 700,
-        letterSpacing: '0.08em', color: '#000',
-        marginBottom: '0.6rem', userSelect: 'none',
-      }}>
-        {cat.title}
-      </div>
-
-      <div style={{
-        width: '100%', aspectRatio: '3/4',
-        position: 'relative', overflow: 'hidden', background: '#111',
-      }}>
+      <div className="category-card-label">{cat.title}</div>
+      <div className="category-card-img">
         {cat.coverImage && (
-          <img src={urlFor(cat.coverImage).width(700).url()} alt={cat.title}
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%',
-              objectFit: 'cover', transition: 'opacity 0.5s ease',
-              opacity: hovered && cat.hoverImage ? 0 : 1,
-            }} />
+          <img
+            src={urlFor(cat.coverImage).width(700).url()} alt={cat.title}
+            style={{ opacity: hovered && cat.hoverImage ? 0 : 1 }}
+          />
         )}
         {cat.hoverImage && (
-          <img src={urlFor(cat.hoverImage).width(700).url()} alt={cat.title}
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%',
-              objectFit: 'cover', transition: 'opacity 0.5s ease',
-              opacity: hovered ? 1 : 0,
-            }} />
+          <img
+            src={urlFor(cat.hoverImage).width(700).url()} alt={cat.title}
+            style={{ opacity: hovered ? 1 : 0 }}
+          />
         )}
       </div>
     </div>
@@ -86,6 +57,9 @@ export default function Home() {
   const horizontalRef = useRef(null)
   const trackRef      = useRef(null)
   const ctxRef        = useRef(null)
+  const logoRef       = useRef(null)
+  const videoRef      = useRef(null)
+  const spacerRef     = useRef(null)
   const [categories,   setCategories]   = useState([])
   const [isMobile,     setIsMobile]     = useState(() => window.innerWidth <= MOBILE_BREAKPOINT)
   const [videoSrc,     setVideoSrc]     = useState(null)
@@ -93,7 +67,14 @@ export default function Home() {
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
-    const handler = (e) => setIsMobile(e.matches)
+    const handler = (e) => {
+      // React state 변경 전에 GSAP 먼저 kill → pin-spacer가 DOM에서 제거된 후 섹션 언마운트
+      if (e.matches && ctxRef.current) {
+        ctxRef.current.revert()
+        ctxRef.current = null
+      }
+      setIsMobile(e.matches)
+    }
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
@@ -111,43 +92,95 @@ export default function Home() {
       })
   }, [])
 
-  // ── 비디오 구간 → 컨텐츠 섹션 스냅 ──
+  // ── 새로고침 시 최상단으로 ──
   useEffect(() => {
-    if (isMobile) return
-    let isSnapping = false
-    // power4 out: 처음엔 빠르게, 끝에서 아주 부드럽게 안착
-    const ease = (t) => 1 - Math.pow(1 - t, 4)
+    window.scrollTo(0, 0)
+    lenis.scrollTo(0, { duration: 0 })
+  }, [])
 
+  // ── 인트로 로고 reveal 애니메이션 ──
+  useEffect(() => {
+    if (!logoRef.current) return
+    const tween = gsap.fromTo(
+      logoRef.current,
+      { yPercent: 100 },
+      { yPercent: 0, duration: 2.4, ease: 'power4.out', delay: 0.6 }
+    )
+    return () => tween.kill()
+  }, [])
+
+  // ── 비디오 스크롤 줌 ──
+  useEffect(() => {
+    if (!videoRef.current || !spacerRef.current) return
+    const tween = gsap.fromTo(
+      videoRef.current,
+      { scale: 1 },
+      {
+        scale: 2,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: spacerRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1,
+        },
+      }
+    )
+    return () => tween.kill()
+  }, [])
+
+  // ── 비디오 구간 → 컨텐츠 섹션 스냅 (데스크탑: wheel / 모바일: touch) ──
+  useEffect(() => {
+    let isSnapping = false
+
+
+    const snapTo = (target) => {
+      isSnapping = true
+      lenis.scrollTo(target, {
+        duration: 1.0,
+        easing: 'power3.out',
+        lock: true,
+        onComplete: () => { isSnapping = false },
+      })
+    }
+
+    // 데스크탑: wheel
     const onWheel = (e) => {
       if (isSnapping) return
-      const vh     = window.innerHeight
+      const vh = window.innerHeight
       const scroll = lenis.scroll
+      if (scroll < vh && e.deltaY > 0)          snapTo(vh)
+      else if (scroll > 0 && scroll <= vh && e.deltaY < 0) snapTo(0)
+    }
 
-      if (scroll < vh && e.deltaY > 0) {
-        isSnapping = true
-        lenis.scrollTo(vh, {
-          duration: 1.6,
-          easing: ease,
-          lock: true,
-          onComplete: () => { isSnapping = false },
-        })
-      } else if (scroll > 0 && scroll <= vh && e.deltaY < 0) {
-        isSnapping = true
-        lenis.scrollTo(0, {
-          duration: 1.6,
-          easing: ease,
-          lock: true,
-          onComplete: () => { isSnapping = false },
-        })
-      }
+    // 모바일: touch
+    let touchStartY = 0
+    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY }
+    const onTouchEnd = (e) => {
+      if (isSnapping) return
+      const vh    = window.innerHeight
+      const scroll = lenis.scroll
+      const diff  = touchStartY - e.changedTouches[0].clientY // 양수: 위로 스와이프
+
+      if (Math.abs(diff) < 30) return // 너무 짧은 스와이프 무시
+
+      if (scroll < vh && diff > 0)          snapTo(vh)
+      else if (scroll > 0 && scroll <= vh && diff < 0) snapTo(0)
     }
 
     window.addEventListener('wheel', onWheel, { passive: false })
-    return () => window.removeEventListener('wheel', onWheel)
-  }, [isMobile])
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+
+    return () => {
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
 
   // ── 가로 스크롤 GSAP ──
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (ctxRef.current) { ctxRef.current.revert(); ctxRef.current = null }
     if (categories.length === 0 || isMobile) return
 
@@ -156,7 +189,6 @@ export default function Home() {
     if (!horizontal || !track) return
 
     ctxRef.current = gsap.context(() => {
-      const totalWidth = track.scrollWidth - horizontal.clientWidth
       const cards = Array.from(track.querySelectorAll('.category-card'))
 
       // 카드 초기 상태: 아래에서 시작
@@ -165,21 +197,21 @@ export default function Home() {
       // 섹션 진입 시 카드 아래 → 위로 등장 (1회)
       ScrollTrigger.create({
         trigger: horizontal,
-        start: 'top 90%',
+        start: 'top 70%',
         once: true,
         onEnter: () => {
-          gsap.to(cards, { y: 0, opacity: 1, duration: 1, stagger: 0.1, ease: 'power3.out' })
+          gsap.to(cards, { y: 0, opacity: 1, duration: 1.2, stagger: 0.08, ease: 'power3.out', delay: 0.2 })
         },
       })
 
-      // 가로 스크롤
+      // 가로 스크롤 — x와 end 모두 함수로 → 리사이즈마다 자동 재계산
       gsap.to(track, {
-        x: -totalWidth,
+        x: () => -(track.scrollWidth - horizontal.clientWidth),
         ease: 'none',
         scrollTrigger: {
           trigger: horizontal,
           start: 'top top',
-          end: () => `+=${totalWidth}`,
+          end: () => `+=${track.scrollWidth - horizontal.clientWidth}`,
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -188,7 +220,10 @@ export default function Home() {
       })
     })
 
-    return () => { ctxRef.current?.revert(); ctxRef.current = null }
+    return () => {
+      ctxRef.current?.revert()
+      ctxRef.current = null
+    }
   }, [categories, isMobile])
 
   return (
@@ -203,54 +238,39 @@ export default function Home() {
         overflow: 'hidden',
       }}>
         <video
+          ref={videoRef}
           autoPlay muted loop playsInline
           poster={videoPoster || undefined}
           style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
         >
           {videoSrc && <source src={videoSrc} type="video/mp4" />}
         </video>
+      </div>
 
-        {/* 스크롤 힌트 */}
-        <div style={{
-          position: 'absolute', bottom: '2rem', left: '50%',
-          transform: 'translateX(-50%)',
-          color: '#fff', fontSize: '0.65rem', letterSpacing: '0.35em', opacity: 0.55,
-          userSelect: 'none',
-        }}>
-          SCROLL
-        </div>
+      {/* ── 인트로 로고 (비디오 위, 컨텐츠 아래) ── */}
+      <div style={{
+        position: 'fixed',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 0,
+        overflow: 'hidden',
+        mixBlendMode: 'difference',
+      }}>
+        <img
+          ref={logoRef}
+          src="/logo-white.svg"
+          alt="DUPARK"
+          style={{ height: '3.5rem', width: 'auto', display: 'block', userSelect: 'none' }}
+        />
       </div>
 
       {/* ── 100vh 스페이서: 비디오 구간 스크롤 공간 ── */}
-      <div style={{ height: '100vh', position: 'relative', zIndex: 1, pointerEvents: 'none' }} />
+      <div ref={spacerRef} style={{ height: '100vh', position: 'relative', zIndex: 1, pointerEvents: 'none' }} />
 
-      {/* ── 데스크탑: 가로 스크롤 섹션 (비디오 위로 올라옴) ── */}
+      {/* ── 데스크탑/태블릿: 가로 스크롤 섹션 ── */}
       {!isMobile && (
-        <section
-          ref={horizontalRef}
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            width: '100vw',
-            height: '100svh',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            background: '#fff',
-          }}
-        >
-          <div
-            ref={trackRef}
-            style={{
-              display: 'flex',
-              gap: '1.25rem',
-              paddingLeft: '2rem',
-              paddingRight: '2rem',
-              paddingTop: '4.5rem',
-              alignItems: 'flex-start',
-              willChange: 'transform',
-            }}
-          >
+        <section ref={horizontalRef} className="h-scroll-section">
+          <div ref={trackRef} className="h-scroll-track">
             {categories.map((cat) => (
               <CategoryCard key={cat._id} cat={cat} />
             ))}
@@ -258,9 +278,9 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── 모바일: 세로 카테고리 목록 ── */}
+      {/* ── 모바일: 2열 그리드 ── */}
       {isMobile && (
-        <section style={{ position: 'relative', zIndex: 1, width: '100vw', background: '#fff' }}>
+        <section className="mobile-grid-section">
           {categories.map((cat) => (
             <MobileCategoryItem key={cat._id} cat={cat} />
           ))}

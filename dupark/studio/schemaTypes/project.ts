@@ -39,8 +39,14 @@ export default defineType({
       of: [{type: 'image', options: {hotspot: true}}],
     }),
     defineField({
+      name: 'videoFile',
+      title: '영상 파일 업로드',
+      type: 'file',
+      options: { accept: 'video/*' },
+    }),
+    defineField({
       name: 'videoUrl',
-      title: '영상 URL (MV용)',
+      title: '영상 URL (YouTube / Vimeo 등 외부 링크)',
       type: 'url',
     }),
     defineField({

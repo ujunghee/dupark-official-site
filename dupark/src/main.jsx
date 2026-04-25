@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -8,6 +7,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+// 새로고침 시 브라우저 스크롤 위치 복원 방지 — React 렌더 전에 실행
+history.scrollRestoration = 'manual'
+window.scrollTo(0, 0)
+
 lenis.on('scroll', ScrollTrigger.update)
 
 gsap.ticker.add((time) => {
@@ -16,8 +19,4 @@ gsap.ticker.add((time) => {
 
 gsap.ticker.lagSmoothing(0)
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+createRoot(document.getElementById('root')).render(<App />)

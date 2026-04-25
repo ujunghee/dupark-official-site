@@ -8,7 +8,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 2rem;
+  padding: .8rem 2rem;
 
   /* 슬라이드 + 배경 트랜지션 */
   transform: translateY(0);
@@ -53,8 +53,26 @@
   font-weight: 900;
   color: #000;
   text-decoration: none;
-  letter-spacing: 0.05em;
-  transition: color 0.3s ease;
+  display: inline-flex;
+  overflow: hidden;
+  height: 1.1em;
+  align-items: flex-start;
+}
+
+.nav-link-inner {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link-inner span {
+  display: block;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.nav-link:hover .nav-link-inner {
+  transform: translateY(-50%);
 }
 
 /* 투명 배경일 때 네비 텍스트 흰색 */
@@ -131,50 +149,89 @@
 .drawer {
   display: none;
   position: fixed;
-  top: 0;
-  right: 0;
-  width: 75vw;
-  max-width: 320px;
+  inset: 0;
+  width: 100%;
   height: 100dvh;
-  background: #fff;
+  background: #000000e8;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 250;
   flex-direction: column;
-  padding: 2rem;
-  gap: 0;
-  transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.1);
+
+  /* 슬라이드 대신 페이드 */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
 }
 
 .drawer.open {
-  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.drawer-logo {
+/* 상단: 로고 + 닫기 버튼 */
+.drawer-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  justify-content: space-between;
+  padding:.6rem 1.25rem;
+  z-index: 1;
 }
 
-.drawer-logo .logo-img {
-  height: 22px;
+/* 닫기 버튼 */
+.drawer-close {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.drawer-close span {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: #fff;
+  transform-origin: center;
+}
+
+.drawer-close span:nth-child(1) { transform: translateY(-50%) rotate(45deg); }
+.drawer-close span:nth-child(2) { transform: translateY(-50%) rotate(-45deg); }
+
+/* 카테고리 메뉴: 100dvh 꽉 채워 가운데 정렬 */
+.drawer-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100dvh;
+  gap: 0;
+}
+
+/* 각 링크 마스크 (overflow hidden으로 아래→위 reveal) */
+.drawer-link-wrap {
+  overflow: hidden;
+  padding: 0.2rem 0;
 }
 
 .drawer-link {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #000;
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
   text-decoration: none;
-  letter-spacing: 0.06em;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  text-align: center;
+  padding: 0.6rem 2rem;
   transition: color 0.2s ease;
-}
-
-.drawer-link:last-child {
-  border-bottom: none;
 }
 
 .drawer-link.active {
@@ -184,7 +241,7 @@
 /* ── 모바일 브레이크포인트 ── */
 @media (max-width: 768px) {
   .header {
-    padding: 1rem 1.25rem;
+    padding: .6rem 1.25rem;
   }
 
   .nav {

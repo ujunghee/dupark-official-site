@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { client } from '../lib/sanity'
+import gsap from 'gsap'
 import './header.css'
 
 export default function Header() {
   const [isOpen, setIsOpen]     = useState(false)
   const [navItems, setNavItems] = useState([])
   const [atTop, setAtTop]       = useState(true)
-  const [hidden, setHidden]     = useState(false)
+  const [hidden, setHidden]     = useState(window.location.pathname === '/' && window.innerWidth > 768)
   const lastScrollY             = useRef(0)
+  const linkRefs                = useRef([])
   const location                = useLocation()
 
   /* ── Sanity 카테고리 패칭 ── */
@@ -30,7 +32,12 @@ export default function Header() {
 
       setAtTop(current < 10)
 
-      if (current < 10) {
+      const isMobile    = window.innerWidth <= 768
+      const inVideoZone = isHome && !isMobile && current < window.innerHeight - 50
+
+      if (inVideoZone) {
+        setHidden(true)
+      } else if (current < 10) {
         setHidden(false)
       } else {
         setHidden(scrollingUp)
@@ -39,34 +46,37 @@ export default function Header() {
       lastScrollY.current = current
     }
 
-    // 초기값 설정
     onScroll()
-
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [isHome])
 
   /* ── 라우트 변경 시 드로어 닫기 ── */
-  useEffect(() => {
-    setIsOpen(false)
-  }, [location])
+  // useEffect(() => { setIsOpen(false) }, [location])
 
-  /* ── 드로어 열릴 때 배경 스크롤 막기 ── */
+  /* ── 드로어 열릴 때 스크롤 막기 + GSAP 링크 reveal ── */
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
+
+    if (isOpen && linkRefs.current.length) {
+      gsap.fromTo(
+        linkRefs.current,
+        { yPercent: 110 },
+        { yPercent: 0, duration: 0.7, stagger: 0.07, ease: 'power3.out', delay: 0.15 }
+      )
+    }
+
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
   const transparent = isHome && atTop
 
-  /* ── 헤더 className 조합 ── */
   const headerClass = [
     'header',
     transparent ? 'at-top' : '',
     hidden      ? 'hidden'  : '',
   ].filter(Boolean).join(' ')
 
-  /* ── 투명일 때 흰 로고, 아닐 때 검정 로고 ── */
   const logoSrc = transparent ? '/logo-white.svg' : '/logo-black.svg'
 
   return (
@@ -76,7 +86,6 @@ export default function Header() {
           <img src={logoSrc} alt="DUPARK" className="logo-img" />
         </NavLink>
 
-        {/* 데스크탑 네비 */}
         <nav className="nav">
           {navItems.map((item) => (
             <NavLink
@@ -84,43 +93,47 @@ export default function Header() {
               to={item.path}
               className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             >
-              {item.label}
+              <span className="nav-link-inner">
+                <span>{item.label}</span>
+                <span>{item.label}</span>
+              </span>
             </NavLink>
           ))}
         </nav>
 
-        {/* 햄버거 버튼 */}
         <button
           className={`hamburger${isOpen ? ' open' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="메뉴"
         >
-          <span />
-          <span />
-          <span />
+          <span /><span /><span />
         </button>
       </header>
 
-      {/* 오버레이 */}
-      <div
-        className={`drawer-overlay${isOpen ? ' visible' : ''}`}
-        onClick={() => setIsOpen(false)}
-      />
-
-      {/* 모바일 드로어 */}
+      {/* 드로어 */}
       <nav className={`drawer${isOpen ? ' open' : ''}`}>
-        <div className="drawer-logo">
-          <img src="/logo-black.svg" alt="DUPARK" className="logo-img" />
+        {/* 상단: 로고 + 닫기 버튼 */}
+        <div className="drawer-header">
+          <img src="/logo-white.svg" alt="DUPARK" className="logo-img" />
+          <button className="drawer-close" onClick={() => setIsOpen(false)} aria-label="닫기">
+            <span /><span />
+          </button>
         </div>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => isActive ? 'drawer-link active' : 'drawer-link'}
-          >
-            {item.label}
-          </NavLink>
-        ))}
+
+        {/* 카테고리 메뉴 */}
+        <div className="drawer-menu">
+          {navItems.map((item, i) => (
+            <div key={item.path} className="drawer-link-wrap">
+              <NavLink
+                ref={(el) => { linkRefs.current[i] = el }}
+                to={item.path}
+                className={({ isActive }) => isActive ? 'drawer-link active' : 'drawer-link'}
+              >
+                {item.label}
+              </NavLink>
+            </div>
+          ))}
+        </div>
       </nav>
     </>
   )

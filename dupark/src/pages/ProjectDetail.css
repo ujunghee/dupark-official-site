@@ -1,0 +1,113 @@
+.detail-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: calc(100vh - 4rem);
+  padding-top: 4rem;
+}
+
+/* ── 왼쪽 sticky 패널 ── */
+.detail-info {
+  position: sticky;
+  top: 4rem;
+  height: fit-content;
+  align-self: start;
+  padding: 2rem 2rem 2rem 2rem;
+}
+
+.detail-category {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.detail-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 0.6rem;
+  color: #000;
+}
+
+.detail-client {
+  font-size: 0.8rem;
+  color: #444;
+  margin-bottom: 0.4rem;
+  line-height: 1.5;
+}
+
+.detail-desc {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.detail-year-block {
+  margin-top: 1.5rem;
+}
+
+.detail-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.detail-year {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000;
+}
+
+/* ── 오른쪽 이미지 2열 그리드 ── */
+.detail-grid {
+  padding: 2rem 2rem 4rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  align-content: start;
+}
+
+.detail-img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* 영상: 2열 전체 너비 차지 */
+.detail-video-wrap {
+  grid-column: 1 / -1;
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+.detail-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border: none;
+}
+
+/* ── 모바일 ── */
+@media (max-width: 768px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+    padding-top: 4rem;
+  }
+
+  .detail-info {
+    position: static;
+    padding: 1.5rem 1.25rem 1rem;
+  }
+
+  .detail-grid {
+    padding: 0 1.25rem 4rem;
+    gap: 0.3rem;
+  }
+}
