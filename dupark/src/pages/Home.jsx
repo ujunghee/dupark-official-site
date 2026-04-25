@@ -68,7 +68,6 @@ export default function Home() {
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
     const handler = (e) => {
-      // React state 변경 전에 GSAP 먼저 kill → pin-spacer가 DOM에서 제거된 후 섹션 언마운트
       if (e.matches && ctxRef.current) {
         ctxRef.current.revert()
         ctxRef.current = null
@@ -129,42 +128,42 @@ export default function Home() {
     return () => tween.kill()
   }, [])
 
-  // ── 비디오 구간 → 컨텐츠 섹션 스냅 (데스크탑: wheel / 모바일: touch) ──
+  // ── 비디오 구간 → 컨텐츠 섹션 스냅 ──
   useEffect(() => {
     let isSnapping = false
-
 
     const snapTo = (target) => {
       isSnapping = true
       lenis.scrollTo(target, {
-        duration: 1.0,
-        easing: 'power3.out',
+        duration: .8,
+        ease: 'power3.out',
         lock: true,
-        onComplete: () => { isSnapping = false },
+        onComplete: () => {
+          isSnapping = false
+          lenis.start()
+        },
       })
     }
 
-    // 데스크탑: wheel
     const onWheel = (e) => {
       if (isSnapping) return
       const vh = window.innerHeight
       const scroll = lenis.scroll
-      if (scroll < vh && e.deltaY > 0)          snapTo(vh)
+      if (scroll < vh && e.deltaY > 0)                    snapTo(vh)
       else if (scroll > 0 && scroll <= vh && e.deltaY < 0) snapTo(0)
     }
 
-    // 모바일: touch
     let touchStartY = 0
     const onTouchStart = (e) => { touchStartY = e.touches[0].clientY }
     const onTouchEnd = (e) => {
       if (isSnapping) return
       const vh    = window.innerHeight
       const scroll = lenis.scroll
-      const diff  = touchStartY - e.changedTouches[0].clientY // 양수: 위로 스와이프
+      const diff  = touchStartY - e.changedTouches[0].clientY
 
-      if (Math.abs(diff) < 30) return // 너무 짧은 스와이프 무시
+      if (Math.abs(diff) < 30) return
 
-      if (scroll < vh && diff > 0)          snapTo(vh)
+      if (scroll < vh && diff > 0)                    snapTo(vh)
       else if (scroll > 0 && scroll <= vh && diff < 0) snapTo(0)
     }
 
@@ -191,10 +190,8 @@ export default function Home() {
     ctxRef.current = gsap.context(() => {
       const cards = Array.from(track.querySelectorAll('.category-card'))
 
-      // 카드 초기 상태: 아래에서 시작
       gsap.set(cards, { y: 60, opacity: 0 })
 
-      // 섹션 진입 시 카드 아래 → 위로 등장 (1회)
       ScrollTrigger.create({
         trigger: horizontal,
         start: 'top 70%',
@@ -204,7 +201,6 @@ export default function Home() {
         },
       })
 
-      // 가로 스크롤 — x와 end 모두 함수로 → 리사이즈마다 자동 재계산
       gsap.to(track, {
         x: () => -(track.scrollWidth - horizontal.clientWidth),
         ease: 'none',
@@ -228,7 +224,7 @@ export default function Home() {
 
   return (
     <main>
-      {/* ── 배경 비디오: fixed로 깔아두기 ── */}
+      {/* ── 배경 비디오 ── */}
       <div style={{
         position: 'fixed',
         top: 0, left: 0,
@@ -247,7 +243,7 @@ export default function Home() {
         </video>
       </div>
 
-      {/* ── 인트로 로고 (비디오 위, 컨텐츠 아래) ── */}
+      {/* ── 인트로 로고 ── */}
       <div style={{
         position: 'fixed',
         top: '50%', left: '50%',
@@ -264,10 +260,10 @@ export default function Home() {
         />
       </div>
 
-      {/* ── 100vh 스페이서: 비디오 구간 스크롤 공간 ── */}
+      {/* ── 100vh 스페이서 ── */}
       <div ref={spacerRef} style={{ height: '100vh', position: 'relative', zIndex: 1, pointerEvents: 'none' }} />
 
-      {/* ── 데스크탑/태블릿: 가로 스크롤 섹션 ── */}
+      {/* ── 데스크탑: 가로 스크롤 섹션 ── */}
       {!isMobile && (
         <section ref={horizontalRef} className="h-scroll-section">
           <div ref={trackRef} className="h-scroll-track">

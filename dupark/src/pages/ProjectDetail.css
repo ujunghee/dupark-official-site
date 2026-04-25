@@ -1,8 +1,47 @@
 .detail-layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: .4fr 1fr;
   min-height: calc(100vh - 4rem);
   padding-top: 4rem;
+  transition: background 0.6s ease, color 0.6s ease;
+}
+
+/* ── 다크모드: 하단 nav 진입 시 ── */
+.detail-layout.dark {
+  background: #000;
+  color: #fff;
+}
+
+.detail-layout.dark .detail-category,
+.detail-layout.dark .detail-label {
+  color: #888;
+}
+
+.detail-layout.dark .detail-title,
+.detail-layout.dark .detail-year,
+.detail-layout.dark .detail-client,
+.detail-layout.dark .detail-desc {
+  color: #fff;
+}
+
+.detail-layout.dark .detail-nav {
+  border-top-color: #333;
+}
+
+.detail-layout.dark .detail-nav-divider {
+  background: #333;
+}
+
+.detail-layout.dark .detail-nav-item:hover {
+  background: #111;
+}
+
+.detail-layout.dark .detail-nav-label {
+  color: #666;
+}
+
+.detail-layout.dark .detail-nav-title {
+  color: #fff;
 }
 
 /* ── 왼쪽 sticky 패널 ── */
@@ -17,17 +56,17 @@
 .detail-category {
   font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
   color: #888;
   text-transform: uppercase;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0rem;
 }
 
 .detail-title {
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.4;
-  margin-bottom: 0.6rem;
+  margin-top: .4rem;
+  margin-bottom: 0.2rem;
   color: #000;
 }
 
@@ -36,11 +75,12 @@
   color: #444;
   margin-bottom: 0.4rem;
   line-height: 1.5;
+  display: none;
 }
 
 .detail-desc {
   font-size: 0.75rem;
-  color: #666;
+  color: #444;
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
@@ -52,7 +92,6 @@
 .detail-label {
   font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
   color: #888;
   text-transform: uppercase;
   margin-bottom: 0.25rem;
@@ -73,10 +112,19 @@
   align-content: start;
 }
 
+.detail-img-wrap {
+  overflow: hidden;
+}
+
 .detail-img {
   width: 100%;
   display: block;
   object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.detail-img-wrap:hover .detail-img {
+  transform: scale(1.05);
 }
 
 /* 영상: 2열 전체 너비 차지 */
@@ -94,6 +142,110 @@
   border: none;
 }
 
+/* ── 하단 Prev / Next 네비게이션 ── */
+.detail-nav {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  margin-top: 8rem;
+}
+
+.detail-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.detail-nav-item:hover {
+  background: #f5f5f5;
+}
+
+.detail-nav-item.disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.detail-nav-next {
+  align-items: flex-end;
+}
+
+.detail-nav-arrow {
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.detail-nav-prev:hover .detail-nav-arrow {
+  transform: translateX(-4px);
+}
+
+.detail-nav-next:hover .detail-nav-arrow {
+  transform: translateX(4px);
+}
+
+.detail-nav-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.detail-nav-text--right {
+  text-align: right;
+}
+
+.detail-nav-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.1em;
+}
+
+.detail-nav-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.3;
+}
+
+.detail-nav-divider {
+  width: 1px;
+  background: #e0e0e0;
+  flex-shrink: 0;
+}
+
+/* ── 커서 따라다니는 미리보기 ── */
+.detail-nav-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+
+.detail-nav-preview img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  transform: scale(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.detail-nav-preview.visible img {
+  transform: scale(1);
+}
+
 /* ── 모바일 ── */
 @media (max-width: 768px) {
   .detail-layout {
@@ -109,5 +261,22 @@
   .detail-grid {
     padding: 0 1.25rem 4rem;
     gap: 0.3rem;
+  }
+
+  .detail-nav {
+    margin-top: 2rem;
+  }
+
+  .detail-nav-item {
+    padding: 1.5rem 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .detail-nav-title {
+    font-size: 0.8rem;
+  }
+
+  .detail-nav-preview {
+    display: none;
   }
 }

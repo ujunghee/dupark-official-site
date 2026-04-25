@@ -23,9 +23,33 @@
   background: transparent;
 }
 
+/* ── 페이지 다크모드 (상세페이지 하단) ── */
+body.page-dark .header {
+  background: #000;
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.6s ease;
+}
+
+body.page-dark .header .nav-link,
+body.page-dark .header .logo-img {
+  filter: invert(1);
+}
+
+body.page-dark .header .hamburger span {
+  background: #fff;
+}
+
 /* 위로 스크롤 → 헤더 숨김 */
 .header.hidden {
   transform: translateY(-100%);
+}
+
+/* ── 헤더 reveal 클리핑 래퍼 ── */
+.header-clip {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 /* ── 로고 ── */
@@ -46,6 +70,13 @@
 .nav {
   display: flex;
   gap: 2rem;
+  align-items: center;
+}
+
+/* nav 래퍼 div — GSAP 애니메이션 대상 */
+.nav > div {
+  display: flex;
+  align-items: center;
 }
 
 .nav-link {
@@ -103,7 +134,7 @@
 
 .hamburger span {
   display: block;
-  width: 24px;
+  width: 18px;
   height: 1.5px;
   background: #000;
   transition:
@@ -152,7 +183,7 @@
   inset: 0;
   width: 100%;
   height: 100dvh;
-  background: #000000e8;
+  background: #000000dc;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index: 250;
@@ -238,6 +269,11 @@
   color: #aaff00;
 }
 
+/* ── 모바일 카테고리 탭바 ── */
+.mobile-subnav {
+  display: none; /* 모바일에서만 표시 */
+}
+
 /* ── 모바일 브레이크포인트 ── */
 @media (max-width: 768px) {
   .header {
@@ -258,5 +294,49 @@
 
   .drawer {
     display: flex;
+  }
+
+  /* 모바일 탭바 */
+  .mobile-subnav {
+    display: flex;
+    position: fixed;
+    top: 47px; /* 헤더 높이 */
+    left: 0;
+    right: 0;
+    z-index: 190;
+    background: #fff;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    gap: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    transform: translateY(0);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 헤더가 숨겨질 때 탭바도 같이 올라감 */
+  .mobile-subnav.hidden {
+    transform: translateY(calc(-100% - 47px));
+  }
+
+  .mobile-subnav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-subnav-link {
+    flex-shrink: 0;
+    padding: 0.65rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #888;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.2s ease;
+  }
+
+  .mobile-subnav-link.active {
+    color: #000;
+    font-weight: 900;
   }
 }
