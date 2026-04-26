@@ -104,7 +104,7 @@ p {
 .project-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
+  gap: 2rem 1rem;
 }
 
 @media (max-width: 1024px) {

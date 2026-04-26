@@ -1,5 +1,6 @@
 import { useEffect, useRef, useLayoutEffect } from 'react'
 import gsap from 'gsap'
+import { lenis } from '../lib/lenis.js'
 import AboutGlobe from '../component/AboutGlobe'
 import './About.css'
 
@@ -18,6 +19,15 @@ export default function About() {
     return () => {
       document.body.classList.remove('dupark-about-page')
     }
+  }, [])
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => lenis.resize())
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  useLayoutEffect(() => {
+    lenis.scrollTo(0, { immediate: true, force: true })
   }, [])
 
   useLayoutEffect(() => {

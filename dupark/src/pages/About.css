@@ -183,11 +183,21 @@ body.dupark-about-page #root {
   opacity: 0.6;
 }
 
-/* ── 모바일: 지구 상단·텍스트 하단 ── */
+/* ── 모바일: 지구 상단·텍스트 하단, 본문 길면 페이지 스크롤(100dvh 락 해제) ── */
 @media (max-width: 768px) {
+  .about-page {
+    height: auto;
+    max-height: none;
+    min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+    min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
   .about-page-inner {
+    height: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(32dvh, 40dvh) minmax(0, 1fr);
+    grid-template-rows: minmax(32dvh, 40dvh) auto;
   }
 
   .about-globe-column {
@@ -195,9 +205,9 @@ body.dupark-about-page #root {
   }
 
   .about-content {
-    padding: 1.25rem 1.5rem 1.5rem;
+    padding: 1.25rem 1.5rem 4rem;
     border-left: none;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .about-content-reveal {
