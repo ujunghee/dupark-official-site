@@ -139,7 +139,7 @@ export default function Home() {
     const snapTo = (target) => {
       isSnapping = true
       lenis.scrollTo(target, {
-        duration: 0.8,
+        duration: 1.8,
         easing: 'power3.out',
         lock: true,
         onComplete: () => {

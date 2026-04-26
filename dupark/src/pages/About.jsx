@@ -1,5 +1,6 @@
 import { useEffect, useRef, useLayoutEffect } from 'react'
 import gsap from 'gsap'
+import AboutGlobe from '../component/AboutGlobe'
 import './About.css'
 
 const ABOUT_BODY_LINES = [
@@ -9,12 +10,8 @@ const ABOUT_BODY_LINES = [
   'production design, and prop styling to create refined and contemporary visual experiences.',
 ]
 
-const LOGO_PX_MAX = 12
-
 export default function About() {
   const pageInnerRef = useRef(null)
-  const aboutMainRef = useRef(null)
-  const logoParallaxRef = useRef(null)
 
   useEffect(() => {
     document.body.classList.add('dupark-about-page')
@@ -23,53 +20,15 @@ export default function About() {
     }
   }, [])
 
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!window.matchMedia('(min-width: 769px)').matches) return
-    const el = logoParallaxRef.current
-    if (!el) return
-
-    const quickX = gsap.quickTo(el, 'x', { duration: 0.5, ease: 'power2.out' })
-    const quickY = gsap.quickTo(el, 'y', { duration: 0.5, ease: 'power2.out' })
-
-    const onMove = (e) => {
-      const w = window.innerWidth
-      const h = window.innerHeight
-      if (w < 1 || h < 1) return
-      const nx = (e.clientX / w - 0.5) * 2
-      const ny = (e.clientY / h - 0.5) * 2
-      quickX(nx * LOGO_PX_MAX)
-      quickY(ny * LOGO_PX_MAX)
-    }
-
-    const onLeave = () => {
-      quickX(0)
-      quickY(0)
-    }
-
-    const main = aboutMainRef.current
-    window.addEventListener('pointermove', onMove, { passive: true })
-    main?.addEventListener('pointerleave', onLeave)
-
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      main?.removeEventListener('pointerleave', onLeave)
-      gsap.set(el, { x: 0, y: 0, clearProps: 'transform' })
-    }
-  }, [])
-
-
   useLayoutEffect(() => {
     const root = pageInnerRef.current
     if (!root) return
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const logoEl = root.querySelector('.about-logo-clip .about-logo')
     const trackEls = root.querySelectorAll('.about-reveal-track')
-    if (!logoEl && !trackEls.length) return
+    if (!trackEls.length) return
 
     if (reduce) {
-      if (logoEl) gsap.set(logoEl, { yPercent: 0, clearProps: 'all' })
       if (trackEls.length) gsap.set(trackEls, { yPercent: 0 })
       return
     }
@@ -77,23 +36,12 @@ export default function About() {
     const yOpts = { yPercent: 100 }
     const beat = 0.04
     const durY = 0.8
-    const logoDur = 1
     const yTo = { yPercent: 0, duration: durY, ease: 'power3.out' }
     const startDelay = 0.8
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ delay: startDelay })
       let t = 0
-
-      if (logoEl) {
-        tl.fromTo(
-          logoEl,
-          yOpts,
-          { yPercent: 0, duration: logoDur, ease: 'power3.out' },
-          t
-        )
-        t += beat
-      }
       trackEls.forEach((el) => {
         tl.fromTo(el, yOpts, yTo, t)
         t += beat
@@ -104,19 +52,11 @@ export default function About() {
   }, [])
 
   return (
-    <main ref={aboutMainRef} className="about-page">
+    <main className="about-page">
       <div className="about-entrance-overlay" aria-hidden="true" />
       <div ref={pageInnerRef} className="about-page-inner">
-        <div className="about-logo-wrap">
-          <div className="about-reveal-clip about-logo-clip">
-            <div ref={logoParallaxRef} className="about-logo-parallax">
-              <img
-                src="/logo-white.svg"
-                alt="DUPARK"
-                className="about-logo"
-              />
-            </div>
-          </div>
+        <div className="about-globe-column">
+          <AboutGlobe />
         </div>
 
         <div className="about-content">

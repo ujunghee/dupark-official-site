@@ -1,13 +1,14 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RouteEnterProvider } from './context/RouteEnterContext'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
-import About from './pages/About'
 import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
+
+const About = lazy(() => import('./pages/About'))
 
 function CustomScrollbar() {
   const barRef   = useRef(null)
@@ -55,7 +56,18 @@ function AppShell() {
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
+        <Route
+          path="/about"
+          element={(
+            <Suspense
+              fallback={(
+                <div style={{ minHeight: '100dvh', background: '#000' }} />
+              )}
+            >
+              <About />
+            </Suspense>
+          )}
+        />
         <Route path="/:category" element={<Category />} />
         <Route path="/:category/:id" element={<ProjectDetail />} />
       </Routes>

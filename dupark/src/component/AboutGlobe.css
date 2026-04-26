@@ -1,0 +1,33 @@
+/* 1:1 뷰포트 + 원형 마스크 → 화면에서 둥근 ‘지구 디스크’처럼 보이게 */
+.about-globe-root {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: min(100%, 72vmin, 52vh);
+  aspect-ratio: 1;
+  height: auto;
+  max-height: min(72dvh, 100%);
+  margin: 0 auto;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.about-globe__gl {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .about-globe-root {
+    max-width: min(100%, 90vw, 36dvh);
+    max-height: min(36dvh, 90vw, 100%);
+  }
+}
