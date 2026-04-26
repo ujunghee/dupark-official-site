@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react
 import { useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
+import { isComingSoonTitle } from '../lib/projectComingSoon'
 import gsap from 'gsap'
 import './ProjectDetail.css'
 
@@ -96,8 +97,14 @@ export default function ProjectDetail() {
           setProject(null)
           return
         }
+        if (isComingSoonTitle(data.title)) {
+          navigate(`/${category}`, { replace: true })
+          return
+        }
         setProject(data)
-        const siblings = data.siblings || []
+        const siblings = (data.siblings || []).filter(
+          (s) => !isComingSoonTitle(s.title)
+        )
         const idx = siblings.findIndex((s) => s.slug === id)
         setPrev(idx > 0 ? siblings[idx - 1] : null)
         setNext(idx < siblings.length - 1 ? siblings[idx + 1] : null)
@@ -105,7 +112,7 @@ export default function ProjectDetail() {
     return () => {
       ignore = true
     }
-  }, [id, category])
+  }, [id, category, navigate])
 
   useLayoutEffect(() => {
     isMountedRef.current = true

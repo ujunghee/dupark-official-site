@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
+import { isComingSoonTitle } from '../lib/projectComingSoon'
 import gsap from 'gsap'
 import './Category.css'
 
@@ -24,17 +25,19 @@ function ProjectCard({ project, category }) {
   const navigate = useNavigate()
   const { start: startEnter } = useRouteEnter()
   const [hovered, setHovered] = useState(false)
+  const noDetail = isComingSoonTitle(project.title)
 
   return (
     <div
-      className="project-card"
+      className={`project-card${noDetail ? ' project-card--no-detail' : ''}`}
       onClick={() => {
+        if (noDetail) return
         flushSync(() => startEnter())
         navigate(`/${category}/${project.slug?.current}`)
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: noDetail ? 'default' : 'pointer' }}
     >
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         {project.coverImage && (
@@ -47,7 +50,7 @@ function ProjectCard({ project, category }) {
               objectFit: 'cover',
               display: 'block',
               transition: 'opacity 0.4s ease',
-              opacity: hovered && project.hoverImage ? 0 : 1,
+              opacity: !noDetail && hovered && project.hoverImage ? 0 : 1,
             }}
           />
         )}
@@ -62,7 +65,7 @@ function ProjectCard({ project, category }) {
               aspectRatio: '3/4',
               objectFit: 'cover',
               transition: 'opacity 0.4s ease',
-              opacity: hovered ? 1 : 0,
+              opacity: !noDetail && hovered ? 1 : 0,
             }}
           />
         )}
