@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react'
-import { flushSync } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
@@ -9,6 +8,10 @@ import './ProjectDetail.css'
 /* onLoad 전부를 기다리지 않고 상한으로 진입 — 흰 화면 최소화(나머지는 자연 로드) */
 const MEDIA_ENTRANCE_CAP_MS = 750
 const ENTRANCE_FADE_S = 0.16
+/* 퇴장: 진입(아래→위)과 반대 — 위 block부터 아래로 스태거, 아래로 내려가며 사라짐 */
+const EXIT_Y = 40
+const EXIT_DUR_S = 0.5
+const EXIT_STAGGER_S = 0.05
 
 function countProjectMedia(p) {
   if (!p) return 0
@@ -43,15 +46,31 @@ export default function ProjectDetail() {
   const mediaDoneRef = useRef(0)
   const expectedMediaRef = useRef(0)
   const detailStageRef = useRef(null)
-  const { start: startEnter, end: endEnter } = useRouteEnter()
+  const exitNavInProgressRef = useRef(false)
+  /* Strict Mode: 언마운트 시뮬 후 ref가 유지되면 false만 남는 경우가 있어, 마운트마다 true로 둔다 */
+  const isMountedRef = useRef(true)
+  const { end: endEnter } = useRouteEnter()
 
-  /* id 변경은 App의 key로 리마운트 — 여기서는 mount 시 맨 위 + 전역 흰 레이어 handoff (paint 전) */
+  /* slug( id )·카테고리가 바뀌면: 헤더/푸터 유지, 본면만 리셋 (전체 리마운트 X) */
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
     document.documentElement.scrollTop = 0
     document.body.scrollTop = 0
     endEnter()
-  }, [endEnter])
+    exitNavInProgressRef.current = false
+    const el = detailLayoutRef.current
+    if (el) el.style.removeProperty('pointer-events')
+    expectedMediaRef.current = 0
+    mediaDoneRef.current = 0
+    /* flushSync + lifecycle 금지(React 19). 스택 끝에서 리셋 — 마이크로태스크는 페인트 직전에 흡수됨 */
+    queueMicrotask(() => {
+      setProject(null)
+      setPrev(null)
+      setNext(null)
+      setEntranceComplete(false)
+      setMediaAllLoaded(false)
+    })
+  }, [id, category, endEnter])
 
   /* ── 데이터 패칭 (project 비움은 useLayout) ── */
   useEffect(() => {
@@ -86,7 +105,14 @@ export default function ProjectDetail() {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, category])
+
+  useLayoutEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const bumpMedia = useCallback(() => {
     const exp = expectedMediaRef.current
@@ -189,14 +215,67 @@ export default function ProjectDetail() {
 
   const goToSibling = useCallback(
     (slug) => {
-      if (!slug) return
-      flushSync(() => startEnter())
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      navigate(`/${category}/${slug}`)
+      if (!slug || exitNavInProgressRef.current) return
+
+      const navigateOnly = () => {
+        if (!isMountedRef.current) return
+        window.scrollTo(0, 0)
+        document.documentElement.scrollTop = 0
+        document.body.scrollTop = 0
+        /* 같은 라우트 컴포넌트·detail만 id 변경 — 전역 흰 레이어(startEnter) 없이 URL만 갱신 */
+        navigate(`/${category}/${slug}`)
+      }
+
+      if (!entranceComplete) {
+        navigateOnly()
+        return
+      }
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        navigateOnly()
+        return
+      }
+
+      const root = detailStageRef.current
+      if (!root) {
+        navigateOnly()
+        return
+      }
+
+      const textEls = root.querySelectorAll('.detail-reveal-track')
+      const cells = root.querySelectorAll('.detail-grid-cell')
+      const all = gsap.utils.toArray([...textEls, ...cells])
+      const navEl = navRef.current
+      if (navEl) all.push(navEl)
+
+      if (all.length === 0) {
+        navigateOnly()
+        return
+      }
+
+      exitNavInProgressRef.current = true
+      const mainEl = detailLayoutRef.current
+      if (mainEl) mainEl.style.pointerEvents = 'none'
+
+      gsap.killTweensOf(all)
+      const tl = gsap.timeline({
+        onComplete: () => {
+          if (!isMountedRef.current) {
+            exitNavInProgressRef.current = false
+            return
+          }
+          navigateOnly()
+        },
+      })
+      tl.to(all, {
+        y: EXIT_Y,
+        autoAlpha: 0,
+        duration: EXIT_DUR_S,
+        stagger: EXIT_STAGGER_S,
+        ease: 'power2.in',
+      })
     },
-    [navigate, category, startEnter]
+    [navigate, category, entranceComplete]
   )
 
   useEffect(() => {
