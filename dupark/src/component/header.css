@@ -10,35 +10,48 @@
   align-items: center;
   padding: .8rem 2rem;
 
-  /* 슬라이드 + 배경 트랜지션 */
   transform: translateY(0);
-  background: #fff;
-  transition:
-    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    background 0.4s ease;
+  background: transparent;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 최상단 → 투명 배경 */
+/* 최상단(영상 위 풀브리딩) — 투명 */
 .header.at-top {
   background: transparent;
 }
 
-/* ── 페이지 다크모드 (상세페이지 하단) ── */
-body.page-dark .header {
-  background: #000;
-  transition:
-    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    background 0.6s ease;
+/* 스크롤해서 맨 위를 벗어난 뒤에만 배경 */
+.header.header--scrolled {
+  background: #fff;
 }
 
-body.page-dark .header .nav-link,
-body.page-dark .header .logo-img {
+/* ── About 페이지 다크모드 (맨 위는 투명, 스크롤 후 검정 바) ── */
+body.page-dark .header {
+  background: transparent;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.page-dark .header.header--scrolled {
+  background: #000;
+}
+
+body.page-dark .nav-link {
   filter: invert(1);
 }
 
-body.page-dark .header .hamburger span {
+/* 헤더 로고: React에서 /logo-white.svg 쓰는 화면 — invert(1) 쓰면 흰 로고가 검게 뒤집힘 */
+body.page-dark .header .logo-img {
+  filter: none;
+}
+
+body.page-dark .drawer .logo-img {
+  filter: none;
+}
+
+body.page-dark .hamburger span {
   background: #fff;
 }
+
 
 /* 위로 스크롤 → 헤더 숨김 */
 .header.hidden {
@@ -63,7 +76,7 @@ body.page-dark .header .hamburger span {
   height: 28px;
   width: auto;
   display: block;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, filter 0.4s ease;
 }
 
 /* ── 데스크탑 네비 ── */
@@ -88,6 +101,7 @@ body.page-dark .header .hamburger span {
   overflow: hidden;
   height: 1.1em;
   align-items: flex-start;
+  transition: filter 0.4s ease;
 }
 
 .nav-link-inner {
@@ -140,7 +154,7 @@ body.page-dark .header .hamburger span {
   transition:
     transform 0.3s ease,
     opacity 0.3s ease,
-    background 0.3s ease;
+    background 0.4s ease;
   transform-origin: center;
 }
 
@@ -184,8 +198,8 @@ body.page-dark .header .hamburger span {
   width: 100%;
   height: 100dvh;
   background: #000000dc;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   z-index: 250;
   flex-direction: column;
 
@@ -276,10 +290,31 @@ body.page-dark .header .hamburger span {
 
 /* ── 모바일 브레이크포인트 ── */
 @media (max-width: 768px) {
+  /* 투명 → 스크롤 시 칠해지는 느낌이 아니라, 처음부터 흰 바(라이트) / page-dark는 처음부터 검정 */
+  .header,
+  .header.at-top,
+  .header.header--scrolled {
+    background: #fff;
+  }
+
+  body.page-dark .header,
+  body.page-dark .header.at-top,
+  body.page-dark .header.header--scrolled {
+    background: #000;
+  }
+
+  /* 흰 헤더 위 홈 히어로: 햄버거·at-top 콘트라스트 */
+  .header.at-top .hamburger span {
+    background: #000;
+  }
+
+  body.page-dark .header .hamburger span {
+    background: #fff;
+  }
+
   .header {
     padding: .6rem 1.25rem;
   }
-
   .nav {
     display: none;
   }
@@ -332,11 +367,29 @@ body.page-dark .header .hamburger span {
     color: #888;
     text-decoration: none;
     letter-spacing: 0.04em;
-    transition: color 0.2s ease;
   }
 
   .mobile-subnav-link.active {
     color: #000;
     font-weight: 900;
+  }
+}
+
+/* 모바일 전용(≤768)과 겹치지 않게, 넓힌 뒤에도 JS 상태가 남아 있을 때 대비 */
+@media (min-width: 769px) {
+  .hamburger {
+    display: none !important;
+  }
+  .drawer,
+  .drawer.open {
+    display: none !important;
+    pointer-events: none !important;
+    opacity: 0;
+  }
+  .mobile-subnav {
+    display: none !important;
+  }
+  .drawer-overlay {
+    display: none !important;
   }
 }

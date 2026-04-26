@@ -4,18 +4,34 @@ import { client } from '../lib/sanity'
 import gsap from 'gsap'
 import './header.css'
 
+/** header.css: 모바일 레이아웃은 (max-width:768px) — 768px에서도 `min-width:769` 아님 */
+const MQL_DESKTOP = '(min-width: 769px)'
+const MQL_NARROW = '(max-width: 768px)'
+
+/** 홈에서 인트로(영상)일 때만 초기·탑에서 헤더 숨김 — 뷰포트 너비 무관(모바일=PC와 동일) */
+const getHomeVideoHeroShouldHideHeader = () => {
+  if (typeof document === 'undefined' || window.location.pathname !== '/') return false
+  return !document.body.classList.contains('dupark-home-content')
+}
+
 export default function Header() {
   const [isOpen, setIsOpen]     = useState(false)
   const [navItems, setNavItems] = useState([])
   const [atTop, setAtTop]       = useState(true)
-  const [hidden, setHidden]     = useState(window.location.pathname === '/' && window.innerWidth > 768)
+  const [homePastIntro, setHomePastIntro] = useState(
+    () => (typeof document !== 'undefined' && document.body.classList.contains('dupark-home-content'))
+  )
+  const [hidden, setHidden]     = useState(() => getHomeVideoHeroShouldHideHeader())
+  const [isNarrow, setIsNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(MQL_NARROW).matches
+  )
   const lastScrollY             = useRef(0)
   const linkRefs                = useRef([])
   const location                = useLocation()
 
   const headerLogoRef  = useRef(null)
   const navItemRefs    = useRef([])
-  const prevHiddenRef  = useRef(window.location.pathname === '/' && window.innerWidth > 768)
+  const prevHiddenRef  = useRef(getHomeVideoHeroShouldHideHeader())
   const hasAnimatedRef = useRef(false)
 
   /* ── Sanity 카테고리 패칭 ── */
@@ -31,6 +47,14 @@ export default function Header() {
   // /:category 또는 /:category/:id 에서 첫 번째 세그먼트를 활성 카테고리로 사용
   const activeSlug  = !isHome ? location.pathname.split('/')[1] : null
 
+  useEffect(() => {
+    if (isHome) {
+      setHomePastIntro(document.body.classList.contains('dupark-home-content'))
+    } else {
+      setHomePastIntro(false)
+    }
+  }, [isHome, location.key, location.pathname])
+
   /* ── 스크롤 핸들러 ── */
   useEffect(() => {
     const onScroll = () => {
@@ -39,15 +63,28 @@ export default function Header() {
 
       setAtTop(current < 10)
 
-      const isMobile    = window.innerWidth <= 768
-      const inVideoZone = isHome && !isMobile && current < window.innerHeight - 50
-
-      if (inVideoZone) {
-        setHidden(true)
-      } else if (current < 10) {
-        setHidden(false)
+      const fromBody = document.body.classList.contains('dupark-home-content')
+      if (isHome) {
+        setHomePastIntro(fromBody)
       } else {
-        setHidden(scrollingUp)
+        setHomePastIntro(false)
+      }
+
+      /* 스크롤 ≈0일 때 먼저 판정 (원래 `else if (current < 10) setHidden(false)`).
+         예전엔 inVideoZone이 먼저라 스크롤0에서도 inVideoZone이 true면 맨 위 헤더 복원이 안 먹음 */
+      if (current < 10) {
+        const hideInVideoHeroOnly = isHome && !fromBody
+        setHidden(hideInVideoHeroOnly)
+      } else {
+        const inVideoZone =
+          isHome &&
+          !fromBody &&
+          current < window.innerHeight - 50
+        if (inVideoZone) {
+          setHidden(true)
+        } else {
+          setHidden(scrollingUp)
+        }
       }
 
       lastScrollY.current = current
@@ -55,10 +92,33 @@ export default function Header() {
 
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [isHome])
 
-  /* ── 라우트 변경 시 드로어 닫기 ── */
+  /* ── 뷰포트를 데스크톱(769+)으로 키우면 모바일 드로어/스크롤 잠금 정리 (resize 대신 matchMedia change) ── */
+  useEffect(() => {
+    const mq = window.matchMedia(MQL_DESKTOP)
+    const onViewport = () => {
+      if (mq.matches) setIsOpen(false)
+    }
+    onViewport()
+    mq.addEventListener('change', onViewport)
+    return () => mq.removeEventListener('change', onViewport)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia(MQL_NARROW)
+    const onNarrow = () => setIsNarrow(mq.matches)
+    onNarrow()
+    mq.addEventListener('change', onNarrow)
+    return () => mq.removeEventListener('change', onNarrow)
+  }, [])
+
+  /* 모바일 드로어: 다른 페이지(카테고리 등)로 이동 시 페이드로 닫힘(`.drawer` opacity 전환) */
   useEffect(() => {
     setIsOpen(false)
   }, [location.pathname])
@@ -85,30 +145,41 @@ export default function Header() {
     }
   }, [hidden])
 
-  /* ── 드로어 열릴 때 스크롤 막기 + GSAP 링크 reveal ── */
+  /* 드로어: 열릴 때 스크롤 잠금 / 닫힐 때는 opacity(0.35s) 끝난 뒤 잠금 해제 → 페이드가 보이도록 */
+  const DRAWER_CLOSE_MS = 350
+
   useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : ''
-
-    if (isOpen && linkRefs.current.length) {
-      gsap.fromTo(
-        linkRefs.current,
-        { yPercent: 110 },
-        { yPercent: 0, duration: 0.7, stagger: 0.07, ease: 'power3.out', delay: 0.15 }
-      )
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      if (linkRefs.current.length) {
+        gsap.fromTo(
+          linkRefs.current,
+          { yPercent: 110 },
+          { yPercent: 0, duration: 0.7, stagger: 0.07, ease: 'power3.out', delay: 0.15 }
+        )
+      }
+      return
     }
-
-    return () => { document.body.style.overflow = '' }
+    const t = window.setTimeout(() => {
+      document.body.style.overflow = ''
+    }, DRAWER_CLOSE_MS)
+    return () => window.clearTimeout(t)
   }, [isOpen])
 
-  const transparent = isHome && atTop
+  /* 콘텐츠(흰 배경)로 넘어간 뒤엔 at-top(영상용 흰 텍스트) 쓰지 않음 */
+  const transparent = isHome && atTop && !homePastIntro
 
   const headerClass = [
     'header',
     transparent ? 'at-top' : '',
+    !atTop ? 'header--scrolled' : '',
     hidden      ? 'hidden'  : '',
   ].filter(Boolean).join(' ')
 
-  const logoSrc = transparent ? '/logo-white.svg' : '/logo-black.svg'
+  /* 흰 로고: About(다크) 전 구간, 홈 인트로는 데스크톱만(모바일은 헤더가 처음부터 흰 바 = 검은 로고) */
+  const useWhiteHeaderLogo =
+    location.pathname === '/about' || (transparent && !isNarrow)
+  const logoSrc = useWhiteHeaderLogo ? '/logo-white.svg' : '/logo-black.svg'
 
   return (
     <>
@@ -123,7 +194,6 @@ export default function Header() {
         <nav className="nav">
           {navItems.map((item, i) => (
             <div key={item.path} className="header-clip">
-              {/* ref는 실제 움직이는 내부 div에 */}
               <div ref={(el) => { navItemRefs.current[i] = el }}>
                 <NavLink
                   to={item.path}
@@ -137,6 +207,20 @@ export default function Header() {
               </div>
             </div>
           ))}
+          <div className="header-clip">
+            <div ref={(el) => { navItemRefs.current[navItems.length] = el }}>
+              <NavLink
+                to="/about"
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+              >
+                <span className="nav-link-inner">
+                  <span>ABOUT</span>
+                  <span>ABOUT</span>
+                </span>
+              </NavLink>
+            </div>
+          </div>
         </nav>
 
         <button
@@ -149,8 +233,8 @@ export default function Header() {
       </header>
 
       {/* 모바일 카테고리 탭바 (홈 제외) */}
-      {!isHome && navItems.length > 0 && (
-        <nav className={`mobile-subnav${hidden ? ' hidden' : ''}`}>
+      {!isHome && location.pathname !== '/about' && navItems.length > 0 && (
+        <nav className={['mobile-subnav', hidden ? 'hidden' : ''].filter(Boolean).join(' ')}>
           {navItems.map((item) => {
             const slug    = item.path.replace('/', '')
             const isActive = slug === activeSlug
@@ -184,12 +268,23 @@ export default function Header() {
               <NavLink
                 ref={(el) => { linkRefs.current[i] = el }}
                 to={item.path}
+                onClick={() => setIsOpen(false)}
                 className={({ isActive }) => isActive ? 'drawer-link active' : 'drawer-link'}
               >
                 {item.label}
               </NavLink>
             </div>
           ))}
+          <div className="drawer-link-wrap">
+            <NavLink
+              ref={(el) => { linkRefs.current[navItems.length] = el }}
+              to="/about"
+              onClick={() => setIsOpen(false)}
+              className={({ isActive }) => isActive ? 'drawer-link active' : 'drawer-link'}
+            >
+              ABOUT
+            </NavLink>
+          </div>
         </div>
       </nav>
     </>

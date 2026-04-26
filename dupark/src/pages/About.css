@@ -1,0 +1,224 @@
+body.dupark-about-page .custom-scrollbar {
+  display: none;
+}
+
+/* fixed 헤더 아래·푸터 위: 뷰포트에서 헤더+푸터 높이만큼 뺀 영역 (index.css --dupark-header-h, --dupark-footer-h) */
+.about-page {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  height: calc(100svh - var(--dupark-footer-h));
+  max-height: calc(100svh - var(--dupark-footer-h));
+  padding: var(--dupark-header-h) 0 0;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* 최상단 풀뷰포트 검정 → 페이드아웃 후 about 본문 노출 (헤더/푸터 위) */
+.about-entrance-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 320; /* .hamburger(300)보다 위 — 진입 시 완전 검정 */
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
+  background: #000;
+  pointer-events: none;
+  animation: about-entrance-black-out 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes about-entrance-black-out {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.about-page-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-entrance-overlay {
+    animation: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ── 왼쪽: 로고(칸 기준 가운데) ── */
+.about-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.about-logo-clip {
+  max-width: min(480px, 38vw);
+  width: 100%;
+}
+
+.about-logo-parallax {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  will-change: transform;
+}
+
+.about-logo {
+  width: 100%;
+  max-width: min(480px, 38vw);
+  height: auto;
+  display: block;
+}
+
+/* ── 오른쪽: 내용 — 마스크 + 내부 reveal ── */
+.about-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 3rem 2.5rem 2rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.about-content-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.5svh, 2.5rem);
+  min-width: 0;
+  min-height: 0;
+}
+
+.about-reveal-clip {
+  overflow: hidden;
+  width: 100%;
+}
+
+.about-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.about-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.about-section-body {
+  font-size: clamp(0.7rem, 1.1svh, 0.8rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.about-body-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.about-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.about-list__line {
+  display: block;
+  font-size: clamp(0.7rem, 1.1svh, 0.8rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.5;
+}
+
+.about-contact-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+}
+
+.about-contact-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.08em;
+  min-width: 5rem;
+}
+
+.about-contact-link {
+  font-size: clamp(0.7rem, 1.1svh, 0.8rem);
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.about-contact-link:hover {
+  opacity: 0.6;
+}
+
+/* ── 모바일: 로고 숨김, 본문만 한 화면 ── */
+@media (max-width: 768px) {
+  .about-page-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .about-logo-wrap {
+    display: none;
+  }
+
+  .about-content {
+    padding: 1.25rem 1.5rem 1.5rem;
+    border-left: none;
+    justify-content: center;
+  }
+
+  .about-content-reveal {
+    gap: clamp(0.75rem, 2.2svh, 1.25rem);
+  }
+
+  .about-section-title {
+    font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+  }
+}
+
+/* 아주 짧은 뷰포트에서 한 화면 유지 */
+@media (max-height: 640px) {
+  .about-content {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .about-section {
+    gap: 0.35rem;
+  }
+}

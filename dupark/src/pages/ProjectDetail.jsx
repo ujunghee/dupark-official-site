@@ -7,9 +7,12 @@ import './ProjectDetail.css'
 function toEmbedUrl(url) {
   if (!url) return null
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`
+  if (ytMatch) {
+    const id = ytMatch[1]
+    return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1`
+  }
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0`
   return url
 }
 
@@ -20,11 +23,15 @@ export default function ProjectDetail() {
   const [prev, setPrev]         = useState(null)
   const [next, setNext]         = useState(null)
   const [hovered, setHovered]   = useState(null)
-  const [darkMode, setDarkMode] = useState(false)
   const navRef     = useRef(null)
   const previewRef = useRef(null)
   const quickX     = useRef(null)
   const quickY     = useRef(null)
+
+  /* ── 페이지 이동 시 최상단으로 ── */
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [id])
 
   /* ── 데이터 패칭 ── */
   useEffect(() => {
@@ -70,30 +77,13 @@ export default function ProjectDetail() {
     return () => window.removeEventListener('mousemove', onMove)
   }, [])
 
-  /* ── IntersectionObserver: 다크모드 ── */
-  useEffect(() => {
-    if (!navRef.current) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setDarkMode(entry.isIntersecting),
-      { threshold: 0.3 }
-    )
-    observer.observe(navRef.current)
-    return () => observer.disconnect()
-  }, [project])
-
-  /* ── body 클래스 전파 ── */
-  useEffect(() => {
-    if (darkMode) document.body.classList.add('page-dark')
-    else          document.body.classList.remove('page-dark')
-    return ()   => document.body.classList.remove('page-dark')
-  }, [darkMode])
 
   if (!project) return null
 
   const catSlug = project.categorySlug || category
 
   return (
-    <main className={`detail-layout${darkMode ? ' dark' : ''}`}>
+    <main className="detail-layout">
 
       {/* ── 왼쪽: sticky 정보 ── */}
       <aside className="detail-info">
@@ -145,6 +135,12 @@ export default function ProjectDetail() {
           onMouseEnter={() => prev && setHovered('prev')}
           onMouseLeave={() => setHovered(null)}
         >
+          <div className="detail-nav-arrow">
+            <svg viewBox="0 0 48 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="48" y1="7" x2="1" y2="7" stroke="currentColor" strokeWidth="1.2"/>
+              <polyline points="10,1 1,7 10,13" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+            </svg>
+          </div>
           <div className="detail-nav-text">
             <span className="detail-nav-label">PREV</span>
             {prev && <span className="detail-nav-title">{prev.title}</span>}
@@ -161,6 +157,12 @@ export default function ProjectDetail() {
           <div className="detail-nav-text detail-nav-text--right">
             <span className="detail-nav-label">NEXT</span>
             {next && <span className="detail-nav-title">{next.title}</span>}
+          </div>
+          <div className="detail-nav-arrow">
+            <svg viewBox="0 0 48 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="7" x2="47" y2="7" stroke="currentColor" strokeWidth="1.2"/>
+              <polyline points="38,1 47,7 38,13" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+            </svg>
           </div>
         </div>
       </div>

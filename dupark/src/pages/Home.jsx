@@ -64,6 +64,8 @@ export default function Home() {
   const [isMobile,     setIsMobile]     = useState(() => window.innerWidth <= MOBILE_BREAKPOINT)
   const [videoSrc,     setVideoSrc]     = useState(null)
   const [videoPoster,  setVideoPoster]  = useState(null)
+  /* 모바일: 그리드가 상단에 붙을 때 / 데스크톱: 가로섹션이 상단에 붙을 때 — 인트로 영상·로고·100vh 제거 */
+  const [hideIntro, setHideIntro] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
@@ -94,7 +96,7 @@ export default function Home() {
   // ── 새로고침 시 최상단으로 ──
   useEffect(() => {
     window.scrollTo(0, 0)
-    lenis.scrollTo(0, { duration: 0 })
+    lenis.scrollTo(0, { immediate: true, force: true })
   }, [])
 
   // ── 인트로 로고 reveal 애니메이션 ──
@@ -108,14 +110,15 @@ export default function Home() {
     return () => tween.kill()
   }, [])
 
-  // ── 비디오 스크롤 줌 ──
+  // ── 비디오 스크롤 줌 (모바일+컨텐츠전환 시 스페이서 0 → ST 비활성) ──
   useEffect(() => {
     if (!videoRef.current || !spacerRef.current) return
+    if (hideIntro) return
     const tween = gsap.fromTo(
       videoRef.current,
       { scale: 1 },
       {
-        scale: 2,
+        scale: 3,
         ease: 'none',
         scrollTrigger: {
           trigger: spacerRef.current,
@@ -126,17 +129,18 @@ export default function Home() {
       }
     )
     return () => tween.kill()
-  }, [])
+  }, [isMobile, hideIntro])
 
   // ── 비디오 구간 → 컨텐츠 섹션 스냅 ──
   useEffect(() => {
     let isSnapping = false
+    const UPWARD_RELEASE_PX = 15
 
     const snapTo = (target) => {
       isSnapping = true
       lenis.scrollTo(target, {
-        duration: .8,
-        ease: 'power3.out',
+        duration: 0.8,
+        easing: 'power3.out',
         lock: true,
         onComplete: () => {
           isSnapping = false
@@ -147,24 +151,52 @@ export default function Home() {
 
     const onWheel = (e) => {
       if (isSnapping) return
+      if (hideIntro) return
       const vh = window.innerHeight
       const scroll = lenis.scroll
-      if (scroll < vh && e.deltaY > 0)                    snapTo(vh)
-      else if (scroll > 0 && scroll <= vh && e.deltaY < 0) snapTo(0)
+      if (scroll < vh && e.deltaY > 0) {
+        snapTo(vh)
+        return
+      }
+      if (
+        scroll > 0 &&
+        scroll <= vh - UPWARD_RELEASE_PX &&
+        e.deltaY < 0 &&
+        !(isMobile && hideIntro)
+      ) {
+        if (!isMobile && trackRef.current) {
+          const x = parseFloat(gsap.getProperty(trackRef.current, 'x', 'px')) || 0
+          if (x < -10) return
+        }
+        snapTo(0)
+      }
     }
 
     let touchStartY = 0
     const onTouchStart = (e) => { touchStartY = e.touches[0].clientY }
     const onTouchEnd = (e) => {
       if (isSnapping) return
+      if (hideIntro) return
       const vh    = window.innerHeight
       const scroll = lenis.scroll
       const diff  = touchStartY - e.changedTouches[0].clientY
 
       if (Math.abs(diff) < 30) return
 
-      if (scroll < vh && diff > 0)                    snapTo(vh)
-      else if (scroll > 0 && scroll <= vh && diff < 0) snapTo(0)
+      if (scroll < vh && diff > 0) {
+        snapTo(vh)
+      } else if (
+        scroll > 0 &&
+        scroll <= vh - UPWARD_RELEASE_PX &&
+        diff < 0 &&
+        !(isMobile && hideIntro)
+      ) {
+        if (!isMobile && trackRef.current) {
+          const x = parseFloat(gsap.getProperty(trackRef.current, 'x', 'px')) || 0
+          if (x < -10) return
+        }
+        snapTo(0)
+      }
     }
 
     window.addEventListener('wheel', onWheel, { passive: false })
@@ -176,7 +208,56 @@ export default function Home() {
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchend', onTouchEnd)
     }
-  }, [])
+  }, [isMobile, hideIntro])
+
+  // ── 모바일: 그리드 / 데스크톱: 가로섹션이 뷰 상단에 닿으면(컨텐츠 100% 구간) 인트로 제거 — 모바일과 동일 패턴 ──
+  useEffect(() => {
+    if (hideIntro) return
+
+    const onScroll = () => {
+      if (isMobile) {
+        const mobileSection = document.querySelector('.mobile-grid-section')
+        if (!mobileSection) return
+        if (mobileSection.getBoundingClientRect().top <= 0) setHideIntro(true)
+        return
+      }
+      const el = horizontalRef.current
+      if (!el) return
+      if (el.getBoundingClientRect().top <= 0) setHideIntro(true)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isMobile, hideIntro, categories.length])
+
+  // Header: 인트로(영상) 끝난 뒤엔 scroll 0이어도 "영상 풀브리딩"으로 보지 않게 함
+  useLayoutEffect(() => {
+    if (hideIntro) document.body.classList.add('dupark-home-content')
+    else document.body.classList.remove('dupark-home-content')
+    return () => document.body.classList.remove('dupark-home-content')
+  }, [hideIntro])
+
+  // 스페이서 제거(100vh) 직후 max scroll < 현재 scroll 이면 하단(푸터)으로 붙는 현상 — Lenis limit 갱신 + 즉시 0
+  useLayoutEffect(() => {
+    if (!hideIntro) return
+    const reset = () => {
+      lenis.resize()
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      lenis.scrollTo(0, { immediate: true, force: true })
+      ScrollTrigger.refresh()
+    }
+    reset()
+    const raf = requestAnimationFrame(() => {
+      reset()
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('scroll'))
+      })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [hideIntro])
 
   // ── 가로 스크롤 GSAP ──
   useLayoutEffect(() => {
@@ -232,6 +313,7 @@ export default function Home() {
         zIndex: -1,
         background: '#000',
         overflow: 'hidden',
+        display: hideIntro ? 'none' : 'block',
       }}>
         <video
           ref={videoRef}
@@ -251,6 +333,7 @@ export default function Home() {
         zIndex: 0,
         overflow: 'hidden',
         mixBlendMode: 'difference',
+        display: hideIntro ? 'none' : 'block',
       }}>
         <img
           ref={logoRef}
@@ -261,7 +344,15 @@ export default function Home() {
       </div>
 
       {/* ── 100vh 스페이서 ── */}
-      <div ref={spacerRef} style={{ height: '100vh', position: 'relative', zIndex: 1, pointerEvents: 'none' }} />
+      <div
+        ref={spacerRef}
+        style={{
+          height: hideIntro ? 0 : '100vh',
+          position: 'relative',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* ── 데스크탑: 가로 스크롤 섹션 ── */}
       {!isMobile && (

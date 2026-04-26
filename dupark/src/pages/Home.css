@@ -23,7 +23,7 @@
 /* 카드: 기본 데스크탑 3.5개 */
 .category-card {
   flex-shrink: 0;
-  width: 26vw;
+  width: 28vw;
   cursor: pointer;
 }
 

@@ -7,20 +7,17 @@
   font-size: 0.75rem;
   background: #fff;
   color: #000;
-  transition: background 0.6s ease, color 0.6s ease;
 }
 
 .footer-link {
   text-decoration: none;
   color: #000;
   font-weight: 800;
-  transition: color 0.6s ease;
 }
 
 .footer-copy {
   font-weight: 800;
   color: #000;
-  transition: color 0.6s ease;
 }
 
 /* ── 다크모드 ── */
@@ -32,4 +29,10 @@ body.page-dark .site-footer {
 body.page-dark .footer-link,
 body.page-dark .footer-copy {
   color: #fff;
+}
+
+@media (max-width: 768px) {
+  .site-footer {
+    padding: 1rem 1.25rem;
+  }
 }

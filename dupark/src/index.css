@@ -16,23 +16,37 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: clip;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  scrollbar-width: none;
 }
 
-/* Chrome / Safari / Edge */
+/* 기본 스크롤바 완전 제거 */
 ::-webkit-scrollbar {
-  width: 3px;
+  display: none;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+
+/* ── 커스텀 스크롤바 ── */
+.custom-scrollbar {
+  position: fixed;
+  right: 6px;
+  top: 0;
+  width: 2px;
+  height: 100vh;
+  z-index: 9998;
+  pointer-events: none;
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+
+.custom-scrollbar-thumb {
+  position: absolute;
+  right: 0;
+  width: 2px;
   border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+
+.custom-scrollbar.active .custom-scrollbar-thumb {
+  opacity: 1;
 }
 
 body {
@@ -42,6 +56,25 @@ body {
   color: #000;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body.page-dark {
+  background: #000;
+  color: #fff;
+}
+
+/* 레이아웃용 — About 등에서 calc(100svh - 헤더 - 푸터) */
+:root {
+  /* .header: padding 0.8rem×2 + logo 28px */
+  --dupark-header-h: 3.35rem;
+  /* .site-footer: padding 1.5rem×2 + 본문 라인 */
+  --dupark-footer-h: 4.125rem;
+}
+@media (max-width: 768px) {
+  :root {
+    /* 모바일 헤더(탭 제외) — mobile-subnav top: 47px 기준 */
+    --dupark-header-h: 2.9375rem;
+  }
 }
 
 #root {
@@ -90,6 +123,6 @@ p {
 @media (max-width: 480px) {
   .project-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    gap: 1.2rem 0.5rem;
   }
 }
