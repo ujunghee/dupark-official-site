@@ -17,9 +17,9 @@ export default function About() {
   const logoParallaxRef = useRef(null)
 
   useEffect(() => {
-    document.body.classList.add('page-dark', 'dupark-about-page')
+    document.body.classList.add('dupark-about-page')
     return () => {
-      document.body.classList.remove('page-dark', 'dupark-about-page')
+      document.body.classList.remove('dupark-about-page')
     }
   }, [])
 

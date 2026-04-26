@@ -20,14 +20,14 @@
   color: #000;
 }
 
-/* ── 다크모드 ── */
-body.page-dark .site-footer {
+/* About: 본문과 맞춘 검정 푸터 */
+body.dupark-about-page .site-footer {
   background: #000;
   color: #fff;
 }
 
-body.page-dark .footer-link,
-body.page-dark .footer-copy {
+body.dupark-about-page .footer-link,
+body.dupark-about-page .footer-copy {
   color: #fff;
 }
 

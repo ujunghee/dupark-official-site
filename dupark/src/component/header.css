@@ -25,33 +25,27 @@
   background: #fff;
 }
 
-/* ── About 페이지 다크모드 (맨 위는 투명, 스크롤 후 검정 바) ── */
-body.page-dark .header {
+/* ── About: 검은 콘텐츠 위 — 민트 active는 항상 #aaff00 (filter/invert 사용 안 함) ── */
+body.dupark-about-page .header {
   background: transparent;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body.page-dark .header.header--scrolled {
+body.dupark-about-page .header.header--scrolled {
   background: #000;
 }
 
-body.page-dark .nav-link {
-  filter: invert(1);
+body.dupark-about-page .header .nav-link {
+  color: #fff;
 }
 
-/* 헤더 로고: React에서 /logo-white.svg 쓰는 화면 — invert(1) 쓰면 흰 로고가 검게 뒤집힘 */
-body.page-dark .header .logo-img {
-  filter: none;
+body.dupark-about-page .header .nav-link.active {
+  color: #aaff00;
 }
 
-body.page-dark .drawer .logo-img {
-  filter: none;
-}
-
-body.page-dark .hamburger span {
+body.dupark-about-page .header .hamburger span {
   background: #fff;
 }
-
 
 /* 위로 스크롤 → 헤더 숨김 */
 .header.hidden {
@@ -290,16 +284,16 @@ body.page-dark .hamburger span {
 
 /* ── 모바일 브레이크포인트 ── */
 @media (max-width: 768px) {
-  /* 투명 → 스크롤 시 칠해지는 느낌이 아니라, 처음부터 흰 바(라이트) / page-dark는 처음부터 검정 */
+  /* 투명 → 스크롤 시 칠해지는 느낌이 아니라, 처음부터 흰 바(라이트) / About은 검정 */
   .header,
   .header.at-top,
   .header.header--scrolled {
     background: #fff;
   }
 
-  body.page-dark .header,
-  body.page-dark .header.at-top,
-  body.page-dark .header.header--scrolled {
+  body.dupark-about-page .header,
+  body.dupark-about-page .header.at-top,
+  body.dupark-about-page .header.header--scrolled {
     background: #000;
   }
 
@@ -308,7 +302,7 @@ body.page-dark .hamburger span {
     background: #000;
   }
 
-  body.page-dark .header .hamburger span {
+  body.dupark-about-page .header .hamburger span {
     background: #fff;
   }
 

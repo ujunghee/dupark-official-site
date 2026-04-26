@@ -1,10 +1,46 @@
+/* 페칭 전 — 흰 화면 (About 오버레이와 유사) */
+.detail-page--awaiting {
+  position: relative;
+  min-height: calc(100svh - var(--dupark-footer-h, 4.125rem));
+  padding-top: 4rem;
+  box-sizing: border-box;
+}
+
+/* 미디어 로드~페이드아웃까지 본문 위 흰 레이어 (헤더 z-index 아래) */
+.detail-entrance-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  background: #fff;
+  /* 로딩·진입 땐 아래(본문·내비)로 이벤트가 통과하지 않게 — “흰 뒤에서 클릭” 방지, 호버 프리뷰는 z-index로 위에 */
+  pointer-events: auto;
+}
+
+.detail-entrance-overlay--boot {
+  pointer-events: auto;
+}
+
 .detail-layout {
+  position: relative;
   display: grid;
   grid-template-columns: .4fr 1fr;
   min-height: calc(100vh - 4rem);
   padding-top: 4rem;
 }
 
+/* aside + 그리드 + nav — 오버레이가 걷힌 뒤에만 드러나게(이중 등장·비침 방지) */
+.detail-stage {
+  display: grid;
+  grid-template-columns: .4fr 1fr;
+  grid-column: 1 / -1;
+  align-self: start;
+}
+
+.detail-stage--conceal {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 
 /* ── 왼쪽 sticky 패널 ── */
 .detail-info {
@@ -12,7 +48,18 @@
   top: 4rem;
   height: fit-content;
   align-self: start;
+  min-width: 0;
   padding: 2rem 2rem 2rem 2rem;
+  /* 등장 애니·자식 line이 패널 밖으로 비치지 않게 */
+  overflow: hidden;
+}
+
+/* y 이동 reveal — margin 붕괴로 overflow 밖으로 새는 것 방지 */
+.detail-reveal-clip {
+  display: flow-root;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .detail-category {
@@ -44,11 +91,14 @@
   font-size: 0.75rem;
   color: #444;
   line-height: 1.6;
-  margin-bottom: 1.5rem;
 }
 
 .detail-year-block {
   margin-top: 1.5rem;
+  overflow: hidden;
+  /* YEAR 라벨 + 연도 두 clip을 한 블록으로 묶어 비침 방지 */
+  display: flow-root;
+  max-width: 100%;
 }
 
 .detail-label {
@@ -115,12 +165,17 @@
   border: none;
 }
 
-/* ── 하단 Prev / Next 네비게이션 ── */
-.detail-nav {
+/* ── 하단 Prev / Next (detail-stage 밖) ── */
+.detail-layout > .detail-nav-outer {
   grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
+}
+
+.detail-nav {
   display: flex;
   align-items: stretch;
-  margin-top: 8rem;
+  margin-top: 0;
 }
 
 .detail-nav-item {
@@ -129,7 +184,7 @@
   flex-direction: row;
   align-items: center;
   gap: 0.75rem;
-  padding: .8rem 2rem;
+  padding: 0.8rem 2rem;
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -144,48 +199,80 @@
   justify-content: flex-end;
 }
 
-.detail-nav-arrow {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  width: 0;
-  opacity: 0;
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.3s ease;
-}
-
-.detail-nav-arrow svg {
+/* 썸: 기본은 폭 0(안 보임) — 호버 시 옆에서 슬라이드 */
+.detail-nav-thumb {
   flex-shrink: 0;
-  width: 48px;
-  height: 14px;
+  width: 0;
+  min-width: 0;
+  height: 4.333rem; /* 3.25 * 4/3 */
+  overflow: hidden;
+  border-radius: 2px;
+  transition: width 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.detail-nav-prev:hover .detail-nav-arrow {
-  width: 52px;
-  opacity: 1;
+.detail-nav-item:not(.disabled):hover .detail-nav-thumb:has(.detail-nav-thumb-img),
+.detail-nav-item:not(.disabled):focus-within .detail-nav-thumb:has(.detail-nav-thumb-img) {
+  width: 3.25rem;
 }
 
-.detail-nav-prev:hover .detail-nav-arrow svg {
-  animation: arrowLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* PREV: 왼쪽 밖(←)에서 진입 */
+.detail-nav-prev .detail-nav-thumb-img {
+  width: 3.25rem;
+  height: 100%;
+  min-height: 4.333rem;
+  object-fit: cover;
+  display: block;
+  transform: translateX(-100%);
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.detail-nav-next:hover .detail-nav-arrow {
-  width: 52px;
-  opacity: 1;
+.detail-nav-item.detail-nav-prev:not(.disabled):hover .detail-nav-thumb:has(.detail-nav-thumb-img) .detail-nav-thumb-img,
+.detail-nav-item.detail-nav-prev:not(.disabled):focus-within .detail-nav-thumb:has(.detail-nav-thumb-img) .detail-nav-thumb-img {
+  transform: translateX(0);
 }
 
-.detail-nav-next:hover .detail-nav-arrow svg {
-  animation: arrowRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* NEXT: 오른쪽 밖(→)에서 진입 */
+.detail-nav-next .detail-nav-thumb-img {
+  width: 3.25rem;
+  height: 100%;
+  min-height: 4.333rem;
+  object-fit: cover;
+  display: block;
+  margin-left: auto;
+  transform: translateX(100%);
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-@keyframes arrowLeft {
-  from { transform: translateX(12px); }
-  to   { transform: translateX(0); }
+.detail-nav-item.detail-nav-next:not(.disabled):hover .detail-nav-thumb:has(.detail-nav-thumb-img) .detail-nav-thumb-img,
+.detail-nav-item.detail-nav-next:not(.disabled):focus-within .detail-nav-thumb:has(.detail-nav-thumb-img) .detail-nav-thumb-img {
+  transform: translateX(0);
 }
 
-@keyframes arrowRight {
-  from { transform: translateX(-12px); }
-  to   { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) {
+  .detail-nav-thumb,
+  .detail-nav-prev .detail-nav-thumb-img,
+  .detail-nav-next .detail-nav-thumb-img {
+    transition: none;
+  }
+  .detail-nav-item:not(.disabled):hover .detail-nav-thumb:has(.detail-nav-thumb-img),
+  .detail-nav-item:not(.disabled):focus-within .detail-nav-thumb:has(.detail-nav-thumb-img) {
+    width: 3.25rem;
+  }
+  .detail-nav-prev .detail-nav-thumb-img,
+  .detail-nav-next .detail-nav-thumb-img {
+    transform: none;
+  }
+}
+
+/* 터치: 호버 없이 썸 항상 표시 */
+@media (hover: none) and (pointer: coarse) {
+  .detail-nav-thumb:has(.detail-nav-thumb-img) {
+    width: 3.25rem;
+  }
+  .detail-nav-prev .detail-nav-thumb-img,
+  .detail-nav-next .detail-nav-thumb-img {
+    transform: none;
+  }
 }
 
 .detail-nav-text {
@@ -218,37 +305,15 @@
   flex-shrink: 0;
 }
 
-/* ── 커서 따라다니는 미리보기 ── */
-.detail-nav-preview {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  pointer-events: none;
-  z-index: 9999;
-  will-change: transform;
-}
-
-.detail-nav-preview img {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  display: block;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  transform: scale(0);
-  transform-origin: center;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.detail-nav-preview.visible img {
-  transform: scale(1);
-}
-
 /* ── 모바일 ── */
 @media (max-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr;
-    padding-top: 4rem;
+    padding-top: 6rem;
+  }
+
+  .detail-stage {
+    grid-template-columns: 1fr;
   }
 
   .detail-info {
@@ -257,11 +322,11 @@
   }
 
   .detail-grid {
-    padding: 0 1.25rem 4rem;
+    padding: 0 1.25rem;
     gap: 0.3rem;
   }
 
-  .detail-nav {
+  .detail-nav-outer {
     margin-top: 2rem;
   }
 
@@ -274,16 +339,24 @@
     display: none;
   }
 
-  .detail-nav-arrow {
-    display: none;
+  .detail-nav-thumb {
+    height: 3.333rem;
   }
 
-  .detail-nav-prev:hover .detail-nav-arrow,
-  .detail-nav-next:hover .detail-nav-arrow {
-    display: none;
+  .detail-nav-item:not(.disabled):hover .detail-nav-thumb:has(.detail-nav-thumb-img),
+  .detail-nav-item:not(.disabled):focus-within .detail-nav-thumb:has(.detail-nav-thumb-img) {
+    width: 2.5rem;
   }
 
-  .detail-nav-preview {
-    display: none;
+  .detail-nav-prev .detail-nav-thumb-img,
+  .detail-nav-next .detail-nav-thumb-img {
+    width: 2.5rem;
+    min-height: 3.333rem;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .detail-nav-thumb:has(.detail-nav-thumb-img) {
+      display: none;
+    }
   }
 }

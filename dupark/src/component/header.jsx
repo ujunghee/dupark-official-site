@@ -176,7 +176,7 @@ export default function Header() {
     hidden      ? 'hidden'  : '',
   ].filter(Boolean).join(' ')
 
-  /* 흰 로고: About(다크) 전 구간, 홈 인트로는 데스크톱만(모바일은 헤더가 처음부터 흰 바 = 검은 로고) */
+  /* 흰 로고: About 본문·홈 히어로(데스크톱) — 모바일은 헤더가 흰 바 = 검은 로고 */
   const useWhiteHeaderLogo =
     location.pathname === '/about' || (transparent && !isNarrow)
   const logoSrc = useWhiteHeaderLogo ? '/logo-white.svg' : '/logo-black.svg'

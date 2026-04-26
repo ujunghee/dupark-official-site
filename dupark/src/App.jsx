@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
+import { RouteEnterProvider } from './context/RouteEnterContext'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
@@ -47,6 +48,12 @@ function CustomScrollbar() {
   )
 }
 
+/* 상세 경로가 바뀌면 전부 리마운트 — 이전 slug 상태 잔상·동기 setState(린트) 회피 */
+function ProjectDetailRoute() {
+  const { category, id } = useParams()
+  return <ProjectDetail key={`${category}/${id}`} />
+}
+
 function AppShell() {
   return (
     <>
@@ -56,7 +63,7 @@ function AppShell() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/:category" element={<Category />} />
-        <Route path="/:category/:id" element={<ProjectDetail />} />
+        <Route path="/:category/:id" element={<ProjectDetailRoute />} />
       </Routes>
       <Footer />
     </>
@@ -73,8 +80,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      {loading && <Loader onComplete={handleLoaderComplete} />}
-      <AppShell />
+      <RouteEnterProvider>
+        {loading && <Loader onComplete={handleLoaderComplete} />}
+        <AppShell />
+      </RouteEnterProvider>
     </BrowserRouter>
   )
 }

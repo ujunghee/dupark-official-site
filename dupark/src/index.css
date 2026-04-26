@@ -58,11 +58,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.page-dark {
-  background: #000;
-  color: #fff;
-}
-
 /* 레이아웃용 — About 등에서 calc(100svh - 헤더 - 푸터) */
 :root {
   /* .header: padding 0.8rem×2 + logo 28px */
@@ -74,12 +69,23 @@ body.page-dark {
   :root {
     /* 모바일 헤더(탭 제외) — mobile-subnav top: 47px 기준 */
     --dupark-header-h: 2.9375rem;
+    /* .site-footer — padding 1rem×2 + 0.75rem 한 줄(데스크톱 4.125은 모바일에서 과대 → 하단 틈) */
+    --dupark-footer-h: 2.95rem;
   }
 }
 
 #root {
   width: 100%;
   min-height: 100svh;
+}
+
+/* 상세로 들어갈 때: 클릭 직후 맨 앞 흰 레이어 → 이후 RouteEnterContext.end()로 제거 */
+.route-enter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: #fff;
+  pointer-events: auto;
 }
 
 p {
@@ -109,6 +115,7 @@ p {
 
 @media (max-width: 768px) {
   .category-page {
+    padding-bottom: 4rem;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
     padding-top: 6.5rem; /* 헤더(48px) + 탭바(40px) */

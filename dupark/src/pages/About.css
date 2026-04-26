@@ -2,14 +2,31 @@ body.dupark-about-page .custom-scrollbar {
   display: none;
 }
 
-/* fixed 헤더 아래·푸터 위: 뷰포트에서 헤더+푸터 높이만큼 뺀 영역 (index.css --dupark-header-h, --dupark-footer-h) */
+/* 틈·서브픽셀에 흰 배경이 비치지 않게 */
+html:has(body.dupark-about-page),
+body.dupark-about-page {
+  background: #000;
+}
+
+body.dupark-about-page #root {
+  min-height: 100dvh;
+  min-height: 100svh;
+  background: #000;
+}
+
+/* fixed 헤더 아래·푸터 위: index.css --dupark-header-h, --dupark-footer-h (모바일은 푸터 높이 별도) */
 .about-page {
   position: relative;
   box-sizing: border-box;
   width: 100%;
   min-height: 0;
-  height: calc(100svh - var(--dupark-footer-h));
-  max-height: calc(100svh - var(--dupark-footer-h));
+  /* svh 먼저, dvh로 덮기 — 뷰포트·safe-area 틈에 흰 선 생기는 경우 완화 */
+  height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
   padding: var(--dupark-header-h) 0 0;
   background: #000;
   color: #fff;
@@ -123,7 +140,6 @@ body.dupark-about-page .custom-scrollbar {
   font-size: 0.65rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.1em;
   text-transform: uppercase;
   margin: 0;
 }
