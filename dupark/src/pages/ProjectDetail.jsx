@@ -14,11 +14,31 @@ const EXIT_Y = 40
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.05
 
+function collectProjectVideos(p) {
+  if (!p) return { fileUrls: [], embedUrls: [] }
+  const fileUrls = []
+  if (p.videoFileUrl) fileUrls.push(p.videoFileUrl)
+  const extraFiles = p.videoFileUrls
+  if (Array.isArray(extraFiles)) {
+    for (const u of extraFiles) {
+      if (u && !fileUrls.includes(u)) fileUrls.push(u)
+    }
+  }
+  const embedUrls = []
+  if (p.videoUrl) embedUrls.push(p.videoUrl)
+  if (Array.isArray(p.videoUrls)) {
+    for (const u of p.videoUrls) {
+      if (u && u !== p.videoUrl && !embedUrls.includes(u)) embedUrls.push(u)
+    }
+  }
+  return { fileUrls, embedUrls }
+}
+
 function countProjectMedia(p) {
   if (!p) return 0
   const nImg = p.images?.length || 0
-  const nVid = p.videoFileUrl || p.videoUrl ? 1 : 0
-  return nImg + nVid
+  const { fileUrls, embedUrls } = collectProjectVideos(p)
+  return nImg + fileUrls.length + embedUrls.length
 }
 
 function toEmbedUrl(url) {
@@ -80,8 +100,9 @@ export default function ProjectDetail() {
       .fetch(
         `*[_type == "project" && slug.current == $id][0]{
           "slug": slug.current,
-          title, client, year, description, videoUrl,
+          title, client, year, description, videoUrl, videoUrls,
           "videoFileUrl": videoFile.asset->url,
+          "videoFileUrls": videoFiles[].asset->url,
           "category": category->title,
           "categorySlug": category->slug,
           coverImage, images,
@@ -309,6 +330,8 @@ export default function ProjectDetail() {
   const mediaCount = countProjectMedia(project)
   const showEntranceLayer = mediaCount > 0 && !entranceComplete
   const mainContentVisible = entranceComplete
+  const { fileUrls: detailFileUrls, embedUrls: detailEmbedUrls } =
+    collectProjectVideos(project)
 
   return (
     <main ref={detailLayoutRef} className="detail-layout">
@@ -361,29 +384,36 @@ export default function ProjectDetail() {
       </aside>
 
       <div className="detail-grid">
-        {(project.videoFileUrl || project.videoUrl) && (
-          <div className="detail-video-wrap detail-grid-cell">
-            {project.videoFileUrl ? (
-              <video
-                src={project.videoFileUrl}
-                controls
-                playsInline
-                className="detail-video"
-                onLoadedData={bumpMedia}
-                onError={bumpMedia}
-              />
-            ) : (
-              <iframe
-                src={toEmbedUrl(project.videoUrl)}
-                className="detail-video"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-                onLoad={bumpMedia}
-                title="Project video"
-              />
-            )}
+        {detailFileUrls.map((src, i) => (
+          <div
+            key={`${project.slug}-vfile-${i}`}
+            className="detail-video-wrap detail-grid-cell"
+          >
+            <video
+              src={src}
+              controls
+              playsInline
+              className="detail-video"
+              onLoadedData={bumpMedia}
+              onError={bumpMedia}
+            />
           </div>
-        )}
+        ))}
+        {detailEmbedUrls.map((url, i) => (
+          <div
+            key={`${project.slug}-vembed-${i}`}
+            className="detail-video-wrap detail-grid-cell"
+          >
+            <iframe
+              src={toEmbedUrl(url)}
+              className="detail-video"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+              onLoad={bumpMedia}
+              title={`${project.title} 영상 ${i + 1}`}
+            />
+          </div>
+        ))}
         {project.images?.map((img, i) => (
           <div key={`${project.slug}-${i}`} className="detail-img-wrap detail-grid-cell">
             <img

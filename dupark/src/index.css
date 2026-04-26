@@ -88,6 +88,15 @@ body {
   pointer-events: auto;
 }
 
+/* About lazy 청크 도착 전: fixed 헤더까지 덮음(플로우 블록만 쓰면 z-index 200 헤더 아래에 깔림) */
+.about-route-suspense-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 310;
+  background: #000;
+  pointer-events: none;
+}
+
 p {
   margin: 0;
 }

@@ -78,14 +78,31 @@ export default defineType({
     }),
     defineField({
       name: 'videoFile',
-      title: '상세 영상 파일 업로드',
+      title: '상세 영상 파일 (단일, 구버전 호환)',
       type: 'file',
       options: { accept: 'video/*' },
     }),
     defineField({
+      name: 'videoFiles',
+      title: '상세 영상 파일 (여러 개, 아래로 이어짐)',
+      type: 'array',
+      of: [
+        {
+          type: 'file',
+          options: {accept: 'video/*'},
+        },
+      ],
+    }),
+    defineField({
       name: 'videoUrl',
-      title: '상세 영상 URL (YouTube / Vimeo 등 외부 링크)',
+      title: '상세 영상 URL (단일, YouTube / Vimeo — 구버전)',
       type: 'url',
+    }),
+    defineField({
+      name: 'videoUrls',
+      title: '상세 영상 URL 여러 개 (YouTube / Vimeo 등)',
+      type: 'array',
+      of: [{type: 'url'}],
     }),
   ],
 })

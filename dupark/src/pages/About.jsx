@@ -1,4 +1,5 @@
 import { useEffect, useRef, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { lenis } from '../lib/lenis.js'
 import AboutGlobe from '../component/AboutGlobe'
@@ -14,7 +15,7 @@ const ABOUT_BODY_LINES = [
 export default function About() {
   const pageInnerRef = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.body.classList.add('dupark-about-page')
     return () => {
       document.body.classList.remove('dupark-about-page')
@@ -63,7 +64,11 @@ export default function About() {
 
   return (
     <main className="about-page">
-      <div className="about-entrance-overlay" aria-hidden="true" />
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <div className="about-entrance-overlay" aria-hidden="true" />,
+          document.body
+        )}
       <div ref={pageInnerRef} className="about-page-inner">
         <div className="about-globe-column">
           <AboutGlobe />

@@ -60,9 +60,7 @@ function AppShell() {
           path="/about"
           element={(
             <Suspense
-              fallback={(
-                <div style={{ minHeight: '100dvh', background: '#000' }} />
-              )}
+              fallback={<div className="about-route-suspense-fallback" aria-hidden />}
             >
               <About />
             </Suspense>
