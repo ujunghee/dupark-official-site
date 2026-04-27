@@ -70,6 +70,14 @@ export default function Header() {
         setHomePastIntro(false)
       }
 
+      /* 모바일 + 홈 + 컨텐츠 영역(=hideIntro=true 이후) → 헤더 항상 고정 보임
+         (iOS 모멘텀 끝 등에서 다운/업 토글로 헤더가 출몰하던 부자연스러움 차단) */
+      if (isHome && fromBody && isNarrow) {
+        setHidden(false)
+        lastScrollY.current = current
+        return
+      }
+
       /* 스크롤 ≈0일 때 먼저 판정 (원래 `else if (current < 10) setHidden(false)`).
          예전엔 inVideoZone이 먼저라 스크롤0에서도 inVideoZone이 true면 맨 위 헤더 복원이 안 먹음 */
       if (current < 10) {
@@ -97,7 +105,7 @@ export default function Header() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [isHome])
+  }, [isHome, isNarrow])
 
   /* ── 뷰포트를 데스크톱(769+)으로 키우면 모바일 드로어/스크롤 잠금 정리 (resize 대신 matchMedia change) ── */
   useEffect(() => {
