@@ -441,6 +441,17 @@ export default function ProjectDetail() {
               onLoad={bumpMedia}
               title={`${project.title} 영상 ${i + 1}`}
             />
+            {/* 클릭 캐처: iframe 위에 깔린 투명 버튼.
+                기본 상태에서는 iframe이 휠/터치를 빨아들이지 않도록 pointer-events 차단,
+                사용자가 클릭하면 .is-active 부여 → iframe 인터랙션(재생/일시정지) 활성화 */}
+            <button
+              type="button"
+              className="detail-video-clickcatch"
+              aria-label="영상 활성화 (클릭하여 재생/조작)"
+              onClick={(e) => {
+                e.currentTarget.parentElement?.classList.add('is-active')
+              }}
+            />
           </div>
         ))}
         {project.images?.map((img, i) => (

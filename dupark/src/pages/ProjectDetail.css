@@ -165,9 +165,36 @@
   border: none;
 }
 
-/* 스크롤 중 iframe 위에서 휠이 막히지 않도록 — 멈추면 다시 클릭/조작 가능 */
-body.dupark-is-scrolling iframe.detail-video {
+/* iframe(YouTube/Vimeo) 기본: 휠/터치가 iframe으로 빨려들지 않고 부모(Lenis)로 전달되도록 항상 pointer-events 차단 */
+.detail-video-wrap iframe.detail-video {
   pointer-events: none;
+}
+
+/* 사용자가 클릭(또는 탭)으로 활성화한 경우에만 iframe과 직접 상호작용 허용 */
+.detail-video-wrap.is-active iframe.detail-video {
+  pointer-events: auto;
+}
+
+/* 활성화 상태라도 스크롤이 시작되면 다시 차단 — Lenis가 휠을 받도록 */
+body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
+  pointer-events: none;
+}
+
+/* 클릭 캐처: iframe 위에 깔리는 투명 버튼 — 활성화되면 사라짐 */
+.detail-video-clickcatch {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+}
+
+.detail-video-wrap.is-active .detail-video-clickcatch {
+  display: none;
 }
 
 /* ── 하단 Prev / Next (detail-stage 밖) ── */
