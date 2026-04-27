@@ -138,13 +138,18 @@ export default function Home() {
     // 모바일은 작은 입력에도 즉시 스냅, 데스크톱은 약간 큰 임계값으로 안정성 확보
     const SWIPE_TRIGGER_PX = isMobile ? 8 : 24
 
-    // offsetTop을 사용해 스크롤 위치와 무관하게 절대 좌표로 타깃 계산
-    // (passive touch로 인해 lenis.scroll이 실제 DOM 위치보다 늦게 업데이트되는 문제 방지)
+    // 다운 스냅 타깃 계산
+    //  · 모바일: .mobile-grid-section.offsetTop (passive touch로 lenis.scroll이 늦어도 정확)
+    //  · PC: 스페이서가 항상 100vh이므로 window.innerHeight 사용
+    //        (가로 섹션은 GSAP pin-spacer로 래핑돼 offsetTop이 0이 될 수 있어 신뢰 X
+    //         → 잘못된 타깃으로 스냅이 거의 안 움직여 컨텐츠가 100% 안 차는 버그 방지)
     const getDownSnapTarget = () => {
-      const targetEl = isMobile
-        ? document.querySelector('.mobile-grid-section')
-        : horizontalRef.current
-      if (targetEl) return targetEl.offsetTop
+      if (isMobile) {
+        const mobileEl = document.querySelector('.mobile-grid-section')
+        if (mobileEl) return mobileEl.offsetTop
+      } else {
+        return window.innerHeight
+      }
       if (spacerRef.current) {
         return spacerRef.current.offsetTop + spacerRef.current.offsetHeight
       }
@@ -152,8 +157,9 @@ export default function Home() {
     }
 
     // 모바일/PC 각각 다른 duration 적용 (값만 바꾸면 됨)
+    // PC는 휠 한 번에 컨텐츠가 "한 번에" 올라오도록 짧게 — 점진 줌 인상을 주지 않음
     const SNAP_DURATION_MOBILE = 1.0
-    const SNAP_DURATION_DESKTOP = 1.5
+    const SNAP_DURATION_DESKTOP = 1.8
 
     const snapTo = (target, { onDone, duration } = {}) => {
       isSnapping = true
