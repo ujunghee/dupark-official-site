@@ -181,7 +181,7 @@ export default function Header() {
       gsap.fromTo(
         els,
         { yPercent: -100 },
-        { yPercent: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out', clearProps: 'all' }
+        { yPercent: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out', clearProps: 'yPercent,transform' }
       )
     }
   }, [hidden])
