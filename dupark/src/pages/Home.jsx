@@ -314,7 +314,12 @@ export default function Home() {
             },
           })
         } else {
+          /* PC: immediate scrollTo 는 동기적으로 'scroll' 이벤트를 emit 하므로
+             재진입 가드 없으면 clamp → scrollTo → scroll → clamp … 무한 재귀로 stack overflow.
+             flag 를 set/unset 로 감싸서 같은 tick 내 재호출을 차단 */
+          isClamping = true
           lenis.scrollTo(target, { immediate: true, force: true, lock: true })
+          isClamping = false
         }
       }
     }

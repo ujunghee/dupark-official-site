@@ -49,6 +49,7 @@ export default function Header() {
 
   useEffect(() => {
     if (isHome) {
+      // eslint-disable-next-line -- DOM body class → React state 동기화(외부 시스템 sync)
       setHomePastIntro(document.body.classList.contains('dupark-home-content'))
     } else {
       setHomePastIntro(false)
@@ -128,6 +129,7 @@ export default function Header() {
 
   /* 모바일 드로어: 다른 페이지(카테고리 등)로 이동 시 페이드로 닫힘(`.drawer` opacity 전환) */
   useEffect(() => {
+    // eslint-disable-next-line -- 라우트 변경 시 드로어 닫는 부수효과(필수)
     setIsOpen(false)
   }, [location.pathname])
 
