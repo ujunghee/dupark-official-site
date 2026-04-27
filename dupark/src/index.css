@@ -52,8 +52,8 @@ html, body {
 body {
   font-family: 'ABCDiatype', system-ui, sans-serif;
   font-weight: 700;
-  background: #fff;
-  color: #000;
+  background: var(--site-bg, #fff);
+  color: var(--site-text, #000);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -64,6 +64,11 @@ body {
   --dupark-header-h: 3.35rem;
   /* .site-footer: padding 1.5rem×2 + 본문 라인 */
   --dupark-footer-h: 4.125rem;
+
+  /* 사이트 색상 — Sanity siteSettings에서 JS로 덮어씀 */
+  --site-accent: #aaff00;
+  --site-text:   #000000;
+  --site-bg:     #ffffff;
 }
 @media (max-width: 768px) {
   :root {

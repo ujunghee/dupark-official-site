@@ -5,19 +5,19 @@
   justify-content: space-between;
   padding: 1.5rem 2rem;
   font-size: 0.75rem;
-  background: #fff;
-  color: #000;
+  background: var(--site-bg, #fff);
+  color: var(--site-text, #000);
 }
 
 .footer-link {
   text-decoration: none;
-  color: #000;
+  color: var(--site-text, #000);
   font-weight: 800;
 }
 
 .footer-copy {
   font-weight: 800;
-  color: #000;
+  color: var(--site-text, #000);
 }
 
 /* About: 본문과 맞춘 검정 푸터 */

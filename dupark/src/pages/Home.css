@@ -7,7 +7,7 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--site-bg, #fff);
 }
 
 .h-scroll-track {
@@ -30,7 +30,7 @@
 .category-card-label {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #000;
+  color: var(--site-text, #000);
   margin-bottom: 0.6rem;
   user-select: none;
 }
@@ -55,7 +55,7 @@
 .mobile-grid-section {
   position: relative;
   z-index: 1;
-  background: #fff;
+  background: var(--site-bg, #fff);
   min-height: 100dvh;
   padding: 5rem 1.25rem 4rem;
   display: grid;
@@ -68,7 +68,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #000;
+  color: var(--site-text, #000);
   margin-bottom: 0.5rem;
   user-select: none;
 }

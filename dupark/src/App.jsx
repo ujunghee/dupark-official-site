@@ -1,12 +1,28 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RouteEnterProvider } from './context/RouteEnterContext'
+import { client } from './lib/sanity'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
 import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
+
+/** Sanity siteSettings에서 색상 fetch → :root CSS 변수 주입 */
+function useSiteColors() {
+  useEffect(() => {
+    client
+      .fetch(`*[_type == "siteSettings"][0]{ accentColor, textColor, bgColor }`)
+      .then((data) => {
+        if (!data) return
+        const root = document.documentElement
+        if (data.accentColor) root.style.setProperty('--site-accent', data.accentColor)
+        if (data.textColor)   root.style.setProperty('--site-text',   data.textColor)
+        if (data.bgColor)     root.style.setProperty('--site-bg',     data.bgColor)
+      })
+  }, [])
+}
 
 const About = lazy(() => import('./pages/About'))
 
@@ -50,6 +66,7 @@ function CustomScrollbar() {
 }
 
 function AppShell() {
+  useSiteColors()
   return (
     <>
       <CustomScrollbar />

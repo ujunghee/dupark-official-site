@@ -25,6 +25,27 @@ export default defineType({
       initialValue: 28,
       description: '헤더에 표시되는 로고의 높이(px)입니다. 기본값: 28',
     }),
+    defineField({
+      name: 'accentColor',
+      title: '포인트 컬러',
+      type: 'string',
+      initialValue: '#aaff00',
+      description: '활성 메뉴, 링크 등 강조 색상 (예: #aaff00)',
+    }),
+    defineField({
+      name: 'textColor',
+      title: '기본 텍스트 컬러',
+      type: 'string',
+      initialValue: '#000000',
+      description: '헤더, 메인, 상세페이지 기본 텍스트 색상 (예: #000000)',
+    }),
+    defineField({
+      name: 'bgColor',
+      title: '기본 배경 컬러',
+      type: 'string',
+      initialValue: '#ffffff',
+      description: '사이트 기본 배경 색상 (예: #ffffff)',
+    }),
   ],
   preview: {
     prepare() {

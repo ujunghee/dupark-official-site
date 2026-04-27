@@ -76,7 +76,7 @@
   line-height: 1.4;
   margin-top: .4rem;
   margin-bottom: 0.2rem;
-  color: #000;
+  color: var(--site-text, #000);
 }
 
 .detail-client {
@@ -112,7 +112,7 @@
 .detail-year {
   font-size: 1rem;
   font-weight: 700;
-  color: #000;
+  color: var(--site-text, #000);
 }
 
 /* ── 오른쪽 이미지 2열 그리드 ── */
@@ -327,7 +327,7 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
 .detail-nav-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #000;
+  color: var(--site-text, #000);
   line-height: 1.3;
 }
 
