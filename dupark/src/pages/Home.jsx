@@ -252,16 +252,31 @@ export default function Home() {
   }, [hideIntro])
 
   // PC/모바일 공통: hideIntro=true 이후 스크롤이 인트로 영역으로 못 돌아가게 클램프
-  //  · PC: 가로 스크롤 맨 앞에서 위로 올려도 영상 다시 노출/백지 방지
-  //  · 모바일: 컨텐츠 100% 채워진 뒤 위로 올리면 영상 다시 노출되던 문제 차단 — 영상은 영구 hidden
+  //  · PC: 가로 스크롤 맨 앞에서 위로 올려도 영상 다시 노출/백지 방지 — 즉시 클램프
+  //  · 모바일: 터치 모멘텀으로 위로 살짝 넘어갔을 때 짧은 스냅백으로 부드럽게 복귀 (툭 끊기는 느낌 제거)
   useEffect(() => {
     if (!hideIntro) return
+    let isClamping = false
     const clamp = () => {
+      if (isClamping) return
       const target = isMobile
         ? document.querySelector('.mobile-grid-section')?.offsetTop ?? window.innerHeight
         : window.innerHeight
-      if (lenis.scroll < target) {
-        lenis.scrollTo(target, { immediate: true, force: true, lock: true })
+      if (lenis.scroll < target - 0.5) {
+        if (isMobile) {
+          isClamping = true
+          lenis.scrollTo(target, {
+            duration: 0.55,
+            easing: (t) => 1 - Math.pow(1 - t, 3),
+            force: true,
+            lock: true,
+            onComplete: () => {
+              isClamping = false
+            },
+          })
+        } else {
+          lenis.scrollTo(target, { immediate: true, force: true, lock: true })
+        }
       }
     }
     lenis.on('scroll', clamp)
