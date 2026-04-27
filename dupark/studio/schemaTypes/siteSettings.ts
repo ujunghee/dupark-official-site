@@ -18,6 +18,13 @@ export default defineType({
       type: 'image',
       options: {hotspot: true},
     }),
+    defineField({
+      name: 'logoSize',
+      title: '헤더 로고 크기 (px)',
+      type: 'number',
+      initialValue: 28,
+      description: '헤더에 표시되는 로고의 높이(px)입니다. 기본값: 28',
+    }),
   ],
   preview: {
     prepare() {

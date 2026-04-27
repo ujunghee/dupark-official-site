@@ -67,7 +67,6 @@ body.dupark-about-page .header .hamburger span {
 }
 
 .logo-img {
-  height: 28px;
   width: auto;
   display: block;
   transition: opacity 0.3s ease, filter 0.4s ease;
