@@ -181,7 +181,7 @@ export default function Home() {
 
     // 모바일/PC 각각 다른 duration 적용 (값만 바꾸면 됨)
     // PC는 휠 한 번에 컨텐츠가 "한 번에" 올라오도록 짧게 — 점진 줌 인상을 주지 않음
-    const SNAP_DURATION_MOBILE = 1
+    const SNAP_DURATION_MOBILE = .8
     const SNAP_DURATION_DESKTOP = 1.8
 
     const snapTo = (target, { onDone, duration } = {}) => {
