@@ -138,15 +138,15 @@ export default function Home() {
     // 모바일은 작은 입력에도 즉시 스냅, 데스크톱은 약간 큰 임계값으로 안정성 확보
     const SWIPE_TRIGGER_PX = isMobile ? 8 : 24
 
-    // 다음 섹션이 화면 100%를 정확히 차지하도록 실제 DOM 좌표 기준으로 타깃 계산
-    // (모바일 URL바 등으로 100vh ≠ window.innerHeight 인 케이스 대응)
+    // offsetTop을 사용해 스크롤 위치와 무관하게 절대 좌표로 타깃 계산
+    // (passive touch로 인해 lenis.scroll이 실제 DOM 위치보다 늦게 업데이트되는 문제 방지)
     const getDownSnapTarget = () => {
       const targetEl = isMobile
         ? document.querySelector('.mobile-grid-section')
         : horizontalRef.current
-      if (targetEl) {
-        const rect = targetEl.getBoundingClientRect()
-        return Math.max(0, rect.top + lenis.scroll)
+      if (targetEl) return targetEl.offsetTop
+      if (spacerRef.current) {
+        return spacerRef.current.offsetTop + spacerRef.current.offsetHeight
       }
       return window.innerHeight
     }
@@ -172,14 +172,15 @@ export default function Home() {
     const onWheel = (e) => {
       if (isSnapping) return
       if (hideIntro) return
-      const vh = window.innerHeight
       const scroll = lenis.scroll
+      const downTarget = getDownSnapTarget()
       // 다운 스냅 — 비디오 → 컨텐츠 한 번에 올라옴 (PC + Mobile 공통)
-      if (scroll < vh && e.deltaY > 0) {
-        snapTo(getDownSnapTarget(), { onDone: () => setHideIntro(true) })
+      if (scroll < downTarget && e.deltaY > 0) {
+        snapTo(downTarget, { onDone: () => setHideIntro(true) })
         return
       }
       // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
+      const vh = window.innerHeight
       if (
         isMobile &&
         scroll > 0 &&
@@ -195,18 +196,20 @@ export default function Home() {
     const onTouchEnd = (e) => {
       if (isSnapping) return
       if (hideIntro) return
-      const vh    = window.innerHeight
       const scroll = lenis.scroll
-      const diff  = touchStartY - e.changedTouches[0].clientY
+      const diff   = touchStartY - e.changedTouches[0].clientY
 
       if (Math.abs(diff) < SWIPE_TRIGGER_PX) return
 
+      const downTarget = getDownSnapTarget()
+
       // 다운 스냅 — 비디오 → 컨텐츠 (공통)
-      if (scroll < vh && diff > 0) {
-        snapTo(getDownSnapTarget(), { onDone: () => setHideIntro(true) })
+      if (scroll < downTarget && diff > 0) {
+        snapTo(downTarget, { onDone: () => setHideIntro(true) })
         return
       }
       // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
+      const vh = window.innerHeight
       if (
         isMobile &&
         scroll > 0 &&
