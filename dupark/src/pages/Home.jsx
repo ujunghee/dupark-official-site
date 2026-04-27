@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
-import { lenis, lenisRAFState } from '../lib/lenis'
+import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './Home.css'
@@ -198,21 +198,7 @@ export default function Home() {
       })
     }
 
-    /* 스냅 완료(컨텐츠가 viewport 100% 차는 그 순간) 처리:
-       · 모바일: spacer 를 흐름에서 imperative 제거 + 같은 frame 에 scroll 좌표 0 강제
-         → mobile-grid-section.top in viewport = 0 그대로 유지 (하단으로 튕기는 현상 차단)
-         이어서 Lenis RAF 를 정지(lenisRAFState.active=false)시켜 컨텐츠 진입 직후부터
-         native iOS/Android 스크롤(모멘텀·rubber band)에 위임 → 기기 내장 스무스 그대로
-       · PC: setHideIntro(true) 만 (Lenis 로 가로 스크롤 계속 사용) */
     const finalizeSnap = () => {
-      if (isMobile && spacerRef.current) {
-        spacerRef.current.style.display = 'none'
-        window.scrollTo(0, 0)
-        lenis.scrollTo(0, { immediate: true, force: true, lock: true })
-        lenis.resize()
-        // 모바일 한정: Lenis 휴면 → native scroll 만 사용
-        lenisRAFState.active = false
-      }
       setHideIntro(true)
     }
 
@@ -326,30 +312,12 @@ export default function Home() {
     return () => lenis.off('scroll', clamp)
   }, [isMobile, hideIntro])
 
-  // hideIntro 변화 시 처리
-  //  · 모바일: spacer 가 같은 commit 에서 display:none 으로 빠져 문서 높이가 100svh 줄어듦
-  //    → 같은 paint cycle 안에 scroll 좌표를 0 으로 강제 동기화 (native + Lenis 양쪽)
-  //    → Lenis RAF 도 finalizeSnap 에서 이미 휴면 처리되어 native scroll 만 동작
-  //  · PC: spacer 는 그대로 유지, Lenis/ST 만 갱신
+  // hideIntro 변화 시 Lenis/ScrollTrigger 좌표 갱신
   useLayoutEffect(() => {
     if (!hideIntro) return
-    if (isMobile) {
-      window.scrollTo(0, 0)
-      lenis.scrollTo(0, { immediate: true, force: true })
-      // 안전망: 어떤 경로로든 hideIntro=true 가 되면 모바일에선 Lenis RAF 휴면
-      lenisRAFState.active = false
-    }
     lenis.resize()
     ScrollTrigger.refresh()
-  }, [hideIntro, isMobile])
-
-  // 컴포넌트 unmount(다른 페이지로 네비게이션) 시 Lenis RAF 복원
-  //  · 다른 페이지(About, ProjectDetail 등)는 Lenis 기반 동작이 필요하므로 반드시 true 로 되돌림
-  useEffect(() => {
-    return () => {
-      lenisRAFState.active = true
-    }
-  }, [])
+  }, [hideIntro])
 
   // ── 가로 스크롤 GSAP ──
   useLayoutEffect(() => {
@@ -437,12 +405,7 @@ export default function Home() {
       </div>
 
       {/* ── 인트로 스페이서 ── */}
-      {/* spacer
-          · PC: 항상 100vh 유지 (가로 섹션 ScrollTrigger 트리거 등 기존 의존부 보존)
-          · 모바일: hideIntro 전엔 100svh (인트로 스크롤 공간), hideIntro 후엔 display:none
-            → 페이지 높이가 컨텐츠만으로 줄어 scrollY=0 부터 시작 + 위쪽 흰 백지 영역 사라짐
-            → 동시에 finalizeSnap 에서 lenisRAFState.active=false 로 Lenis RAF 휴면
-              native iOS/Android 모멘텀·rubber band 스크롤 그대로 사용 */}
+      {/* PC: 100vh, 모바일: 100svh (URL bar 변동 영향 받지 않음) */}
       <div
         ref={spacerRef}
         style={{
@@ -450,7 +413,6 @@ export default function Home() {
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',
-          display: (isMobile && hideIntro) ? 'none' : 'block',
         }}
       />
 
