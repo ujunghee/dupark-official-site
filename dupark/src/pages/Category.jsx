@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
-import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import './Category.css'
 
@@ -99,17 +98,6 @@ export default function Category() {
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
-
-  /* 페이지 진입(마운트 또는 카테고리 변경) 시 항상 최상단으로 정렬
-     · 직전 페이지(Home 등)에서 남아 있을 수 있는 scroll 좌표/Lenis 잔존 상태 동시 리셋
-     · useLayoutEffect 로 paint 전 적용 → 새 그리드가 잘못된 위치에서 잠깐 보이는 현상 차단 */
-  useLayoutEffect(() => {
-    lenis.start()
-    lenis.scrollTo(0, { immediate: true, force: true })
-    window.scrollTo(0, 0)
-    document.documentElement.scrollTop = 0
-    document.body.scrollTop = 0
-  }, [category])
 
   useEffect(() => {
     client
