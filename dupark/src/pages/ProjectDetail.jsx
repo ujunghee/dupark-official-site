@@ -47,10 +47,10 @@ function toEmbedUrl(url) {
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
   if (ytMatch) {
     const id = ytMatch[1]
-    return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1`
+    return `https://www.youtube.com/embed/${id}`
   }
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
-  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0`
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
   return url
 }
 
@@ -315,6 +315,26 @@ export default function ProjectDetail() {
     [navigate, category, entranceComplete]
   )
 
+  /* 스크롤 중에는 iframe(YouTube/Vimeo) 위에서도 휠이 부모로 전달되도록 pointer-events 차단 — 멈추면 다시 활성화 */
+  useEffect(() => {
+    let timeoutId
+    const onScroll = () => {
+      document.body.classList.add('dupark-is-scrolling')
+      clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        document.body.classList.remove('dupark-is-scrolling')
+      }, 180)
+    }
+    lenis.on('scroll', onScroll)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      lenis.off('scroll', onScroll)
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(timeoutId)
+      document.body.classList.remove('dupark-is-scrolling')
+    }
+  }, [])
+
   useEffect(() => {
     if (prev?.coverImage) {
       const im = new Image()
@@ -416,7 +436,7 @@ export default function ProjectDetail() {
             <iframe
               src={toEmbedUrl(url)}
               className="detail-video"
-              allow="autoplay; fullscreen; picture-in-picture"
+              allow="fullscreen; picture-in-picture"
               allowFullScreen
               onLoad={bumpMedia}
               title={`${project.title} 영상 ${i + 1}`}

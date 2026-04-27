@@ -165,6 +165,11 @@
   border: none;
 }
 
+/* 스크롤 중 iframe 위에서 휠이 막히지 않도록 — 멈추면 다시 클릭/조작 가능 */
+body.dupark-is-scrolling iframe.detail-video {
+  pointer-events: none;
+}
+
 /* ── 하단 Prev / Next (detail-stage 밖) ── */
 .detail-layout > .detail-nav-outer {
   grid-column: 1 / -1;
