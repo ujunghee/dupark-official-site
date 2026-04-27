@@ -308,10 +308,17 @@ export default function Home() {
     return () => lenis.off('scroll', clamp)
   }, [isMobile, hideIntro])
 
-  // 모바일/데스크톱 공통: hideIntro 변화 시 Lenis 한도 갱신
-  // (스페이서를 더 이상 축소하지 않으므로 강제 scrollTo 없이 resize만 수행 — "툭" 점프 방지)
+  // hideIntro 변화 시 처리
+  //  · 모바일: spacer 가 같은 commit 에서 display:none 으로 바뀌어 문서 높이가 100svh 줄어든 상태
+  //    → 이 useLayoutEffect 가 paint 전에 동기 실행되어 같은 frame 안에 scroll 좌표를 0 으로 리매핑
+  //    (시각적으로 mobile-grid-section.top 은 0 그대로 유지 → 점프 없음)
+  //  · PC: spacer 는 그대로 유지 (가로 섹션 ScrollTrigger 등 영향 없도록), Lenis/ST 만 갱신
   useLayoutEffect(() => {
     if (!hideIntro) return
+    if (isMobile) {
+      window.scrollTo(0, 0)
+      lenis.scrollTo(0, { immediate: true, force: true })
+    }
     lenis.resize()
     ScrollTrigger.refresh()
   }, [hideIntro, isMobile])
@@ -402,7 +409,10 @@ export default function Home() {
       </div>
 
       {/* ── 인트로 스페이서 ── */}
-      {/* 모바일은 svh(URL바 고려), PC는 vh. 레이아웃 점프 방지 위해 양쪽 모두 항상 유지 */}
+      {/* spacer
+          · PC: 항상 100vh (가로 섹션 ScrollTrigger 트리거·스냅 타깃 계산에 필요)
+          · 모바일: hideIntro 전엔 100svh (인트로 스크롤 공간), hideIntro 후엔 display:none
+            → 컨텐츠가 진짜 scrollY=0 부터 시작 (위 useLayoutEffect 가 같은 frame 에 scroll 좌표 동기화) */}
       <div
         ref={spacerRef}
         style={{
@@ -410,6 +420,7 @@ export default function Home() {
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',
+          display: (isMobile && hideIntro) ? 'none' : 'block',
         }}
       />
 
