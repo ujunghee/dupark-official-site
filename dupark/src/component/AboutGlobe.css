@@ -26,8 +26,9 @@
 }
 
 @media (max-width: 768px) {
+  /* svh 사용 — 모바일 URL 바 토글로 높이 변동 시 globe가 리사이즈되며 깜빡이는 현상 방지 */
   .about-globe-root {
-    max-width: min(100%, 90vw, 36dvh);
-    max-height: min(36dvh, 90vw, 100%);
+    max-width: min(100%, 90vw, 36svh);
+    max-height: min(36svh, 90vw, 100%);
   }
 }

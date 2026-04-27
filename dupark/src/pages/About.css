@@ -198,7 +198,8 @@ body.dupark-about-page #root {
   .about-page-inner {
     height: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(32dvh, 40dvh) auto;
+    /* svh 사용 — URL 바 토글 시 행 높이가 변동되어 globe 캔버스가 리사이즈되며 깜빡이는 현상 방지 */
+    grid-template-rows: minmax(32svh, 40svh) auto;
   }
 
   .about-globe-column {

@@ -40,11 +40,20 @@ export default function AboutGlobe({ className = '' }) {
     let ro = null
     const toDispose = { meshMat: null, meshGeo: null, groundTex: null, sprites: [] }
 
+    let lastW = 0
+    let lastH = 0
+    const RESIZE_THRESHOLD_PX = 2 // 모바일 URL 바 토글 등으로 발생하는 미세 변동 무시 (캔버스 재할당으로 인한 깜빡임 방지)
     const onResize = () => {
       if (!camera || !renderer) return
       const w = el.clientWidth
       const h = el.clientHeight
       if (w < 1 || h < 1) return
+      if (
+        Math.abs(w - lastW) < RESIZE_THRESHOLD_PX &&
+        Math.abs(h - lastH) < RESIZE_THRESHOLD_PX
+      ) return
+      lastW = w
+      lastH = h
       camera.aspect = w / h
       camera.updateProjectionMatrix()
       renderer.setSize(w, h, false)
