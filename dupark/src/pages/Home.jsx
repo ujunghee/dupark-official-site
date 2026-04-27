@@ -229,17 +229,16 @@ export default function Home() {
   }, [isMobile, hideIntro])
 
   // ── 인트로 제거 트리거 ──
-  //  · 모바일: 그리드가 상단에 닿으면 한 번만 hideIntro=true (스페이서 0 + 스크롤 리셋과 함께 동작)
-  //  · 데스크톱: 가로 섹션 상단 도달 여부에 따라 hideIntro 양방향 토글
-  //    (레이아웃은 그대로, 영상만 display:none — 위로 올리면 영상 다시 노출)
+  //  · 모바일: 스페이서 그대로 유지(레이아웃 점프 방지). 그리드가 뷰 상단에 닿으면 영상 hidden,
+  //    위로 올리면 다시 노출되도록 양방향 토글 — 업 스냅 시 영상이 자연스럽게 나타나도록.
+  //  · 데스크톱: 가로 섹션 상단 도달 시 한 번만 true (그 후 클램프로 영상 영역 복귀 차단)
   useEffect(() => {
     const onScroll = () => {
       if (isMobile) {
         const mobileSection = document.querySelector('.mobile-grid-section')
         if (!mobileSection) return
-        if (mobileSection.getBoundingClientRect().top <= 0) {
-          setHideIntro((prev) => prev || true)
-        }
+        const shouldHide = mobileSection.getBoundingClientRect().top <= 0
+        setHideIntro((prev) => (prev !== shouldHide ? shouldHide : prev))
         return
       }
 
@@ -281,26 +280,12 @@ export default function Home() {
     return () => lenis.off('scroll', clamp)
   }, [isMobile, hideIntro])
 
-  // 모바일 전용: 스페이서 제거(100vh→0) 직후 스크롤 위치 보정
-  // (PC는 스페이서 그대로 유지하므로 보정 불필요 — 강제 scrollTo가 "점프" 원인이라 제외)
+  // 모바일/데스크톱 공통: hideIntro 변화 시 Lenis 한도 갱신
+  // (스페이서를 더 이상 축소하지 않으므로 강제 scrollTo 없이 resize만 수행 — "툭" 점프 방지)
   useLayoutEffect(() => {
-    if (!hideIntro || !isMobile) return
-    const reset = () => {
-      lenis.resize()
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      lenis.scrollTo(0, { immediate: true, force: true })
-      ScrollTrigger.refresh()
-    }
-    reset()
-    const raf = requestAnimationFrame(() => {
-      reset()
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('scroll'))
-      })
-    })
-    return () => cancelAnimationFrame(raf)
+    if (!hideIntro) return
+    lenis.resize()
+    ScrollTrigger.refresh()
   }, [hideIntro, isMobile])
 
   // ── 가로 스크롤 GSAP ──
@@ -388,11 +373,11 @@ export default function Home() {
       </div>
 
       {/* ── 인트로 스페이서 ── */}
-      {/* 모바일은 svh 기준(URL바 고려), PC는 vh 유지. 모바일 hideIntro 시 0으로 축소 */}
+      {/* 모바일은 svh(URL바 고려), PC는 vh. 레이아웃 점프 방지 위해 양쪽 모두 항상 유지 */}
       <div
         ref={spacerRef}
         style={{
-          height: hideIntro && isMobile ? 0 : (isMobile ? '100svh' : '100vh'),
+          height: isMobile ? '100svh' : '100vh',
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',
