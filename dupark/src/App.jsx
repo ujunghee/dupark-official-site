@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { RouteEnterProvider } from './context/RouteEnterContext'
-import { client } from './lib/sanity'
+import { client, urlFor } from './lib/sanity'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
@@ -9,17 +9,42 @@ import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
 
-/** Sanity siteSettings에서 색상 fetch → :root CSS 변수 주입 */
-function useSiteColors() {
+/** Sanity siteSettings에서 색상·메타 fetch → :root CSS 변수 + head 태그 주입 */
+function useSiteSettings() {
   useEffect(() => {
     client
-      .fetch(`*[_type == "siteSettings"][0]{ accentColor, textColor, bgColor }`)
+      .fetch(`*[_type == "siteSettings"][0]{
+        accentColor, textColor, bgColor,
+        favicon{ asset->{ url } },
+        ogImage, ogTitle, ogDescription
+      }`)
       .then((data) => {
         if (!data) return
+
+        // CSS 변수
         const root = document.documentElement
         if (data.accentColor) root.style.setProperty('--site-accent', data.accentColor)
         if (data.textColor)   root.style.setProperty('--site-text',   data.textColor)
         if (data.bgColor)     root.style.setProperty('--site-bg',     data.bgColor)
+
+        // 파비콘
+        if (data.favicon?.asset?.url) {
+          let link = document.querySelector("link[rel~='icon']")
+          if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link) }
+          link.href = data.favicon.asset.url
+        }
+
+        // OG 메타 태그
+        const setMeta = (property, content) => {
+          if (!content) return
+          let el = document.querySelector(`meta[property="${property}"]`)
+          if (!el) { el = document.createElement('meta'); el.setAttribute('property', property); document.head.appendChild(el) }
+          el.setAttribute('content', content)
+        }
+        if (data.ogTitle) document.title = data.ogTitle
+        setMeta('og:title',       data.ogTitle)
+        setMeta('og:description', data.ogDescription)
+        if (data.ogImage) setMeta('og:image', urlFor(data.ogImage).width(1200).url())
       })
   }, [])
 }
@@ -66,7 +91,7 @@ function CustomScrollbar() {
 }
 
 function AppShell() {
-  useSiteColors()
+  useSiteSettings()
   return (
     <>
       <CustomScrollbar />

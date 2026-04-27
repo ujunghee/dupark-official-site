@@ -46,6 +46,50 @@ export default defineType({
       initialValue: '#ffffff',
       description: '사이트 기본 배경 색상 (예: #ffffff)',
     }),
+    defineField({
+      name: 'snsLinks',
+      title: 'SNS 링크',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', title: '이름', type: 'string', description: '예: Instagram, YouTube' }),
+            defineField({ name: 'url', title: 'URL', type: 'url' }),
+          ],
+          preview: {
+            select: { title: 'label', subtitle: 'url' },
+          },
+        },
+      ],
+      description: '푸터에 표시될 SNS 링크 목록',
+    }),
+    defineField({
+      name: 'favicon',
+      title: '파비콘 이미지',
+      type: 'image',
+      description: '브라우저 탭 아이콘 (권장: 32×32 또는 64×64 PNG)',
+    }),
+    defineField({
+      name: 'ogImage',
+      title: 'OG 이미지 (SNS 미리보기)',
+      type: 'image',
+      description: '카카오, 슬랙, 트위터 등 공유 시 표시되는 이미지 (권장: 1200×630)',
+    }),
+    defineField({
+      name: 'ogTitle',
+      title: 'OG 제목',
+      type: 'string',
+      initialValue: 'DUPARK STUDIO',
+      description: 'SNS 공유 시 표시되는 제목',
+    }),
+    defineField({
+      name: 'ogDescription',
+      title: 'OG 설명',
+      type: 'text',
+      rows: 2,
+      description: 'SNS 공유 시 표시되는 설명',
+    }),
   ],
   preview: {
     prepare() {

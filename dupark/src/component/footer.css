@@ -9,6 +9,12 @@
   color: var(--site-text, #000);
 }
 
+.footer-sns {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
 .footer-link {
   text-decoration: none;
   color: var(--site-text, #000);
