@@ -26,6 +26,10 @@ export default function Header() {
     () => typeof window !== 'undefined' && window.matchMedia(MQL_NARROW).matches
   )
   const lastScrollY             = useRef(0)
+  /* 모바일 한정 hysteresis 앵커
+     · `lastScrollY` 는 PC 분기(가로 스크롤 시작점 clamp bounce 등)가 의존하는 frame-to-frame 위치라 절대 손대면 안 됨
+     · 모바일에서만 누적 임계값(HIDE_THRESHOLD_PX) 도달했을 때 갱신 → iOS 모멘텀 미세 떨림 흡수 */
+  const lastToggleY             = useRef(0)
   const linkRefs                = useRef([])
   const location                = useLocation()
 
@@ -57,7 +61,13 @@ export default function Header() {
   }, [isHome, location.key, location.pathname])
 
   /* ── 스크롤 핸들러 ── */
+  //  · PC 분기는 원본 그대로 — `setHidden(scrollingUp)` + `lastScrollY` 매 프레임 갱신
+  //    (홈 가로 스크롤 시작점 clamp bounce 의 0.6px delta 가 헤더를 노출시키는 메커니즘 의존)
+  //  · 모바일 분기만 별도 앵커(`lastToggleY`) 와 임계값(HIDE_THRESHOLD_PX) 으로 hysteresis
+  //    → iOS 모멘텀/손가락 미세 떨림(1~2px) 은 누적이 임계값 미달이라 토글 안 됨 = 떨림 흡수
   useEffect(() => {
+    const HIDE_THRESHOLD_PX = 8
+
     const onScroll = () => {
       const current     = window.scrollY
       const scrollingUp = current < lastScrollY.current
@@ -76,6 +86,7 @@ export default function Header() {
       if (isHome && fromBody && isNarrow) {
         setHidden(false)
         lastScrollY.current = current
+        lastToggleY.current = current
         return
       }
 
@@ -84,6 +95,7 @@ export default function Header() {
       if (current < 10) {
         const hideInVideoHeroOnly = isHome && !fromBody
         setHidden(hideInVideoHeroOnly)
+        lastToggleY.current = current
       } else {
         const inVideoZone =
           isHome &&
@@ -91,7 +103,18 @@ export default function Header() {
           current < window.innerHeight - 50
         if (inVideoZone) {
           setHidden(true)
+          lastToggleY.current = current
+        } else if (isNarrow) {
+          /* 모바일 일반 영역: 누적 임계값 hysteresis
+             · accumDelta 가 임계값 미달 → 토글/앵커 갱신 모두 안 함 → 떨림 흡수
+             · 임계값 도달 시점에만 토글 + 앵커 재설정 (다음 누적은 이 지점부터) */
+          const accumDelta = current - lastToggleY.current
+          if (Math.abs(accumDelta) >= HIDE_THRESHOLD_PX) {
+            setHidden(accumDelta < 0) // UP=hide, DOWN=show (원본 방향)
+            lastToggleY.current = current
+          }
         } else {
+          /* PC: 원본 그대로 (한 줄도 변경 X) */
           setHidden(scrollingUp)
         }
       }
