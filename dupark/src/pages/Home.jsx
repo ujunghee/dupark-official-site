@@ -198,7 +198,18 @@ export default function Home() {
       })
     }
 
+    /* 스냅이 끝난 시점(컨텐츠가 viewport 100% 차이는 그 순간) 에 한 task 안에서 처리:
+       모바일 한정 — spacer 를 imperative 로 흐름에서 빼고 + 같은 frame 에 scroll 좌표를 0 으로 강제
+       (React 상태 갱신 전에 미리 박아둬야 paint 가 발생하지 않은 사이에 둘 다 적용됨
+        → mobile-grid-section.top in viewport = 0 그대로 유지, 컨텐츠 하단으로 튕기는 현상 차단)
+       PC 는 그대로 setHideIntro(true) 만. */
     const finalizeSnap = () => {
+      if (isMobile && spacerRef.current) {
+        spacerRef.current.style.display = 'none'
+        window.scrollTo(0, 0)
+        lenis.scrollTo(0, { immediate: true, force: true, lock: true })
+        lenis.resize()
+      }
       setHideIntro(true)
     }
 
@@ -312,12 +323,20 @@ export default function Home() {
     return () => lenis.off('scroll', clamp)
   }, [isMobile, hideIntro])
 
-  // hideIntro 변화 시 Lenis/ScrollTrigger 좌표 갱신
+  // hideIntro 변화 시 처리
+  //  · 모바일: spacer 가 같은 commit 에서 display:none 으로 빠져 문서 높이가 100svh 줄어듦
+  //    → 같은 paint cycle 안에 scroll 좌표를 0 으로 강제 동기화 (native + Lenis 양쪽)
+  //    → Lenis 내부 좌표를 즉시 0 으로 정렬해 native touch scroll 과 충돌 안 하게 함
+  //  · PC: spacer 는 그대로 유지, Lenis/ST 만 갱신
   useLayoutEffect(() => {
     if (!hideIntro) return
+    if (isMobile) {
+      window.scrollTo(0, 0)
+      lenis.scrollTo(0, { immediate: true, force: true })
+    }
     lenis.resize()
     ScrollTrigger.refresh()
-  }, [hideIntro])
+  }, [hideIntro, isMobile])
 
   // ── 가로 스크롤 GSAP ──
   useLayoutEffect(() => {
@@ -405,7 +424,11 @@ export default function Home() {
       </div>
 
       {/* ── 인트로 스페이서 ── */}
-      {/* PC: 100vh, 모바일: 100svh (URL bar 변동 영향 받지 않음) */}
+      {/* spacer
+          · PC: 항상 100vh 유지 (가로 섹션 ScrollTrigger 트리거 등 기존 의존부 보존)
+          · 모바일: hideIntro 전엔 100svh (인트로 스크롤 공간), hideIntro 후엔 display:none
+            → 페이지 높이가 컨텐츠만으로 줄어 scrollY=0 부터 시작 + 위쪽 흰 백지 영역 사라짐
+            → 동시에 useLayoutEffect 에서 lenis.stop() 이 호출되어 native scroll 에 위임 */}
       <div
         ref={spacerRef}
         style={{
@@ -413,6 +436,7 @@ export default function Home() {
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',
+          display: (isMobile && hideIntro) ? 'none' : 'block',
         }}
       />
 
