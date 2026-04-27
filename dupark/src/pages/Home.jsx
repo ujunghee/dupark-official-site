@@ -372,7 +372,7 @@ export default function Home() {
           ref={logoRef}
           src="/logo-white.svg"
           alt="DUPARK"
-          style={{ height: '3.5rem', width: 'auto', display: 'block', userSelect: 'none' }}
+          style={{ height: '3.5rem', width: 'clamp(4.5rem, 15vw, 8vw)', display: 'block', userSelect: 'none' }}
         />
       </div>
 
