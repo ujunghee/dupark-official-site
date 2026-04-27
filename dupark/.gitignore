@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code / Cursor 작업 임시 디렉터리
+.claude/
+.cursor/

@@ -134,7 +134,6 @@ export default function Home() {
   // ── 비디오 구간 → 컨텐츠 섹션 스냅 ──
   useEffect(() => {
     let isSnapping = false
-    const UPWARD_RELEASE_PX = 15
     // 모바일은 작은 입력에도 즉시 스냅, 데스크톱은 약간 큰 임계값으로 안정성 확보
     const SWIPE_TRIGGER_PX = isMobile ? 8 : 24
 
@@ -180,20 +179,9 @@ export default function Home() {
       if (hideIntro) return
       const scroll = lenis.scroll
       const downTarget = getDownSnapTarget()
-      // 다운 스냅 — 비디오 → 컨텐츠 한 번에 올라옴 (PC + Mobile 공통)
+      // 다운 스냅 — 비디오 → 컨텐츠 한 번에 올라옴 (PC + Mobile 공통, 단방향)
       if (scroll < downTarget && e.deltaY > 0) {
         snapTo(downTarget, { onDone: () => setHideIntro(true) })
-        return
-      }
-      // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
-      const vh = window.innerHeight
-      if (
-        isMobile &&
-        scroll > 0 &&
-        scroll <= vh - UPWARD_RELEASE_PX &&
-        e.deltaY < 0
-      ) {
-        snapTo(0)
       }
     }
 
@@ -209,20 +197,9 @@ export default function Home() {
 
       const downTarget = getDownSnapTarget()
 
-      // 다운 스냅 — 비디오 → 컨텐츠 (공통)
+      // 다운 스냅 — 비디오 → 컨텐츠 (공통, 단방향)
       if (scroll < downTarget && diff > 0) {
         snapTo(downTarget, { onDone: () => setHideIntro(true) })
-        return
-      }
-      // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
-      const vh = window.innerHeight
-      if (
-        isMobile &&
-        scroll > 0 &&
-        scroll <= vh - UPWARD_RELEASE_PX &&
-        diff < 0
-      ) {
-        snapTo(0)
       }
     }
 
@@ -237,17 +214,17 @@ export default function Home() {
     }
   }, [isMobile, hideIntro])
 
-  // ── 인트로 제거 트리거 ──
-  //  · 모바일: 스페이서 그대로 유지(레이아웃 점프 방지). 그리드가 뷰 상단에 닿으면 영상 hidden,
-  //    위로 올리면 다시 노출되도록 양방향 토글 — 업 스냅 시 영상이 자연스럽게 나타나도록.
+  // ── 인트로 제거 트리거 (PC/모바일 공통: 단방향) ──
+  //  · 모바일: 그리드 상단이 뷰 상단에 닿으면 한 번만 true (그 후 클램프로 영상 영역 복귀 차단)
   //  · 데스크톱: 가로 섹션 상단 도달 시 한 번만 true (그 후 클램프로 영상 영역 복귀 차단)
   useEffect(() => {
     const onScroll = () => {
       if (isMobile) {
         const mobileSection = document.querySelector('.mobile-grid-section')
         if (!mobileSection) return
-        const shouldHide = mobileSection.getBoundingClientRect().top <= 0
-        setHideIntro((prev) => (prev !== shouldHide ? shouldHide : prev))
+        if (mobileSection.getBoundingClientRect().top <= 0) {
+          setHideIntro((prev) => prev || true)
+        }
         return
       }
 
@@ -274,14 +251,17 @@ export default function Home() {
     return () => document.body.classList.remove('dupark-home-content')
   }, [hideIntro])
 
-  // PC 전용: hideIntro=true 이후 스크롤이 vh 이하로 내려가지 못하도록 클램프
-  // (가로 스크롤 맨 앞에서 위로 더 올렸을 때 영상이 다시 노출되거나 백지가 되는 현상 방지)
+  // PC/모바일 공통: hideIntro=true 이후 스크롤이 인트로 영역으로 못 돌아가게 클램프
+  //  · PC: 가로 스크롤 맨 앞에서 위로 올려도 영상 다시 노출/백지 방지
+  //  · 모바일: 컨텐츠 100% 채워진 뒤 위로 올리면 영상 다시 노출되던 문제 차단 — 영상은 영구 hidden
   useEffect(() => {
-    if (isMobile || !hideIntro) return
+    if (!hideIntro) return
     const clamp = () => {
-      const vh = window.innerHeight
-      if (lenis.scroll < vh) {
-        lenis.scrollTo(vh, { immediate: true, force: true, lock: true })
+      const target = isMobile
+        ? document.querySelector('.mobile-grid-section')?.offsetTop ?? window.innerHeight
+        : window.innerHeight
+      if (lenis.scroll < target) {
+        lenis.scrollTo(target, { immediate: true, force: true, lock: true })
       }
     }
     lenis.on('scroll', clamp)
