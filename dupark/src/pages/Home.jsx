@@ -93,6 +93,30 @@ export default function Home() {
       })
   }, [])
 
+  // ── 메인 첫 로드: 로더 완료 후 비디오 재생 시작 ──
+  //  · 첫 방문(로더 표시) → 'loaderComplete' 이벤트 수신 시점에 play()
+  //  · 재방문(sessionStorage 'dupark_loaded' 존재, 로더 미표시) → 즉시 play()
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !videoSrc) return
+
+    const tryPlay = () => {
+      // muted 상태이므로 브라우저 자동재생 정책상 거의 항상 허용. 차단 시는 조용히 무시.
+      const p = video.play()
+      if (p && typeof p.catch === 'function') p.catch(() => {})
+    }
+
+    const loaderActive = !sessionStorage.getItem('dupark_loaded')
+    if (!loaderActive) {
+      tryPlay()
+      return
+    }
+
+    const onLoaderComplete = () => tryPlay()
+    window.addEventListener('loaderComplete', onLoaderComplete, { once: true })
+    return () => window.removeEventListener('loaderComplete', onLoaderComplete)
+  }, [videoSrc])
+
   // ── 새로고침 시 최상단으로 ──
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -350,7 +374,8 @@ export default function Home() {
       }}>
         <video
           ref={videoRef}
-          autoPlay muted loop playsInline
+          muted loop playsInline
+          preload="auto"
           poster={videoPoster || undefined}
           style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
         >

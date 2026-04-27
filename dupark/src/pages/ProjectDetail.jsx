@@ -222,28 +222,48 @@ export default function ProjectDetail() {
     )
   }, [project, mediaAllLoaded, entranceComplete, id])
 
-  /* 본문·그리드: 흰 오버레이 제거 뒤 아래→위 스태거 */
+  /* 프로젝트가 로드되자마자(흰 오버레이 fade 중에 미리) 초기 hidden 상태를 박아둠 — 첫 프레임 깜빡임 방지
+     · 이미지: yPercent 100 (부모 .detail-img-wrap 마스크 아래에 숨김)
+     · 텍스트/비디오 wrap: y 36 + autoAlpha 0 */
+  useLayoutEffect(() => {
+    if (!project) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const root = detailStageRef.current
+    if (!root) return
+    const textEls = root.querySelectorAll('.detail-reveal-track')
+    const imgEls = root.querySelectorAll('.detail-img')
+    const videoCells = root.querySelectorAll('.detail-video-wrap.detail-grid-cell')
+    if (textEls.length) gsap.set(textEls, { y: 36, autoAlpha: 0 })
+    if (videoCells.length) gsap.set(videoCells, { y: 36, autoAlpha: 0 })
+    if (imgEls.length) gsap.set(imgEls, { yPercent: 100 })
+  }, [project])
+
+  /* 본문·그리드: 흰 오버레이 제거 뒤 아래→위 스태거
+     · 텍스트/비디오 wrap: y + autoAlpha 페이드
+     · 이미지(.detail-img): 부모(.detail-img-wrap, overflow:hidden)를 마스크로 사용해
+       내부에서 yPercent 100→0 으로 슬라이드 인 (wrap 자체는 정적, 이미지만 아래→위) */
   useLayoutEffect(() => {
     if (!entranceComplete || !project) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const root = detailStageRef.current
     if (!root) return
-    const textEls = root.querySelectorAll('.detail-reveal-track')
-    const cells = root.querySelectorAll('.detail-grid-cell')
-    const all = gsap.utils.toArray([...textEls, ...cells])
+    /* DOM 순서대로 수집 — stagger가 위→아래 자연스러운 순서로 작동 */
+    const targets = root.querySelectorAll(
+      '.detail-reveal-track, .detail-img, .detail-video-wrap.detail-grid-cell'
+    )
+    const all = gsap.utils.toArray(targets)
     if (all.length === 0) return
     gsap.killTweensOf(all)
-    gsap.fromTo(
-      all,
-      { y: 36, autoAlpha: 0 },
-      {
-        y: 0,
-        autoAlpha: 1,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: 'power3.out',
-      }
-    )
+    /* 초기 상태는 위 useLayoutEffect 에서 이미 세팅되어 있어 to 만 사용
+       (각 속성은 요소별 현재 값에서 시작 — 이미지는 yPercent 100→0, 그 외는 y 36→0 + autoAlpha 0→1) */
+    gsap.to(all, {
+      y: 0,
+      yPercent: 0,
+      autoAlpha: 1,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power3.out',
+    })
     return () => {
       gsap.killTweensOf(all)
     }
