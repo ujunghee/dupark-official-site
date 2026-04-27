@@ -181,7 +181,7 @@ export default function Home() {
 
     // 모바일/PC 각각 다른 duration 적용 (값만 바꾸면 됨)
     // PC는 휠 한 번에 컨텐츠가 "한 번에" 올라오도록 짧게 — 점진 줌 인상을 주지 않음
-    const SNAP_DURATION_MOBILE = 2
+    const SNAP_DURATION_MOBILE = 1
     const SNAP_DURATION_DESKTOP = 1.8
 
     const snapTo = (target, { onDone, duration } = {}) => {
@@ -198,6 +198,21 @@ export default function Home() {
       })
     }
 
+    /* 스냅이 끝난 시점(컨텐츠가 viewport 100% 차이는 그 순간) 에 한 task 안에서 처리:
+       모바일 한정 — spacer 를 imperative 로 흐름에서 빼고 + 같은 frame 에 scroll 좌표를 0 으로 강제
+       (React 상태 갱신 전에 미리 박아둬야 paint 가 발생하지 않은 사이에 둘 다 적용됨
+        → mobile-grid-section.top in viewport = 0 그대로 유지, 컨텐츠 하단으로 튕기는 현상 차단)
+       PC 는 그대로 setHideIntro(true) 만. */
+    const finalizeSnap = () => {
+      if (isMobile && spacerRef.current) {
+        spacerRef.current.style.display = 'none'
+        window.scrollTo(0, 0)
+        lenis.scrollTo(0, { immediate: true, force: true, lock: true })
+        lenis.resize()
+      }
+      setHideIntro(true)
+    }
+
     const onWheel = (e) => {
       if (isSnapping) return
       if (hideIntro) return
@@ -205,7 +220,7 @@ export default function Home() {
       const downTarget = getDownSnapTarget()
       // 다운 스냅 — 비디오 → 컨텐츠 한 번에 올라옴 (PC + Mobile 공통, 단방향)
       if (scroll < downTarget && e.deltaY > 0) {
-        snapTo(downTarget, { onDone: () => setHideIntro(true) })
+        snapTo(downTarget, { onDone: finalizeSnap })
       }
     }
 
@@ -223,7 +238,7 @@ export default function Home() {
 
       // 다운 스냅 — 비디오 → 컨텐츠 (공통, 단방향)
       if (scroll < downTarget && diff > 0) {
-        snapTo(downTarget, { onDone: () => setHideIntro(true) })
+        snapTo(downTarget, { onDone: finalizeSnap })
       }
     }
 
