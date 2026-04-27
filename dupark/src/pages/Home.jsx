@@ -181,7 +181,7 @@ export default function Home() {
 
     // 모바일/PC 각각 다른 duration 적용 (값만 바꾸면 됨)
     // PC는 휠 한 번에 컨텐츠가 "한 번에" 올라오도록 짧게 — 점진 줌 인상을 주지 않음
-    const SNAP_DURATION_MOBILE = 1.0
+    const SNAP_DURATION_MOBILE = 2
     const SNAP_DURATION_DESKTOP = 1.8
 
     const snapTo = (target, { onDone, duration } = {}) => {
@@ -308,10 +308,17 @@ export default function Home() {
     return () => lenis.off('scroll', clamp)
   }, [isMobile, hideIntro])
 
-  // 모바일/데스크톱 공통: hideIntro 변화 시 Lenis 한도 갱신
-  // (스페이서를 더 이상 축소하지 않으므로 강제 scrollTo 없이 resize만 수행 — "툭" 점프 방지)
+  // hideIntro 변화 시 처리
+  //  · 모바일: spacer 가 같은 commit 에서 display:none 으로 빠져 문서 높이가 100svh 줄어듦
+  //    → 같은 paint cycle 안에 scroll 좌표를 0 으로 강제 동기화 (native + Lenis 양쪽)
+  //    → Lenis 내부 좌표를 즉시 0 으로 정렬해 native touch scroll 과 충돌 안 하게 함
+  //  · PC: spacer 는 그대로 유지, Lenis/ST 만 갱신
   useLayoutEffect(() => {
     if (!hideIntro) return
+    if (isMobile) {
+      window.scrollTo(0, 0)
+      lenis.scrollTo(0, { immediate: true, force: true })
+    }
     lenis.resize()
     ScrollTrigger.refresh()
   }, [hideIntro, isMobile])
@@ -402,7 +409,11 @@ export default function Home() {
       </div>
 
       {/* ── 인트로 스페이서 ── */}
-      {/* 모바일은 svh(URL바 고려), PC는 vh. 레이아웃 점프 방지 위해 양쪽 모두 항상 유지 */}
+      {/* spacer
+          · PC: 항상 100vh 유지 (가로 섹션 ScrollTrigger 트리거 등 기존 의존부 보존)
+          · 모바일: hideIntro 전엔 100svh (인트로 스크롤 공간), hideIntro 후엔 display:none
+            → 페이지 높이가 컨텐츠만으로 줄어 scrollY=0 부터 시작 + 위쪽 흰 백지 영역 사라짐
+            → 동시에 useLayoutEffect 에서 lenis.stop() 이 호출되어 native scroll 에 위임 */}
       <div
         ref={spacerRef}
         style={{
@@ -410,6 +421,7 @@ export default function Home() {
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',
+          display: (isMobile && hideIntro) ? 'none' : 'block',
         }}
       />
 
