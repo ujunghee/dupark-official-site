@@ -8,12 +8,12 @@ import gsap from 'gsap'
 import './ProjectDetail.css'
 
 /* onLoad 전부를 기다리지 않고 상한으로 진입 — 흰 화면 최소화(나머지는 자연 로드) */
-const MEDIA_ENTRANCE_CAP_MS = 750
-const ENTRANCE_FADE_S = 0.16
+const MEDIA_ENTRANCE_CAP_MS = 550
+const ENTRANCE_FADE_S = 0.05
 /* 퇴장: 진입(아래→위)과 반대 — 위 block부터 아래로 스태거, 아래로 내려가며 사라짐 */
-const EXIT_Y = 40
+const EXIT_Y = 5
 const EXIT_DUR_S = 0.5
-const EXIT_STAGGER_S = 0.05
+const EXIT_STAGGER_S = 0.02
 
 function collectProjectVideos(p) {
   if (!p) return { fileUrls: [], embedUrls: [] }
