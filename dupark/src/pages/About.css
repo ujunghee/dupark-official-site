@@ -67,6 +67,7 @@ body.dupark-about-page #root {
   box-sizing: border-box;
   min-height: 0;
   height: 100%;
+  padding-top: 2rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -205,13 +206,13 @@ body.dupark-about-page #root {
   }
 
   .about-content {
-    padding: 1.25rem 1.5rem 4rem;
+    padding: 4.25rem 1.5rem 4rem;
     border-left: none;
     justify-content: flex-start;
   }
 
   .about-content-reveal {
-    gap: clamp(0.75rem, 2.2svh, 1.25rem);
+    gap: 2.2rem;
   }
 
   .about-section-title {

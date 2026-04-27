@@ -135,16 +135,36 @@ export default function Home() {
   useEffect(() => {
     let isSnapping = false
     const UPWARD_RELEASE_PX = 15
+    // 모바일은 작은 입력에도 즉시 스냅, 데스크톱은 약간 큰 임계값으로 안정성 확보
+    const SWIPE_TRIGGER_PX = isMobile ? 8 : 24
 
-    const snapTo = (target) => {
+    // 다음 섹션이 화면 100%를 정확히 차지하도록 실제 DOM 좌표 기준으로 타깃 계산
+    // (모바일 URL바 등으로 100vh ≠ window.innerHeight 인 케이스 대응)
+    const getDownSnapTarget = () => {
+      const targetEl = isMobile
+        ? document.querySelector('.mobile-grid-section')
+        : horizontalRef.current
+      if (targetEl) {
+        const rect = targetEl.getBoundingClientRect()
+        return Math.max(0, rect.top + lenis.scroll)
+      }
+      return window.innerHeight
+    }
+
+    // 모바일/PC 각각 다른 duration 적용 (값만 바꾸면 됨)
+    const SNAP_DURATION_MOBILE = 1.0
+    const SNAP_DURATION_DESKTOP = 1.5
+
+    const snapTo = (target, { onDone, duration } = {}) => {
       isSnapping = true
       lenis.scrollTo(target, {
-        duration: 1.8,
+        duration: duration ?? (isMobile ? SNAP_DURATION_MOBILE : SNAP_DURATION_DESKTOP),
         easing: 'power3.out',
         lock: true,
         onComplete: () => {
           isSnapping = false
           lenis.start()
+          onDone?.()
         },
       })
     }
@@ -154,20 +174,18 @@ export default function Home() {
       if (hideIntro) return
       const vh = window.innerHeight
       const scroll = lenis.scroll
+      // 다운 스냅 — 비디오 → 컨텐츠 한 번에 올라옴 (PC + Mobile 공통)
       if (scroll < vh && e.deltaY > 0) {
-        snapTo(vh)
+        snapTo(getDownSnapTarget(), { onDone: () => setHideIntro(true) })
         return
       }
+      // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
       if (
+        isMobile &&
         scroll > 0 &&
         scroll <= vh - UPWARD_RELEASE_PX &&
-        e.deltaY < 0 &&
-        !(isMobile && hideIntro)
+        e.deltaY < 0
       ) {
-        if (!isMobile && trackRef.current) {
-          const x = parseFloat(gsap.getProperty(trackRef.current, 'x', 'px')) || 0
-          if (x < -10) return
-        }
         snapTo(0)
       }
     }
@@ -181,20 +199,20 @@ export default function Home() {
       const scroll = lenis.scroll
       const diff  = touchStartY - e.changedTouches[0].clientY
 
-      if (Math.abs(diff) < 30) return
+      if (Math.abs(diff) < SWIPE_TRIGGER_PX) return
 
+      // 다운 스냅 — 비디오 → 컨텐츠 (공통)
       if (scroll < vh && diff > 0) {
-        snapTo(vh)
-      } else if (
+        snapTo(getDownSnapTarget(), { onDone: () => setHideIntro(true) })
+        return
+      }
+      // 업 스냅 — 컨텐츠 → 인트로 (모바일 전용)
+      if (
+        isMobile &&
         scroll > 0 &&
         scroll <= vh - UPWARD_RELEASE_PX &&
-        diff < 0 &&
-        !(isMobile && hideIntro)
+        diff < 0
       ) {
-        if (!isMobile && trackRef.current) {
-          const x = parseFloat(gsap.getProperty(trackRef.current, 'x', 'px')) || 0
-          if (x < -10) return
-        }
         snapTo(0)
       }
     }
@@ -210,26 +228,36 @@ export default function Home() {
     }
   }, [isMobile, hideIntro])
 
-  // ── 모바일: 그리드 / 데스크톱: 가로섹션이 뷰 상단에 닿으면(컨텐츠 100% 구간) 인트로 제거 — 모바일과 동일 패턴 ──
+  // ── 인트로 제거 트리거 ──
+  //  · 모바일: 그리드가 상단에 닿으면 한 번만 hideIntro=true (스페이서 0 + 스크롤 리셋과 함께 동작)
+  //  · 데스크톱: 가로 섹션 상단 도달 여부에 따라 hideIntro 양방향 토글
+  //    (레이아웃은 그대로, 영상만 display:none — 위로 올리면 영상 다시 노출)
   useEffect(() => {
-    if (hideIntro) return
-
     const onScroll = () => {
       if (isMobile) {
         const mobileSection = document.querySelector('.mobile-grid-section')
         if (!mobileSection) return
-        if (mobileSection.getBoundingClientRect().top <= 0) setHideIntro(true)
+        if (mobileSection.getBoundingClientRect().top <= 0) {
+          setHideIntro((prev) => prev || true)
+        }
         return
       }
-      const el = horizontalRef.current
-      if (!el) return
-      if (el.getBoundingClientRect().top <= 0) setHideIntro(true)
+
+      // PC: 한 번 true가 되면 유지 (가로 스크롤로 들어간 뒤엔 영상 영역으로 복귀 X)
+      const scrollY = lenis.scroll ?? window.scrollY
+      if (scrollY >= window.innerHeight - 1) {
+        setHideIntro((prev) => prev || true)
+      }
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
+    lenis.on('scroll', onScroll)
     onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [isMobile, hideIntro, categories.length])
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      lenis.off('scroll', onScroll)
+    }
+  }, [isMobile, categories.length])
 
   // Header: 인트로(영상) 끝난 뒤엔 scroll 0이어도 "영상 풀브리딩"으로 보지 않게 함
   useLayoutEffect(() => {
@@ -238,9 +266,25 @@ export default function Home() {
     return () => document.body.classList.remove('dupark-home-content')
   }, [hideIntro])
 
-  // 스페이서 제거(100vh) 직후 max scroll < 현재 scroll 이면 하단(푸터)으로 붙는 현상 — Lenis limit 갱신 + 즉시 0
+  // PC 전용: hideIntro=true 이후 스크롤이 vh 이하로 내려가지 못하도록 클램프
+  // (가로 스크롤 맨 앞에서 위로 더 올렸을 때 영상이 다시 노출되거나 백지가 되는 현상 방지)
+  useEffect(() => {
+    if (isMobile || !hideIntro) return
+    const clamp = () => {
+      const vh = window.innerHeight
+      if (lenis.scroll < vh) {
+        lenis.scrollTo(vh, { immediate: true, force: true, lock: true })
+      }
+    }
+    lenis.on('scroll', clamp)
+    clamp()
+    return () => lenis.off('scroll', clamp)
+  }, [isMobile, hideIntro])
+
+  // 모바일 전용: 스페이서 제거(100vh→0) 직후 스크롤 위치 보정
+  // (PC는 스페이서 그대로 유지하므로 보정 불필요 — 강제 scrollTo가 "점프" 원인이라 제외)
   useLayoutEffect(() => {
-    if (!hideIntro) return
+    if (!hideIntro || !isMobile) return
     const reset = () => {
       lenis.resize()
       window.scrollTo(0, 0)
@@ -257,7 +301,7 @@ export default function Home() {
       })
     })
     return () => cancelAnimationFrame(raf)
-  }, [hideIntro])
+  }, [hideIntro, isMobile])
 
   // ── 가로 스크롤 GSAP ──
   useLayoutEffect(() => {
@@ -343,11 +387,12 @@ export default function Home() {
         />
       </div>
 
-      {/* ── 100vh 스페이서 ── */}
+      {/* ── 인트로 스페이서 ── */}
+      {/* 모바일은 svh 기준(URL바 고려), PC는 vh 유지. 모바일 hideIntro 시 0으로 축소 */}
       <div
         ref={spacerRef}
         style={{
-          height: hideIntro ? 0 : '100vh',
+          height: hideIntro && isMobile ? 0 : (isMobile ? '100svh' : '100vh'),
           position: 'relative',
           zIndex: 1,
           pointerEvents: 'none',

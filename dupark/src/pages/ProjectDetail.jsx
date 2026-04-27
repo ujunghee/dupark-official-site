@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
+import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import './ProjectDetail.css'
 
@@ -74,6 +75,9 @@ export default function ProjectDetail() {
 
   /* slug( id )·카테고리가 바뀌면: 헤더/푸터 유지, 본면만 리셋 (전체 리마운트 X) */
   useLayoutEffect(() => {
+    /* Lenis와 네이티브 scrollTop을 함께 동기화 — 직전 페이지(Home)에서 lock/snap 잔존 시에도 즉시 풀고 0으로 정렬 */
+    lenis.start()
+    lenis.scrollTo(0, { immediate: true, force: true })
     window.scrollTo(0, 0)
     document.documentElement.scrollTop = 0
     document.body.scrollTop = 0
@@ -147,6 +151,8 @@ export default function ProjectDetail() {
     /* onLoad가 useLayout(기대 수 확정)보다 먼저 나면 1 >= 0으로 잘못 완료됨 → 본문 깜빡임 */
     if (exp < 1) return
     mediaDoneRef.current += 1
+    /* 미디어 한 개 로드될 때마다 문서 높이 변화 → Lenis가 새 max scroll을 알 수 있도록 갱신 */
+    lenis.resize()
     if (mediaDoneRef.current >= exp) {
       setMediaAllLoaded(true)
     }
@@ -183,6 +189,8 @@ export default function ProjectDetail() {
   useEffect(() => {
     if (!project || !mediaAllLoaded) return
     if (entranceComplete) return
+    /* 진입 직전 한번 더 — 늦게 합쳐진 이미지/iframe 사이즈까지 반영해 max scroll 정확히 잡기 */
+    lenis.resize()
 
     const total = countProjectMedia(project)
     if (total === 0) {
@@ -247,6 +255,7 @@ export default function ProjectDetail() {
 
       const navigateOnly = () => {
         if (!isMountedRef.current) return
+        lenis.scrollTo(0, { immediate: true, force: true })
         window.scrollTo(0, 0)
         document.documentElement.scrollTop = 0
         document.body.scrollTop = 0
