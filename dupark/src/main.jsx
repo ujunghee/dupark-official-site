@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { lenis } from './lib/lenis.js'
+import { lenis, lenisRAFState } from './lib/lenis.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -13,8 +13,9 @@ window.scrollTo(0, 0)
 
 lenis.on('scroll', ScrollTrigger.update)
 
+// Lenis RAF — lenisRAFState.active 가 false 면 휴면 (모바일 메인 컨텐츠 진입 후 native scroll)
 gsap.ticker.add((time) => {
-  lenis.raf(time * 1000)
+  if (lenisRAFState.active) lenis.raf(time * 1000)
 })
 
 gsap.ticker.lagSmoothing(0)
