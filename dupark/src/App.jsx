@@ -5,6 +5,7 @@ import { client, urlFor } from './lib/sanity'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
+import HomeMobileGrid from './pages/HomeMobileGrid'
 import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
@@ -97,6 +98,7 @@ function AppShell() {
       <CustomScrollbar />
       <Header />
       <Routes>
+        <Route path="/m" element={<HomeMobileGrid />} />
         <Route path="/" element={<Home />} />
         <Route
           path="/about"

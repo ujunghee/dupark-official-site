@@ -8,7 +8,7 @@ import './header.css'
 const MQL_DESKTOP = '(min-width: 769px)'
 const MQL_NARROW = '(max-width: 768px)'
 
-/** 홈에서 인트로(영상)일 때만 초기·탑에서 헤더 숨김 — 뷰포트 너비 무관(모바일=PC와 동일) */
+/** 홈 인트로(`/`)에서만 영상 히어로일 때 헤더 숨김 — `/m`·다른 경로는 해당 없음 */
 const getHomeVideoHeroShouldHideHeader = () => {
   if (typeof document === 'undefined' || window.location.pathname !== '/') return false
   return !document.body.classList.contains('dupark-home-content')
@@ -55,7 +55,7 @@ export default function Header() {
       .then((data) => { if (data?.logoSize) setLogoSize(data.logoSize) })
   }, [])
 
-  const isHome      = location.pathname === '/'
+  const isHome      = location.pathname === '/' || location.pathname === '/m'
   // /:category 또는 /:category/:id 에서 첫 번째 세그먼트를 활성 카테고리로 사용
   const activeSlug  = !isHome ? location.pathname.split('/')[1] : null
 
