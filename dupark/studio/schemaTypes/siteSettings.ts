@@ -66,13 +66,13 @@ export default defineType({
     }),
     defineField({
       name: 'fontRegularFile',
-      title: '구버전: 단일 폰트 파일 (레거시)',
+      title: 'fontRegularFile',
       type: 'file',
+      hidden: true,
+      readOnly: true,
       options: {
         accept: '.woff2,.woff,.ttf,.otf',
       },
-      description:
-        '이전 스키마에서 쓰던 필드입니다. 경고가 뜨지 않게만 유지해 두었어요. **본문 폰트 — 한글**에 같은 파일을 다시 올리거나 지정한 뒤, 여기는 비워 주세요.',
     }),
     defineField({
       name: 'snsLinks',
