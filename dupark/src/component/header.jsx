@@ -41,7 +41,7 @@ export default function Header() {
   /* ── Sanity 카테고리 패칭 ── */
   useEffect(() => {
     client
-      .fetch(`*[_type == "category"] | order(order asc) { title, slug }`)
+      .fetch(`*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc) { title, slug }`)
       .then((data) =>
         setNavItems(data.map((cat) => ({ label: cat.title, path: `/${cat.slug}` })))
       )

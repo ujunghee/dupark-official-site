@@ -79,7 +79,7 @@ export default function HomeMobileGrid() {
 
   useEffect(() => {
     if (!allowed) return
-    client.fetch(`*[_type == "category"] | order(order asc)`).then(setCategories)
+    client.fetch(`*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc)`).then(setCategories)
   }, [allowed])
 
   useEffect(() => {

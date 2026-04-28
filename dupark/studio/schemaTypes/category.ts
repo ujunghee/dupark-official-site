@@ -7,8 +7,8 @@ export default defineType({
   orderings: [
     {
       title: '순서',
-      name: 'orderAsc',
-      by: [{field: 'order', direction: 'asc'}],
+      name: 'orderDesc',
+      by: [{field: 'order', direction: 'desc'}],
     },
   ],
   fields: [
@@ -33,8 +33,8 @@ export default defineType({
       name: 'order',
       title: '메뉴 순서',
       type: 'number',
-      description: '숫자가 낮을수록 먼저 표시됩니다',
-      initialValue: 99,
+      description: '숫자가 클수록 먼저 표시됩니다. 새 카테고리는 자동으로 가장 큰 값이 들어가서 최상단에 옵니다.',
+      initialValue: () => Date.now(),
     }),
     defineField({
       name: 'coverImage',

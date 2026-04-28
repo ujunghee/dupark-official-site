@@ -35,9 +35,11 @@ export default defineType({
     }),
     defineField({
       name: 'order',
-      title: '우선순위 (숫자 낮을수록 먼저)',
+      title: '우선순위 (숫자 높을수록 먼저)',
       type: 'number',
-      initialValue: 0,
+      description:
+        '숫자가 클수록 먼저 표시됩니다. 새 프로젝트는 자동으로 가장 큰 값이 들어가서 최상단에 옵니다.',
+      initialValue: () => Date.now(),
     }),
     defineField({
       name: 'category',

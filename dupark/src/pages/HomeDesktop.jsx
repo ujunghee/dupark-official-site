@@ -50,7 +50,7 @@ export default function HomeDesktop() {
   const [hideIntro, setHideIntro] = useState(false)
 
   useEffect(() => {
-    client.fetch(`*[_type == "category"] | order(order asc)`).then(setCategories)
+    client.fetch(`*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc)`).then(setCategories)
   }, [])
 
   useEffect(() => {
@@ -267,14 +267,14 @@ export default function HomeDesktop() {
     ctxRef.current = gsap.context(() => {
       const cards = Array.from(track.querySelectorAll('.category-card'))
 
-      gsap.set(cards, { y: 60, opacity: 0 })
+      gsap.set(cards, { y: 50, opacity: 0 })
 
       ScrollTrigger.create({
         trigger: horizontal,
         start: 'top 70%',
         once: true,
         onEnter: () => {
-          gsap.to(cards, { y: 0, opacity: 1, duration: 1.2, stagger: 0.08, ease: 'power3.out', delay: 0.2 })
+          gsap.to(cards, { y: 0, opacity: 1, duration: 1.2, stagger: 0.05, ease: 'power3.out', delay: 0.2 })
         },
       })
 

@@ -110,7 +110,7 @@ export default function ProjectDetail() {
           "category": category->title,
           "categorySlug": category->slug,
           coverImage, images,
-          "siblings": *[_type == "project" && category._ref == ^.category._ref] | order(order asc, _createdAt desc){
+          "siblings": *[_type == "project" && category._ref == ^.category._ref] | order(coalesce(order, 0) desc, _createdAt desc){
             title, "slug": slug.current, coverImage
           }
         }`,

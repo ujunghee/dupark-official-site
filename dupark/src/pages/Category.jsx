@@ -102,7 +102,7 @@ export default function Category() {
   useEffect(() => {
     client
       .fetch(
-        `*[_type == "project" && category->slug == $category] | order(order asc, _createdAt desc){ _id, title, slug, client, coverImage, "coverVideoUrl": coverVideo.asset->url, hoverImage, "hoverVideoUrl": hoverVideo.asset->url }`,
+        `*[_type == "project" && category->slug == $category] | order(coalesce(order, 0) desc, _createdAt desc){ _id, title, slug, client, coverImage, "coverVideoUrl": coverVideo.asset->url, hoverImage, "hoverVideoUrl": hoverVideo.asset->url }`,
         { category }
       )
       .then((data) => {
