@@ -47,6 +47,24 @@ export default defineType({
       description: '사이트 기본 배경 색상 (예: #ffffff)',
     }),
     defineField({
+      name: 'fontKoreanFile',
+      title: '본문 폰트 — 한글',
+      type: 'file',
+      options: {
+        accept: '.woff2,.woff,.ttf,.otf',
+      },
+      description: '한글 음절·자모에 쓰일 파일(TTF 등). 비우면 해당 범위는 기본(ABCDiatype)로 렌더됩니다.',
+    }),
+    defineField({
+      name: 'fontEnglishFile',
+      title: '본문 폰트 — 영문·숫자',
+      type: 'file',
+      options: {
+        accept: '.woff2,.woff,.ttf,.otf',
+      },
+      description: '라틴 문자·숫자·기호 등. 비우면 해당 범위는 기본 폰트입니다. 한글 파일과 같이 올리면 글자 범위별로 나뉘어 적용됩니다.',
+    }),
+    defineField({
       name: 'snsLinks',
       title: 'SNS 링크',
       type: 'array',

@@ -8,6 +8,8 @@
   font-display: swap;
 }
 
+/* 기본 본문 폰트 — Sanity siteSettings 한·영 폰트 파일로 App에서 덮어씀 */
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -50,7 +52,7 @@ html, body {
 }
 
 body {
-  font-family: 'ABCDiatype', system-ui, sans-serif;
+  font-family: var(--site-font-family, 'ABCDiatype', system-ui, sans-serif);
   font-weight: 700;
   background: var(--site-bg, #fff);
   color: var(--site-text, #000);
@@ -60,6 +62,7 @@ body {
 
 /* 레이아웃용 — About 등에서 calc(100svh - 헤더 - 푸터) */
 :root {
+  --site-font-family: 'ABCDiatype', system-ui, sans-serif;
   /* 데스크톱 .header: padding 세로 .8rem×2 + 로고 (--dupark-header-logo-height) */
   --dupark-header-h: calc(1.6rem + var(--dupark-header-logo-height));
   /* .site-footer: padding 1.5rem×2 + 본문 라인 */

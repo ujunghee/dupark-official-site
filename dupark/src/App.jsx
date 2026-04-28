@@ -12,12 +12,46 @@ import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
 
-/** Sanity siteSettings에서 색상·로고 높이·메타 fetch → :root CSS 변수 + head 태그 주입 */
+/** Sanity siteSettings에서 색상·로고·폰트·메타 fetch → :root CSS 변수 + head 태그 주입 */
+const SITE_FONT_FACE_STYLE_ID = 'dupark-site-font-face'
+const SITE_CUSTOM_FONT_FAMILY = 'DuparkSiteCustom'
+/** 한글 음절·자모 + 한국어에서 자주 쓰는 부호·CJK 기호 일부 */
+const UNICODE_RANGE_HANGUL =
+  'U+AC00-D7A3, U+3130-318F, U+1100-11FF, U+A960-A97F, U+D7B0-D7FF, U+3000-303F, U+2000-206F, U+FE30-FE4F, U+FF00-FFEF'
+/** 라틴(영문)·숫자·흔한 기호 — 한글 파일과 같이 쓸 때 영문 전용 파일에만 적용 */
+const UNICODE_RANGE_LATIN =
+  'U+0020-007F, U+0080-00FF, U+0100-024F, U+0250-02AF, U+0300-036F'
+
+function fontFormatForCss(url) {
+  const path = (url || '').split('?')[0].toLowerCase()
+  if (path.endsWith('.woff2')) return "format('woff2')"
+  if (path.endsWith('.woff')) return "format('woff')"
+  if (path.endsWith('.ttf')) return "format('truetype')"
+  if (path.endsWith('.otf')) return "format('opentype')"
+  return "format('truetype')"
+}
+
+function fontFaceBlocksForUrl(url, unicodeRange) {
+  const fmt = fontFormatForCss(url)
+  const rangeCss = unicodeRange ? `\n  unicode-range: ${unicodeRange};` : ''
+  /* body 가 font-weight:700 이라 정적 TTF 는 400·700 각각 등록해야 매칭되는 경우가 많음 */
+  const one = (weight) => `@font-face {
+  font-family: '${SITE_CUSTOM_FONT_FAMILY}';
+  src: url(${JSON.stringify(url)}) ${fmt};
+  font-weight: ${weight};
+  font-style: normal;
+  font-display: swap;${rangeCss}
+}`
+  return `${one(400)}\n\n${one(700)}`
+}
+
 function useSiteSettings() {
   useEffect(() => {
     client
       .fetch(`*[_type == "siteSettings"][0]{
         accentColor, textColor, bgColor, logoSize,
+        "fontKoUrl": fontKoreanFile.asset->url,
+        "fontEnUrl": fontEnglishFile.asset->url,
         favicon{ asset->{ url } },
         ogImage, ogTitle, ogDescription
       }`)
@@ -32,6 +66,37 @@ function useSiteSettings() {
         const logoPx = typeof data.logoSize === 'number' ? data.logoSize : Number(data.logoSize)
         if (Number.isFinite(logoPx) && logoPx > 0) {
           root.style.setProperty('--dupark-header-logo-height', `${logoPx}px`)
+        }
+
+        const prevFace = document.getElementById(SITE_FONT_FACE_STYLE_ID)
+        if (prevFace) prevFace.remove()
+
+        const koUrl =
+          typeof data.fontKoUrl === 'string' ? data.fontKoUrl.trim() : ''
+        const enUrl =
+          typeof data.fontEnUrl === 'string' ? data.fontEnUrl.trim() : ''
+
+        const blocks = []
+        if (koUrl && enUrl) {
+          blocks.push(fontFaceBlocksForUrl(koUrl, UNICODE_RANGE_HANGUL))
+          blocks.push(fontFaceBlocksForUrl(enUrl, UNICODE_RANGE_LATIN))
+        } else if (koUrl) {
+          blocks.push(fontFaceBlocksForUrl(koUrl, null))
+        } else if (enUrl) {
+          blocks.push(fontFaceBlocksForUrl(enUrl, null))
+        }
+
+        if (blocks.length) {
+          const style = document.createElement('style')
+          style.id = SITE_FONT_FACE_STYLE_ID
+          style.textContent = blocks.join('\n\n')
+          document.head.appendChild(style)
+          root.style.setProperty(
+            '--site-font-family',
+            `'${SITE_CUSTOM_FONT_FAMILY}', 'ABCDiatype', system-ui, sans-serif`
+          )
+        } else {
+          root.style.removeProperty('--site-font-family')
         }
 
         // 파비콘
