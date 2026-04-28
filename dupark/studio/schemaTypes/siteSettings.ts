@@ -99,6 +99,15 @@ export default defineType({
       description: '브라우저 탭 아이콘 (권장: 32×32 또는 64×64 PNG)',
     }),
     defineField({
+      name: 'siteUrl',
+      title: '사이트 도메인 (URL)',
+      type: 'url',
+      description:
+        '실제 서비스되는 사이트 주소 (예: https://dupark.studio). SNS 공유 미리보기·검색엔진에 사용됩니다.',
+      validation: (Rule) =>
+        Rule.uri({ scheme: ['http', 'https'], allowRelative: false }),
+    }),
+    defineField({
       name: 'ogImage',
       title: 'OG 이미지 (SNS 미리보기)',
       type: 'image',
