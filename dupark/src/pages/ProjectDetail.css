@@ -25,7 +25,7 @@
   display: grid;
   grid-template-columns: .4fr 1fr;
   min-height: calc(100vh - 4rem);
-  padding-top: 4rem;
+  padding-top: 8rem;
 }
 
 /* aside + 그리드 + nav — 오버레이가 걷힌 뒤에만 드러나게(이중 등장·비침 방지) */
