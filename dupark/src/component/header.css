@@ -54,7 +54,6 @@ body.dupark-about-page .header .hamburger span {
 
 /* ── 헤더 reveal 클리핑 래퍼 ── */
 .header-clip {
-  overflow: hidden;
   display: flex;
   align-items: center;
 }
