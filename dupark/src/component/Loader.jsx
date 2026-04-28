@@ -11,7 +11,7 @@ export default function Loader({ onComplete }) {
 
     gsap.to(counter, {
       val: 100,
-      duration: 1.6,
+      duration: 1,
       ease: 'power1.inOut',
       onUpdate: () => setNum(Math.floor(counter.val)),
     })
@@ -20,11 +20,11 @@ export default function Loader({ onComplete }) {
       window.dispatchEvent(new CustomEvent('loaderComplete'))
       gsap.to(wrapRef.current, {
         opacity: 0,
-        duration: 0.7,
+        duration: 0.45,
         ease: 'power2.inOut',
         onComplete,
       })
-    }, 1800)
+    }, 1150)
 
     return () => {
       clearTimeout(timer)

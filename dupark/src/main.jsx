@@ -5,6 +5,11 @@ import { lenis } from './lib/lenis.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+/* 새로고침·복귀 시 브라우저가 이전 scroll 위치를 복원하면 Lenis·레이아웃과 어긋남 → 항상 수동 */
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual'
+}
+
 gsap.registerPlugin(ScrollTrigger)
 
 /* Lenis 가 스크롤을 가로채도 ScrollTrigger 는 네이티브 scrollTop 만 보면 scrub·pin 이 엇나감

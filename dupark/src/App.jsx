@@ -1,5 +1,7 @@
-import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState, useCallback, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { lenis } from './lib/lenis'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { RouteEnterProvider } from './context/RouteEnterContext'
 import { client, urlFor } from './lib/sanity'
 import Header from './component/header'
@@ -55,6 +57,22 @@ function useSiteSettings() {
 }
 
 const About = lazy(() => import('./pages/About'))
+
+/** 라우트·새로고침마다 세로 스크롤 맨 위 — 브라우저 복원 끈 뒤 Lenis·네이티브 동기화 */
+function ScrollToTop() {
+  const { pathname, key } = useLocation()
+  useLayoutEffect(() => {
+    lenis.start()
+    lenis.scrollTo(0, { immediate: true, force: true })
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+    lenis.resize()
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
+    return () => cancelAnimationFrame(id)
+  }, [pathname, key])
+  return null
+}
 
 function CustomScrollbar() {
   const barRef   = useRef(null)
@@ -128,7 +146,7 @@ function App() {
   const [loading, setLoading] = useState(() => !sessionStorage.getItem('dupark_loaded'))
 
   /* loaderComplete 시점과 동일 프레임에 플래그 저장 — 비디오 등이 `loaderComplete` 리스너를
-     나중에 달았을 때(예: Sanity로 videoSrc가 1.8s~2.5s 사이에 도착) 이미 지나간 이벤트에
+     나중에 달았을 때(예: Sanity로 videoSrc가 늦게 도착) 이미 지나간 이벤트에
      묶이지 않도록. 페이드 onComplete는 UI만 닫음 */
   useEffect(() => {
     const onLoaderComplete = () => {
@@ -148,6 +166,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       {loading && <Loader onComplete={handleLoaderComplete} />}
       <AppShell />
     </BrowserRouter>

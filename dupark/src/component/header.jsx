@@ -129,7 +129,7 @@ export default function Header() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [isHome, isNarrow])
+  }, [isHome, isNarrow, location.pathname])
 
   /* ── 뷰포트를 데스크톱(769+)으로 키우면 모바일 드로어/스크롤 잠금 정리 (resize 대신 matchMedia change) ── */
   useEffect(() => {
