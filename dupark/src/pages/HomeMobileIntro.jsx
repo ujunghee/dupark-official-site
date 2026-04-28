@@ -171,8 +171,8 @@ export default function HomeMobileIntro() {
     let isSnapping = false
     const SWIPE_TRIGGER_PX = 8
     const getDownSnapTarget = () => window.innerHeight
-    /* 스냅: 조금 길게 + ease-out 끝을 부드럽게 (power3.out 은 후반 감속이 딱 끊기는 느낌) */
-    const SNAP_DURATION_MOBILE = 1.42
+    /* 터치 후 첫 화면→다음 뷰 스냅(영상 줌 구간)만 짧게 — 백지 올라오는 속도는 Home.css 전환 길이 */
+    const SNAP_DURATION_MOBILE = 0.55
     /** ease-out quint — 끝 구간이 더 길게 풀림 */
     const snapEaseOut = (t) => 1 - Math.pow(1 - t, 5)
 

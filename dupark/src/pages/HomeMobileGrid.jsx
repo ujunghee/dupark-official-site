@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import gsap from 'gsap'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import { DUPARK_M_SPA_OK } from '../lib/mobileGridSession'
@@ -10,7 +11,11 @@ const MOBILE_MAX = 768
 function MobileCategoryItem({ cat }) {
   const navigate = useNavigate()
   return (
-    <div onClick={() => navigate(`/${cat.slug}`)} style={{ cursor: 'pointer' }}>
+    <div
+      className="mobile-grid-item"
+      onClick={() => navigate(`/${cat.slug}`)}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="mobile-cat-label">{cat.title}</div>
       <div className="mobile-cat-img">
         {cat.coverImage
@@ -31,6 +36,7 @@ export default function HomeMobileGrid() {
   const navigate = useNavigate()
   const location = useLocation()
   const [categories, setCategories] = useState([])
+  const gridSectionRef = useRef(null)
 
   let spaOk = false
   try {
@@ -83,11 +89,50 @@ export default function HomeMobileGrid() {
     lenis.resize()
   }, [allowed])
 
+  useLayoutEffect(() => {
+    if (!allowed || categories.length === 0) return
+    const section = gridSectionRef.current
+    if (!section) return
+    const items = gsap.utils.toArray(section.querySelectorAll('.mobile-grid-item'))
+    if (!items.length) return
+
+    const reduce =
+      typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) {
+      gsap.set(items, { clearProps: 'transform,opacity,visibility' })
+      return undefined
+    }
+
+    gsap.killTweensOf(items)
+    /* y + opacity 한 세트로 같은 이징·길이 — 긴 메인 페이드와 분리돼 어색함 제거 */
+    gsap.fromTo(
+      items,
+      { y: 10, autoAlpha: 0 },
+      {
+        y: 0,
+        autoAlpha: 1,
+        duration: 0.58,
+        stagger: {
+          each: 0.05,
+          from: 'start',
+        },
+        ease: 'power3.out',
+        onComplete: () => {
+          gsap.set(items, { clearProps: 'transform,opacity,visibility' })
+        },
+      }
+    )
+    return () => {
+      gsap.killTweensOf(items)
+    }
+  }, [allowed, categories])
+
   if (!allowed) return null
 
   return (
     <main className="home-mobile-grid-main">
-      <section className="mobile-grid-section">
+      <section ref={gridSectionRef} className="mobile-grid-section">
         {categories.map((cat) => (
           <MobileCategoryItem key={cat._id} cat={cat} />
         ))}
