@@ -20,10 +20,17 @@ export default defineType({
     }),
     defineField({
       name: 'logoSize',
-      title: '헤더 로고 크기 (px)',
+      title: '헤더 로고 크기 — 데스크톱 (px)',
       type: 'number',
       initialValue: 28,
-      description: '헤더에 표시되는 로고의 높이(px)입니다. 기본값: 28',
+      description: '데스크톱(가로 769px 이상)에서 헤더 로고 높이(px). 기본값: 28',
+    }),
+    defineField({
+      name: 'logoSizeMobile',
+      title: '헤더 로고 크기 — 모바일 (px, ≤768px)',
+      type: 'number',
+      initialValue: 24,
+      description: '모바일(가로 768px 이하)에서 헤더 로고 높이(px). 비우면 데스크톱 값과 동일.',
     }),
     defineField({
       name: 'accentColor',

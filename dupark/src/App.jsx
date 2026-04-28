@@ -49,7 +49,7 @@ function useSiteSettings() {
   useEffect(() => {
     client
       .fetch(`*[_type == "siteSettings"][0]{
-        accentColor, textColor, bgColor, logoSize,
+        accentColor, textColor, bgColor, logoSize, logoSizeMobile,
         "fontKoUrl": coalesce(fontKoreanFile.asset->url, fontRegularFile.asset->url),
         "fontEnUrl": fontEnglishFile.asset->url,
         favicon{ asset->{ url } },
@@ -63,9 +63,13 @@ function useSiteSettings() {
         if (data.accentColor) root.style.setProperty('--site-accent', data.accentColor)
         if (data.textColor)   root.style.setProperty('--site-text',   data.textColor)
         if (data.bgColor)     root.style.setProperty('--site-bg',     data.bgColor)
-        const logoPx = typeof data.logoSize === 'number' ? data.logoSize : Number(data.logoSize)
-        if (Number.isFinite(logoPx) && logoPx > 0) {
-          root.style.setProperty('--dupark-header-logo-height', `${logoPx}px`)
+        const logoPxDesktop = typeof data.logoSize === 'number' ? data.logoSize : Number(data.logoSize)
+        const logoPxMobile = typeof data.logoSizeMobile === 'number' ? data.logoSizeMobile : Number(data.logoSizeMobile)
+        if (Number.isFinite(logoPxDesktop) && logoPxDesktop > 0) {
+          root.style.setProperty('--dupark-header-logo-height-desktop', `${logoPxDesktop}px`)
+        }
+        if (Number.isFinite(logoPxMobile) && logoPxMobile > 0) {
+          root.style.setProperty('--dupark-header-logo-height-mobile', `${logoPxMobile}px`)
         }
 
         const prevFace = document.getElementById(SITE_FONT_FACE_STYLE_ID)
