@@ -65,6 +65,16 @@ export default defineType({
       description: '라틴 문자·숫자·기호 등. 비우면 해당 범위는 기본 폰트입니다. 한글 파일과 같이 올리면 글자 범위별로 나뉘어 적용됩니다.',
     }),
     defineField({
+      name: 'fontRegularFile',
+      title: '구버전: 단일 폰트 파일 (레거시)',
+      type: 'file',
+      options: {
+        accept: '.woff2,.woff,.ttf,.otf',
+      },
+      description:
+        '이전 스키마에서 쓰던 필드입니다. 경고가 뜨지 않게만 유지해 두었어요. **본문 폰트 — 한글**에 같은 파일을 다시 올리거나 지정한 뒤, 여기는 비워 주세요.',
+    }),
+    defineField({
       name: 'snsLinks',
       title: 'SNS 링크',
       type: 'array',

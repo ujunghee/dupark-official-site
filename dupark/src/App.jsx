@@ -50,7 +50,7 @@ function useSiteSettings() {
     client
       .fetch(`*[_type == "siteSettings"][0]{
         accentColor, textColor, bgColor, logoSize,
-        "fontKoUrl": fontKoreanFile.asset->url,
+        "fontKoUrl": coalesce(fontKoreanFile.asset->url, fontRegularFile.asset->url),
         "fontEnUrl": fontEnglishFile.asset->url,
         favicon{ asset->{ url } },
         ogImage, ogTitle, ogDescription
