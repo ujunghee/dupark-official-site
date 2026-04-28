@@ -341,7 +341,7 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
 @media (max-width: 768px) {
   .detail-layout {
     grid-template-columns: 1fr;
-    padding-top: 6rem;
+    padding-top: var(--dupark-mobile-header-stack);
   }
 
   .detail-stage {

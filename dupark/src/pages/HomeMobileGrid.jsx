@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
+import { DUPARK_M_SPA_OK } from '../lib/mobileGridSession'
 import './Home.css'
 
 const MOBILE_MAX = 768
@@ -23,24 +24,36 @@ function MobileCategoryItem({ cat }) {
 
 /**
  * 모바일 그리드 전용 (`/m`).
- * 인트로에서만 `navigate('/m', { state: { fromIntro: true } })` 로 들어올 수 있음.
- * (Performance `navigation.type === 'reload'` 는 `/` 새로고침 후에도 계속 reload 로 남아 오판하므로 사용하지 않음)
+ * `location.state.fromIntro` + 같은 탭에서 방금 세팅된 `sessionStorage` 플래그가 있어야 진입.
+ * 전체 새로고침 시 `location.state`가 사라져 `/`(인트로)로 보냄.
  */
 export default function HomeMobileGrid() {
   const navigate = useNavigate()
   const location = useLocation()
   const [categories, setCategories] = useState([])
 
+  let spaOk = false
+  try {
+    spaOk = sessionStorage.getItem(DUPARK_M_SPA_OK) === '1'
+  } catch {
+    spaOk = false
+  }
   const fromIntro = location.state?.fromIntro === true
+  const allowed = fromIntro && spaOk
 
   useLayoutEffect(() => {
-    if (fromIntro) {
-      document.body.classList.add('dupark-home-content')
-      return () => document.body.classList.remove('dupark-home-content')
+    if (!allowed) {
+      try {
+        sessionStorage.removeItem(DUPARK_M_SPA_OK)
+      } catch {
+        /* ignore */
+      }
+      navigate('/', { replace: true })
+      return undefined
     }
-    navigate('/', { replace: true })
-    return undefined
-  }, [fromIntro, navigate])
+    document.body.classList.add('dupark-home-content')
+    return () => document.body.classList.remove('dupark-home-content')
+  }, [allowed, navigate])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -59,21 +72,21 @@ export default function HomeMobileGrid() {
   }, [navigate])
 
   useEffect(() => {
-    if (!fromIntro) return
+    if (!allowed) return
     client.fetch(`*[_type == "category"] | order(order asc)`).then(setCategories)
-  }, [fromIntro])
+  }, [allowed])
 
   useEffect(() => {
-    if (!fromIntro) return
+    if (!allowed) return
     window.scrollTo(0, 0)
     lenis.scrollTo(0, { immediate: true, force: true })
     lenis.resize()
-  }, [fromIntro])
+  }, [allowed])
 
-  if (!fromIntro) return null
+  if (!allowed) return null
 
   return (
-    <main>
+    <main className="home-mobile-grid-main">
       <section className="mobile-grid-section">
         {categories.map((cat) => (
           <MobileCategoryItem key={cat._id} cat={cat} />

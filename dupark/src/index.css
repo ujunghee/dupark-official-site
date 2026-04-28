@@ -60,8 +60,8 @@ body {
 
 /* 레이아웃용 — About 등에서 calc(100svh - 헤더 - 푸터) */
 :root {
-  /* .header: padding 0.8rem×2 + logo 28px */
-  --dupark-header-h: 3.35rem;
+  /* 데스크톱 .header: padding 세로 .8rem×2 + 로고 (--dupark-header-logo-height) */
+  --dupark-header-h: calc(1.6rem + var(--dupark-header-logo-height));
   /* .site-footer: padding 1.5rem×2 + 본문 라인 */
   --dupark-footer-h: 4.125rem;
 
@@ -69,11 +69,17 @@ body {
   --site-accent: #aaff00;
   --site-text:   #000000;
   --site-bg:     #ffffff;
+  /* 헤더 로고 높이 — Sanity `logoSize` 가 오면 App useSiteSettings 가 같은 이름 변수로 덮어씀 */
+  --dupark-header-logo-height: 32px;
 }
 @media (max-width: 768px) {
   :root {
-    /* 모바일 헤더(탭 제외) — mobile-subnav top: 47px 기준 */
-    --dupark-header-h: 2.9375rem;
+    /* 모바일 .header: padding 세로 .6rem×2 + 로고 — mobile-subnav 의 top 과 동일 기준 */
+    --dupark-header-h: calc(1.2rem + var(--dupark-header-logo-height));
+    /* 카테고리 탭바 한 줄 높이(고정 근사) — 실제와 맞추려면 .mobile-subnav-link 기준으로 조정 */
+    --dupark-mobile-subnav-h: 2.45rem;
+    /* 헤더 + 탭바 (카테고리·상세 등 패딩용) */
+    --dupark-mobile-header-stack: calc(var(--dupark-header-h) + var(--dupark-mobile-subnav-h));
     /* .site-footer — padding 1rem×2 + 0.75rem 한 줄(데스크톱 4.125은 모바일에서 과대 → 하단 틈) */
     --dupark-footer-h: 2.95rem;
   }
@@ -132,7 +138,7 @@ p {
     padding-bottom: 4rem;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    padding-top: 6.5rem; /* 헤더(48px) + 탭바(40px) */
+    padding-top: var(--dupark-mobile-header-stack);
   }
 
   .project-grid {

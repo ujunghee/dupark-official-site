@@ -66,20 +66,49 @@ export default function HomeDesktop() {
     const video = videoRef.current
     if (!video || !videoSrc) return
 
+    let cancelled = false
+
     const tryPlay = () => {
-      const p = video.play()
-      if (p && typeof p.catch === 'function') p.catch(() => {})
+      if (cancelled) return
+      video.muted = true
+      void video.play().catch(() => {})
+    }
+
+    const onMediaReady = () => {
+      if (cancelled) return
+      video.removeEventListener('canplay', onMediaReady)
+      video.removeEventListener('loadeddata', onMediaReady)
+      tryPlay()
+    }
+
+    const armPlayback = () => {
+      if (cancelled) return
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        queueMicrotask(tryPlay)
+      } else {
+        video.addEventListener('canplay', onMediaReady)
+        video.addEventListener('loadeddata', onMediaReady)
+      }
     }
 
     const loaderActive = !sessionStorage.getItem('dupark_loaded')
     if (!loaderActive) {
-      tryPlay()
-      return
+      queueMicrotask(() => armPlayback())
+      return () => {
+        cancelled = true
+        video.removeEventListener('canplay', onMediaReady)
+        video.removeEventListener('loadeddata', onMediaReady)
+      }
     }
 
-    const onLoaderComplete = () => tryPlay()
+    const onLoaderComplete = () => armPlayback()
     window.addEventListener('loaderComplete', onLoaderComplete, { once: true })
-    return () => window.removeEventListener('loaderComplete', onLoaderComplete)
+    return () => {
+      cancelled = true
+      window.removeEventListener('loaderComplete', onLoaderComplete)
+      video.removeEventListener('canplay', onMediaReady)
+      video.removeEventListener('loadeddata', onMediaReady)
+    }
   }, [videoSrc])
 
   useEffect(() => {
@@ -262,6 +291,7 @@ export default function HomeDesktop() {
           invalidateOnRefresh: true,
         },
       })
+      
     })
 
     return () => {

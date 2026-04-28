@@ -17,7 +17,6 @@ const getHomeVideoHeroShouldHideHeader = () => {
 export default function Header() {
   const [isOpen, setIsOpen]     = useState(false)
   const [navItems, setNavItems] = useState([])
-  const [logoSize, setLogoSize] = useState(null)
   const [atTop, setAtTop]       = useState(true)
   const [homePastIntro, setHomePastIntro] = useState(
     () => (typeof document !== 'undefined' && document.body.classList.contains('dupark-home-content'))
@@ -46,13 +45,6 @@ export default function Header() {
       .then((data) =>
         setNavItems(data.map((cat) => ({ label: cat.title, path: `/${cat.slug}` })))
       )
-  }, [])
-
-  /* ── Sanity 사이트 설정 (로고 크기) ── */
-  useEffect(() => {
-    client
-      .fetch(`*[_type == "siteSettings"][0]{ logoSize }`)
-      .then((data) => { if (data?.logoSize) setLogoSize(data.logoSize) })
   }, [])
 
   const isHome      = location.pathname === '/' || location.pathname === '/m'
@@ -228,7 +220,7 @@ export default function Header() {
         {/* 로고: 클리핑 래퍼 → 내부 img가 위에서 아래로 reveal */}
         <NavLink to="/" className="logo">
           <div className="header-clip">
-            <img ref={headerLogoRef} src={logoSrc} alt="DUPARK" className="logo-img" style={logoSize ? { height: `${logoSize}px` } : undefined} />
+            <img ref={headerLogoRef} src={logoSrc} alt="DUPARK" className="logo-img" />
           </div>
         </NavLink>
 

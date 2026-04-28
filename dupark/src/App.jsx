@@ -10,12 +10,12 @@ import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
 
-/** Sanity siteSettings에서 색상·메타 fetch → :root CSS 변수 + head 태그 주입 */
+/** Sanity siteSettings에서 색상·로고 높이·메타 fetch → :root CSS 변수 + head 태그 주입 */
 function useSiteSettings() {
   useEffect(() => {
     client
       .fetch(`*[_type == "siteSettings"][0]{
-        accentColor, textColor, bgColor,
+        accentColor, textColor, bgColor, logoSize,
         favicon{ asset->{ url } },
         ogImage, ogTitle, ogDescription
       }`)
@@ -27,6 +27,10 @@ function useSiteSettings() {
         if (data.accentColor) root.style.setProperty('--site-accent', data.accentColor)
         if (data.textColor)   root.style.setProperty('--site-text',   data.textColor)
         if (data.bgColor)     root.style.setProperty('--site-bg',     data.bgColor)
+        const logoPx = typeof data.logoSize === 'number' ? data.logoSize : Number(data.logoSize)
+        if (Number.isFinite(logoPx) && logoPx > 0) {
+          root.style.setProperty('--dupark-header-logo-height', `${logoPx}px`)
+        }
 
         // 파비콘
         if (data.favicon?.asset?.url) {
@@ -97,22 +101,24 @@ function AppShell() {
     <>
       <CustomScrollbar />
       <Header />
-      <Routes>
-        <Route path="/m" element={<HomeMobileGrid />} />
-        <Route path="/" element={<Home />} />
-        <Route
-          path="/about"
-          element={(
-            <Suspense
-              fallback={<div className="about-route-suspense-fallback" aria-hidden />}
-            >
-              <About />
-            </Suspense>
-          )}
-        />
-        <Route path="/:category" element={<Category />} />
-        <Route path="/:category/:id" element={<ProjectDetail />} />
-      </Routes>
+      <RouteEnterProvider>
+        <Routes>
+          <Route path="/m" element={<HomeMobileGrid />} />
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/about"
+            element={(
+              <Suspense
+                fallback={<div className="about-route-suspense-fallback" aria-hidden />}
+              >
+                <About />
+              </Suspense>
+            )}
+          />
+          <Route path="/:category" element={<Category />} />
+          <Route path="/:category/:id" element={<ProjectDetail />} />
+        </Routes>
+      </RouteEnterProvider>
       <Footer />
     </>
   )
@@ -121,17 +127,29 @@ function AppShell() {
 function App() {
   const [loading, setLoading] = useState(() => !sessionStorage.getItem('dupark_loaded'))
 
+  /* loaderComplete 시점과 동일 프레임에 플래그 저장 — 비디오 등이 `loaderComplete` 리스너를
+     나중에 달았을 때(예: Sanity로 videoSrc가 1.8s~2.5s 사이에 도착) 이미 지나간 이벤트에
+     묶이지 않도록. 페이드 onComplete는 UI만 닫음 */
+  useEffect(() => {
+    const onLoaderComplete = () => {
+      try {
+        sessionStorage.setItem('dupark_loaded', '1')
+      } catch {
+        /* private mode 등 */
+      }
+    }
+    window.addEventListener('loaderComplete', onLoaderComplete)
+    return () => window.removeEventListener('loaderComplete', onLoaderComplete)
+  }, [])
+
   const handleLoaderComplete = useCallback(() => {
-    sessionStorage.setItem('dupark_loaded', '1')
     setLoading(false)
   }, [])
 
   return (
     <BrowserRouter>
-      <RouteEnterProvider>
-        {loading && <Loader onComplete={handleLoaderComplete} />}
-        <AppShell />
-      </RouteEnterProvider>
+      {loading && <Loader onComplete={handleLoaderComplete} />}
+      <AppShell />
     </BrowserRouter>
   )
 }

@@ -51,14 +51,74 @@
   transition: opacity 0.5s ease;
 }
 
-/* ── 모바일 그리드 섹션 ── */
-@keyframes mobile-grid-rise {
+/* ── 모바일 인트로 전용: 스크롤 시 푸터가 올라와 보이지 않게 (영상 줌만 보이도록) ── */
+body.dupark-mobile-intro-hero {
+  overscroll-behavior-y: none;
+}
+
+body.dupark-mobile-intro-hero .site-footer {
+  display: none !important;
+}
+
+body.dupark-mobile-intro-hero .custom-scrollbar {
+  visibility: hidden;
+}
+
+/* ── 모바일 인트로: 스냅 직후 흰 백지가 아래에서 위로 100% (그 다음 `/m` + 페이드) ── */
+.home-mobile-intro-white-rise {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  height: 100dvh;
+  max-height: 100svh;
+  background: var(--site-bg, #fff);
+  z-index: 100;
+  pointer-events: none;
+  transform: translateY(100%);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.home-mobile-intro-white-rise.home-mobile-intro-white-rise--active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-mobile-intro-white-rise {
+    transition: none;
+  }
+}
+
+/* ── 모바일 그리드 전체 (`/m` main) — 라우트 전환 직후 백지 느낌 완화 */
+@keyframes home-mobile-grid-fade {
   from {
     opacity: 0;
-    transform: translateY(1.35rem);
   }
   to {
     opacity: 1;
+  }
+}
+
+.home-mobile-grid-main {
+  min-height: 100dvh;
+  background: var(--site-bg, #fff);
+  animation: home-mobile-grid-fade 0.52s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-mobile-grid-main {
+    animation: none;
+  }
+}
+
+/* ── 모바일 그리드 섹션 ── */
+@keyframes mobile-grid-rise {
+  from {
+    transform: translateY(0.75rem);
+  }
+  to {
     transform: translateY(0);
   }
 }
@@ -73,7 +133,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem 1rem;
   align-content: start;
-  animation: mobile-grid-rise 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: mobile-grid-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

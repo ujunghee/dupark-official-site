@@ -69,6 +69,8 @@ body.dupark-about-page .header .hamburger span {
 .logo-img {
   width: auto;
   display: block;
+  height: var(--dupark-header-logo-height);
+  box-sizing: content-box;
   transition: opacity 0.3s ease, filter 0.4s ease;
 }
 
@@ -328,7 +330,7 @@ body.dupark-about-page .header .hamburger span {
   .mobile-subnav {
     display: flex;
     position: fixed;
-    top: 47px; /* 헤더 높이 */
+    top: var(--dupark-header-h);
     left: 0;
     right: 0;
     z-index: 190;
@@ -345,7 +347,7 @@ body.dupark-about-page .header .hamburger span {
 
   /* 헤더가 숨겨질 때 탭바도 같이 올라감 */
   .mobile-subnav.hidden {
-    transform: translateY(calc(-100% - 47px));
+    transform: translateY(calc(-100% - var(--dupark-header-h)));
   }
 
   .mobile-subnav::-webkit-scrollbar {
