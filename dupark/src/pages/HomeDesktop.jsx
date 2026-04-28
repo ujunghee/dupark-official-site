@@ -335,7 +335,14 @@ export default function HomeDesktop() {
           ref={logoRef}
           src="/logo-white.svg"
           alt="DUPARK"
-          style={{ height: '3.5rem', width: 'clamp(4.5rem, 15vw, 8vw)', display: 'block', userSelect: 'none' }}
+          style={{
+            display: 'block',
+            width: 'auto',
+            height: 'clamp(2.25rem, 4vw, 3.5rem)',
+            maxWidth: 'min(90vw, 20rem)',
+            objectFit: 'contain',
+            userSelect: 'none',
+          }}
         />
       </div>
 

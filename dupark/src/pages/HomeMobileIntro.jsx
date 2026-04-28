@@ -311,7 +311,14 @@ export default function HomeMobileIntro() {
           ref={logoRef}
           src="/logo-white.svg"
           alt="DUPARK"
-          style={{ height: '3.5rem', width: 'clamp(4.5rem, 15vw, 8vw)', display: 'block', userSelect: 'none' }}
+          style={{
+            display: 'block',
+            width: 'auto',
+            height: 'clamp(2rem, 11vw, 3.25rem)',
+            maxWidth: 'min(88vw, 17.5rem)',
+            objectFit: 'contain',
+            userSelect: 'none',
+          }}
         />
       </div>
 

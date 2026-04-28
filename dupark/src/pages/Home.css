@@ -67,18 +67,23 @@ body.dupark-mobile-intro-hero .custom-scrollbar {
 /* ── 모바일 인트로: 스냅 직후 흰 백지가 아래에서 위로 100% (그 다음 `/m` + 페이드) ── */
 .home-mobile-intro-white-rise {
   position: fixed;
+  inset: 0;
   left: 0;
   right: 0;
   top: 0;
-  bottom: 0;
-  height: 100dvh;
-  max-height: 100svh;
+  width: 100%;
+  /* 주소창·툴바 변동: 한 단위만 쓰면 잘려 보임 → 큰 쪽 기준으로 풀블리드 */
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  min-height: 100lvh;
   background: var(--site-bg, #fff);
   z-index: 100;
   pointer-events: none;
   transform: translateY(100%);
   transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
+  box-sizing: border-box;
 }
 
 .home-mobile-intro-white-rise.home-mobile-intro-white-rise--active {

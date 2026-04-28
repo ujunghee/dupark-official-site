@@ -70,7 +70,10 @@ body.dupark-about-page .header .hamburger span {
   width: auto;
   display: block;
   height: var(--dupark-header-logo-height);
-  box-sizing: content-box;
+  max-width: min(18rem, 88vw);
+  object-fit: contain;
+  object-position: left center;
+  box-sizing: border-box;
   transition: opacity 0.3s ease, filter 0.4s ease;
 }
 
