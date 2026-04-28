@@ -338,7 +338,7 @@ export default function HomeDesktop() {
           style={{
             display: 'block',
             width: 'auto',
-            height: 'clamp(2.25rem, 4vw, 3.5rem)',
+            height: 'clamp(3.25rem, 24vw, 7.5rem)',
             maxWidth: 'min(90vw, 20rem)',
             objectFit: 'contain',
             userSelect: 'none',

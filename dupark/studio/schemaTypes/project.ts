@@ -1,4 +1,5 @@
 import {defineField, defineType} from 'sanity'
+import {AutoSlugInput} from './components/AutoSlugInput'
 
 export default defineType({
   name: 'project',
@@ -9,12 +10,28 @@ export default defineType({
       name: 'title',
       title: '프로젝트 제목',
       type: 'string',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'slug',
-      title: 'URL Slug (영문, 숫자, 하이픈만)',
+      title: 'URL Slug (자동 생성 — 제목만 입력하면 자동으로 채워집니다)',
+      description:
+        '제목 변경 시 자동으로 URL 친화적인 슬러그가 만들어집니다. 직접 수정 가능하지만 일반적으로 건드릴 필요 없습니다. (한글 제목은 영문/숫자만 추출되므로 영문 제목 권장)',
       type: 'slug',
-      options: { source: 'title', maxLength: 96 },
+      options: {
+        source: 'title',
+        maxLength: 96,
+        slugify: (input: string) =>
+          input
+            .toLowerCase()
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/['"`\u2018\u2019\u201C\u201D]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 96),
+      },
+      components: {input: AutoSlugInput},
       validation: (Rule) => Rule.required(),
     }),
     defineField({

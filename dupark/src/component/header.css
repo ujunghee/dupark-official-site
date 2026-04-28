@@ -39,6 +39,10 @@ body.dupark-about-page .header .nav-link {
   color: #fff;
 }
 
+body.dupark-about-page .header .nav-link:hover {
+  color: var(--site-accent, #aaff00);
+}
+
 body.dupark-about-page .header .nav-link.active {
   color: var(--site-accent, #aaff00);
 }
@@ -98,13 +102,12 @@ body.dupark-about-page .header .hamburger span {
   overflow: hidden;
   height: 1.1em;
   align-items: flex-start;
-  transition: filter 0.4s ease;
+  transition: color 0.25s ease, filter 0.4s ease;
 }
 
 .nav-link-inner {
   display: flex;
   flex-direction: column;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link-inner span {
@@ -113,13 +116,19 @@ body.dupark-about-page .header .hamburger span {
   white-space: nowrap;
 }
 
-.nav-link:hover .nav-link-inner {
-  transform: translateY(-50%);
+/* 호버 시 포인트 컬러(Sanity siteSettings.accent → --site-accent)로 변경 */
+.nav-link:hover {
+  color: var(--site-accent, #aaff00);
 }
 
 /* 투명 배경일 때 네비 텍스트 흰색 */
 .header.at-top .nav-link {
   color: #fff;
+}
+
+/* 투명 배경에서도 호버는 포인트 컬러 (specificity 동률 → 뒤 규칙이 이김) */
+.header.at-top .nav-link:hover {
+  color: var(--site-accent, #aaff00);
 }
 
 .nav-link.active {

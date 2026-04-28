@@ -28,6 +28,16 @@
   color: var(--site-accent, #aaff00);
 }
 
+/* 카드 타이틀: 호버 시 회색(#888 = rgb(136,136,136))으로 — `.project-card--no-detail` 도 동일하게 적용
+   (Coming Soon 카드도 호버 시각 피드백 동일) */
+.project-card-title {
+  transition: color 0.3s ease;
+}
+
+.project-card:hover .project-card-title {
+  color: rgb(136, 136, 136);
+}
+
 /* 모바일 무한 스크롤 감지용 */
 .category-infinite-sentinel {
   width: 100%;

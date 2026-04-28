@@ -70,7 +70,10 @@ function ProjectCard({ project, category }) {
           />
         )}
       </div>
-      <p style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: '0.5rem' }}>
+      <p
+        className="project-card-title"
+        style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: '0.5rem' }}
+      >
         {project.title}
       </p>
       {project.client && (

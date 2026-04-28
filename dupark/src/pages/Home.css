@@ -14,8 +14,10 @@
   display: flex;
   align-items: flex-start;
   will-change: transform;
+  padding-top: 2rem;
   padding-left: 2rem;
   padding-right: 2rem;
+  gap: .8rem;
 }
 
 /* 카드: 기본 데스크탑 3.5개 */
@@ -25,10 +27,15 @@
   cursor: pointer;
 }
 
+.category-card:hover .category-card-label {
+  color: var(--site-accent, #aaff00);
+}
+
 .category-card-label {
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--site-text, #000);
+  transition: color 0.2s ease;
   margin-bottom: 0.6rem;
   user-select: none;
 }

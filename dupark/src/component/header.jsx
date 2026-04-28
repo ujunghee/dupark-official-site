@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { client } from '../lib/sanity'
 import gsap from 'gsap'
@@ -156,27 +156,38 @@ export default function Header() {
     setIsOpen(false)
   }, [location.pathname])
 
-  /* ── hidden → visible 전환 시 로고 + nav stagger 등장 (clip reveal) ── */
-  useEffect(() => {
-    const wasHidden = prevHiddenRef.current
+  /* ── 등장 애니메이션 (한 번만 실행) ──
+     트리거 조건: 헤더가 노출 상태(`!hidden`) AND Sanity nav 데이터 로드 완료(`navItems.length > 0`)
+     · 홈(영상 히어로): hidden=true 로 시작 → 인트로 끝나면 hidden=false 로 풀리며 트리거
+     · 카테고리/ABOUT 페이지: hidden=false 로 시작하지만 nav 비어있어 대기 → fetch 완료 시 트리거
+       (→ 새로고침 시 "로고+ABOUT 먼저, 그 뒤 전체 출현" 팝인 현상 차단)
+     useLayoutEffect: from-state(yPercent:-100, opacity:0) 가 첫 페인트 전에 적용돼 깜빡임 방지 */
+  useLayoutEffect(() => {
     prevHiddenRef.current = hidden
+    if (hasAnimatedRef.current) return
+    if (hidden) return
+    if (navItems.length === 0) return
 
-    if (wasHidden && !hidden && !hasAnimatedRef.current) {
-      hasAnimatedRef.current = true
+    hasAnimatedRef.current = true
 
-      const els = [
-        headerLogoRef.current,
-        ...navItemRefs.current.filter(Boolean),
-      ].filter(Boolean)
+    const els = [
+      headerLogoRef.current,
+      ...navItemRefs.current.filter(Boolean),
+    ].filter(Boolean)
 
-      // overflow:hidden 래퍼 안에서 위→아래 슬라이드 reveal
-      gsap.fromTo(
-        els,
-        { yPercent: -100 },
-        { yPercent: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out', clearProps: 'yPercent,transform' }
-      )
-    }
-  }, [hidden])
+    gsap.fromTo(
+      els,
+      { yPercent: -100, opacity: 0 },
+      {
+        yPercent: 0,
+        opacity: 1,
+        duration: 0.55,
+        stagger: 0.07,
+        ease: 'power3.out',
+        clearProps: 'transform,opacity',
+      }
+    )
+  }, [hidden, navItems.length])
 
   /* 드로어: 열릴 때 스크롤 잠금 / 닫힐 때는 opacity(0.35s) 끝난 뒤 잠금 해제 → 페이드가 보이도록 */
   const DRAWER_CLOSE_MS = 350
@@ -224,36 +235,43 @@ export default function Header() {
           </div>
         </NavLink>
 
+        {/* nav: Sanity 카테고리 도착 전에는 렌더 보류 → ABOUT만 먼저 깜빡 등장 후 카테고리가 끼어드는 layout shift 차단
+            (등장 애니메이션도 데이터 도착 후 한 번에 실행) */}
         <nav className="nav">
-          {navItems.map((item, i) => (
-            <div key={item.path} className="header-clip">
-              <div ref={(el) => { navItemRefs.current[i] = el }}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-                >
-                  <span className="nav-link-inner">
-                    <span>{item.label}</span>
-                    <span>{item.label}</span>
-                  </span>
-                </NavLink>
+          {navItems.length > 0 && (
+            <>
+              {navItems.map((item, i) => (
+                <div key={item.path} className="header-clip">
+                  {/* GSAP 대상: NavLink 래퍼 div(1줄 높이) — .nav-link-inner는 호버용 2줄 스택이라 직접 대상에서 제외 */}
+                  <div ref={(el) => { navItemRefs.current[i] = el }}>
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                    >
+                      <span className="nav-link-inner">
+                        <span>{item.label}</span>
+                        <span>{item.label}</span>
+                      </span>
+                    </NavLink>
+                  </div>
+                </div>
+              ))}
+              <div className="header-clip">
+                <div ref={(el) => { navItemRefs.current[navItems.length] = el }}>
+                  <NavLink
+                    to="/about"
+                    onClick={() => setIsOpen(false)}
+                    className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                  >
+                    <span className="nav-link-inner">
+                      <span>ABOUT</span>
+                      <span>ABOUT</span>
+                    </span>
+                  </NavLink>
+                </div>
               </div>
-            </div>
-          ))}
-          <div className="header-clip">
-            <div ref={(el) => { navItemRefs.current[navItems.length] = el }}>
-              <NavLink
-                to="/about"
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-              >
-                <span className="nav-link-inner">
-                  <span>ABOUT</span>
-                  <span>ABOUT</span>
-                </span>
-              </NavLink>
-            </div>
-          </div>
+            </>
+          )}
         </nav>
 
         <button
