@@ -47,7 +47,8 @@
   overflow: hidden;
 }
 
-.category-card-img img {
+.category-card-img img,
+.category-card-img video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -137,7 +138,8 @@ body.dupark-mobile-intro-hero .custom-scrollbar {
   background: #111;
 }
 
-.mobile-cat-img img {
+.mobile-cat-img img,
+.mobile-cat-img video {
   position: absolute;
   inset: 0;
   width: 100%;

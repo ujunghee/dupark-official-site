@@ -10,6 +10,24 @@ const MOBILE_MAX = 768
 
 function MobileCategoryItem({ cat }) {
   const navigate = useNavigate()
+  let media
+  if (cat.coverImage) {
+    media = <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
+  } else if (cat.coverVideoUrl) {
+    media = (
+      <video
+        src={cat.coverVideoUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={cat.title}
+      />
+    )
+  } else {
+    media = <div style={{ position: 'absolute', inset: 0, background: '#222' }} />
+  }
   return (
     <div
       className="mobile-grid-item"
@@ -17,12 +35,7 @@ function MobileCategoryItem({ cat }) {
       style={{ cursor: 'pointer' }}
     >
       <div className="mobile-cat-label">{cat.title}</div>
-      <div className="mobile-cat-img">
-        {cat.coverImage
-          ? <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
-          : <div style={{ position: 'absolute', inset: 0, background: '#222' }} />
-        }
-      </div>
+      <div className="mobile-cat-img">{media}</div>
     </div>
   )
 }
@@ -79,7 +92,12 @@ export default function HomeMobileGrid() {
 
   useEffect(() => {
     if (!allowed) return
-    client.fetch(`*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc)`).then(setCategories)
+    client.fetch(
+      `*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc){
+        _id, title, slug, coverImage,
+        "coverVideoUrl": coverVideo.asset->url
+      }`
+    ).then(setCategories)
   }, [allowed])
 
   useEffect(() => {

@@ -6,9 +6,34 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './Home.css'
 
+/** 카테고리 카드용 — 이미지 우선, 없으면 영상 폴백 (Home.css `.category-card-img > img` 스타일을 그대로 따름) */
+function CardMedia({ image, videoUrl, alt, hidden }) {
+  const style = hidden ? { opacity: 0 } : { opacity: 1 }
+  if (image) {
+    return <img src={urlFor(image).width(700).url()} alt={alt} style={style} />
+  }
+  if (videoUrl) {
+    return (
+      <video
+        src={videoUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={alt}
+        style={style}
+      />
+    )
+  }
+  return null
+}
+
 function CategoryCard({ cat }) {
   const navigate = useNavigate()
   const [hovered, setHovered] = useState(false)
+  const hasCover = Boolean(cat.coverImage || cat.coverVideoUrl)
+  const hasHover = Boolean(cat.hoverImage || cat.hoverVideoUrl)
 
   return (
     <div
@@ -19,16 +44,20 @@ function CategoryCard({ cat }) {
     >
       <div className="category-card-label">{cat.title}</div>
       <div className="category-card-img">
-        {cat.coverImage && (
-          <img
-            src={urlFor(cat.coverImage).width(700).url()} alt={cat.title}
-            style={{ opacity: hovered && cat.hoverImage ? 0 : 1 }}
+        {hasCover && (
+          <CardMedia
+            image={cat.coverImage}
+            videoUrl={cat.coverVideoUrl}
+            alt={cat.title}
+            hidden={hovered && hasHover}
           />
         )}
-        {cat.hoverImage && (
-          <img
-            src={urlFor(cat.hoverImage).width(700).url()} alt={cat.title}
-            style={{ opacity: hovered ? 1 : 0 }}
+        {hasHover && (
+          <CardMedia
+            image={cat.hoverImage}
+            videoUrl={cat.hoverVideoUrl}
+            alt={cat.title}
+            hidden={!hovered}
           />
         )}
       </div>
@@ -50,7 +79,13 @@ export default function HomeDesktop() {
   const [hideIntro, setHideIntro] = useState(false)
 
   useEffect(() => {
-    client.fetch(`*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc)`).then(setCategories)
+    client.fetch(
+      `*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc){
+        _id, title, slug, coverImage, hoverImage,
+        "coverVideoUrl": coverVideo.asset->url,
+        "hoverVideoUrl": hoverVideo.asset->url
+      }`
+    ).then(setCategories)
   }, [])
 
   useEffect(() => {

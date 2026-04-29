@@ -21,11 +21,44 @@ function getColumnCount() {
 const ROWS_PER_STEP = 2
 const MOBILE_COLS = 2
 
+/** 이미지가 있으면 이미지, 없고 영상 URL이 있으면 영상으로 폴백해 같은 자리에 그려주는 헬퍼 */
+function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
+  const baseStyle = {
+    width: '100%',
+    aspectRatio: '3/4',
+    objectFit: 'cover',
+    display: 'block',
+    transition: 'opacity 0.4s ease',
+    ...(layered ? { position: 'absolute', inset: 0 } : null),
+    ...style,
+  }
+  if (image) {
+    return <img src={urlFor(image).width(width).url()} alt={alt} style={baseStyle} />
+  }
+  if (videoUrl) {
+    return (
+      <video
+        src={videoUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={alt}
+        style={baseStyle}
+      />
+    )
+  }
+  return null
+}
+
 function ProjectCard({ project, category }) {
   const navigate = useNavigate()
   const { start: startEnter } = useRouteEnter()
   const [hovered, setHovered] = useState(false)
   const noDetail = isComingSoonTitle(project.title)
+  const hasCover = Boolean(project.coverImage || project.coverVideoUrl)
+  const hasHover = Boolean(project.hoverImage || project.hoverVideoUrl)
 
   return (
     <div
@@ -40,31 +73,23 @@ function ProjectCard({ project, category }) {
       style={{ cursor: noDetail ? 'default' : 'pointer' }}
     >
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {project.coverImage && (
-          <img
-            src={urlFor(project.coverImage).width(400).url()}
+        {hasCover && (
+          <CoverMedia
+            image={project.coverImage}
+            videoUrl={project.coverVideoUrl}
             alt={project.title}
             style={{
-              width: '100%',
-              aspectRatio: '3/4',
-              objectFit: 'cover',
-              display: 'block',
-              transition: 'opacity 0.4s ease',
-              opacity: !noDetail && hovered && project.hoverImage ? 0 : 1,
+              opacity: !noDetail && hovered && hasHover ? 0 : 1,
             }}
           />
         )}
-        {project.hoverImage && (
-          <img
-            src={urlFor(project.hoverImage).width(400).url()}
+        {hasHover && (
+          <CoverMedia
+            image={project.hoverImage}
+            videoUrl={project.hoverVideoUrl}
             alt={project.title}
+            layered
             style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              aspectRatio: '3/4',
-              objectFit: 'cover',
-              transition: 'opacity 0.4s ease',
               opacity: !noDetail && hovered ? 1 : 0,
             }}
           />
