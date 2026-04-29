@@ -132,7 +132,8 @@ export default function AboutGlobe({ className = '' }) {
 
       group.rotation.set(0, 0, 0)
 
-      const viewFrom = seoul.clone().normalize().multiplyScalar(5.2)
+      /* 지구본을 컨테이너 안에서 좀 더 작게 보이게 — 회전 시 로고 sprite가 원형 마스크에 잘리지 않도록 카메라를 뒤로 */
+      const viewFrom = seoul.clone().normalize().multiplyScalar(6.6)
       camera.position.copy(viewFrom)
       camera.position.y += 0.12
       camera.lookAt(0, 0, 0)
@@ -140,8 +141,9 @@ export default function AboutGlobe({ className = '' }) {
       controls = new OrbitControls(camera, gl)
       controls.enableDamping = !reduce
       controls.dampingFactor = 0.06
-      controls.minDistance = 2.6
-      controls.maxDistance = 8.5
+      /* 사용자가 너무 가까이 줌인하면 다시 잘리므로 최소 거리도 키움 */
+      controls.minDistance = 4.5
+      controls.maxDistance = 9.5
       controls.enablePan = false
       controls.rotateSpeed = reduce ? 0.85 : 0.7
       controls.target.set(0, 0, 0)
