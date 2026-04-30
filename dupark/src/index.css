@@ -60,6 +60,29 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 접근성 — Tab 첫 진입 시 보이는 “메인으로 바로가기” 스킵 링크 (WCAG 2.4.1) */
+.dupark-skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100000;
+  padding: 0.65rem 1.1rem;
+  background: #000;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--site-accent, #aaff00);
+  border-radius: 4px;
+  transform: translateY(-200%);
+  transition: transform 160ms ease;
+}
+.dupark-skip-link:focus,
+.dupark-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: none;
+}
+
 /* 레이아웃용 — About 등에서 calc(100svh - 헤더 - 푸터) */
 :root {
   --site-font-family: 'ABCDiatype', system-ui, sans-serif;
@@ -118,6 +141,23 @@ body {
 
 p {
   margin: 0;
+}
+
+/* ── 이미지 도용 방지 ──
+   * 드래그(끌어 저장) 차단
+   * iOS Safari 길게 누르기로 뜨는 "이미지 저장" 콜아웃 차단
+   * 텍스트/이미지 선택 차단 (이미지 한정 아니라 picture/svg 까지)
+   * 우클릭 컨텍스트 메뉴는 JS 에서 추가로 막음(App.jsx) */
+img,
+picture,
+svg,
+video {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* ── Category 페이지 레이아웃 ── */

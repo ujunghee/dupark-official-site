@@ -176,8 +176,20 @@ export default function HomeMobileIntro() {
     /** ease-out quint — 끝 구간이 더 길게 풀림 */
     const snapEaseOut = (t) => 1 - Math.pow(1 - t, 5)
 
+    const isReducedMotion = () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     const snapTo = (target, { onDone, duration } = {}) => {
       isSnapping = true
+      /* 모션 줄이기 사용자: 즉시 이동 */
+      if (isReducedMotion()) {
+        lenis.scrollTo(target, { immediate: true, force: true, lock: true })
+        isSnapping = false
+        lenis.start()
+        onDone?.()
+        return
+      }
       lenis.scrollTo(target, {
         duration: duration ?? SNAP_DURATION_MOBILE,
         easing: snapEaseOut,
@@ -256,19 +268,29 @@ export default function HomeMobileIntro() {
       }
     }
 
+    /* 키보드/스크린리더 사용자가 스킵 링크로 인트로 통째로 건너뛰기 → /m 으로 즉시 */
+    const onSkipToMain = () => {
+      if (isSnapping) return
+      snapTo(getDownSnapTarget(), { onDone: finalizeSnap, duration: 0 })
+    }
+
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
     window.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
+    window.addEventListener('skipToMain', onSkipToMain)
 
     return () => {
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('touchstart', onTouchStart, true)
       window.removeEventListener('touchend', onTouchEnd, true)
+      window.removeEventListener('skipToMain', onSkipToMain)
     }
   }, [navigate])
 
   return (
     <main
+      id="main-content"
+      tabIndex={-1}
       style={{
         /* Lenis/브라우저가 세로 스크롤 가능해야 터치→스냅이 먹음. 예전엔 그리드가 아래에 있어 높이가 났음 */
         touchAction: 'pan-y',

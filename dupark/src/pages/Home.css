@@ -25,6 +25,10 @@
   flex-shrink: 0;
   width: 28vw;
   cursor: pointer;
+  /* <Link> = <a> 기본 스타일 리셋 */
+  color: inherit;
+  text-decoration: none;
+  display: block;
 }
 
 .category-card:hover .category-card-label {
@@ -145,4 +149,18 @@ body.dupark-mobile-intro-hero .custom-scrollbar {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* 모바일 카드도 <Link> = <a> 라 기본 스타일 리셋 */
+.mobile-grid-item {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 키보드 포커스 표시 (마우스 클릭 때는 안 뜸 — :focus-visible) */
+.category-card:focus-visible,
+.mobile-grid-item:focus-visible {
+  outline: 2px solid var(--site-accent, #aaff00);
+  outline-offset: 4px;
 }

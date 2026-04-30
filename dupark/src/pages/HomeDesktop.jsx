@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
@@ -30,14 +30,13 @@ function CardMedia({ image, videoUrl, alt, hidden }) {
 }
 
 function CategoryCard({ cat }) {
-  const navigate = useNavigate()
   const [hovered, setHovered] = useState(false)
   const hasCover = Boolean(cat.coverImage || cat.coverVideoUrl)
   const hasHover = Boolean(cat.hoverImage || cat.hoverVideoUrl)
 
   return (
-    <div
-      onClick={() => navigate(`/${cat.slug}`)}
+    <Link
+      to={`/${cat.slug}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="category-card"
@@ -61,7 +60,7 @@ function CategoryCard({ cat }) {
           />
         )}
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -189,8 +188,20 @@ export default function HomeDesktop() {
 
     const SNAP_DURATION_DESKTOP = 1.5
 
+    const isReducedMotion = () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     const snapTo = (target, { onDone, duration } = {}) => {
       isSnapping = true
+      /* 모션 줄이기(prefers-reduced-motion) 켜진 사용자에겐 1.5초 자동 스크롤 → 즉시 이동 */
+      if (isReducedMotion()) {
+        lenis.scrollTo(target, { immediate: true, force: true, lock: true })
+        isSnapping = false
+        lenis.start()
+        onDone?.()
+        return
+      }
       lenis.scrollTo(target, {
         duration: duration ?? SNAP_DURATION_DESKTOP,
         easing: 'power3.out',
@@ -217,6 +228,12 @@ export default function HomeDesktop() {
       }
     }
 
+    /* 키보드/스크린리더 사용자가 스킵 링크로 인트로 통째로 건너뛰기 */
+    const onSkipToMain = () => {
+      if (hideIntro) return
+      snapTo(getDownSnapTarget(), { onDone: finalizeSnap, duration: 0 })
+    }
+
     let touchStartY = 0
     const onTouchStart = (e) => { touchStartY = e.touches[0].clientY }
     const onTouchEnd = (e) => {
@@ -237,11 +254,13 @@ export default function HomeDesktop() {
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchend', onTouchEnd, { passive: true })
+    window.addEventListener('skipToMain', onSkipToMain)
 
     return () => {
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('skipToMain', onSkipToMain)
     }
   }, [hideIntro])
 
@@ -336,7 +355,7 @@ export default function HomeDesktop() {
   }, [categories])
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <div style={{
         position: 'fixed',
         top: 0, left: 0,

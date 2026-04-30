@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import gsap from 'gsap'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
@@ -9,7 +9,6 @@ import './Home.css'
 const MOBILE_MAX = 768
 
 function MobileCategoryItem({ cat }) {
-  const navigate = useNavigate()
   let media
   if (cat.coverImage) {
     media = <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
@@ -29,14 +28,10 @@ function MobileCategoryItem({ cat }) {
     media = <div style={{ position: 'absolute', inset: 0, background: '#222' }} />
   }
   return (
-    <div
-      className="mobile-grid-item"
-      onClick={() => navigate(`/${cat.slug}`)}
-      style={{ cursor: 'pointer' }}
-    >
+    <Link to={`/${cat.slug}`} className="mobile-grid-item">
       <div className="mobile-cat-label">{cat.title}</div>
       <div className="mobile-cat-img">{media}</div>
-    </div>
+    </Link>
   )
 }
 
@@ -149,7 +144,7 @@ export default function HomeMobileGrid() {
   if (!allowed) return null
 
   return (
-    <main className="home-mobile-grid-main">
+    <main id="main-content" tabIndex={-1} className="home-mobile-grid-main">
       <section ref={gridSectionRef} className="mobile-grid-section">
         {categories.map((cat) => (
           <MobileCategoryItem key={cat._id} cat={cat} />

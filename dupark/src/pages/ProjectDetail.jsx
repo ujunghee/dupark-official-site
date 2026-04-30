@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
@@ -40,6 +40,37 @@ function countProjectMedia(p) {
   const nImg = p.images?.length || 0
   const { fileUrls, embedUrls } = collectProjectVideos(p)
   return nImg + fileUrls.length + embedUrls.length
+}
+
+/** prev/next 미리보기 — 이미지가 있으면 이미지, 없고 coverVideo가 있으면 영상으로 폴백.
+ *  CSS는 .detail-nav-thumb-img 클래스 기준으로 슬라이드/사이즈/반응형이 걸려있으므로
+ *  video 에도 동일 클래스를 주면 그대로 같은 모션·레이아웃이 적용된다. */
+function NavThumbMedia({ project, side }) {
+  if (project?.coverImage) {
+    return (
+      <img
+        src={urlFor(project.coverImage).width(200).url()}
+        alt={project.title}
+        className="detail-nav-thumb-img"
+      />
+    )
+  }
+  if (project?.coverVideoUrl) {
+    return (
+      <video
+        src={project.coverVideoUrl}
+        className="detail-nav-thumb-img"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={project.title}
+        data-side={side}
+      />
+    )
+  }
+  return null
 }
 
 function toEmbedUrl(url) {
@@ -111,7 +142,8 @@ export default function ProjectDetail() {
           "categorySlug": category->slug,
           coverImage, images,
           "siblings": *[_type == "project" && category._ref == ^.category._ref] | order(coalesce(order, 0) desc, _createdAt desc){
-            title, "slug": slug.current, coverImage
+            title, "slug": slug.current, coverImage,
+            "coverVideoUrl": coverVideo.asset->url
           }
         }`,
         { id }
@@ -336,6 +368,8 @@ export default function ProjectDetail() {
   }, [])
 
   useEffect(() => {
+    /* 이미지만 prefetch — 영상은 NavThumbMedia 의 <video preload=metadata autoPlay> 가
+       마운트 직후부터 자체적으로 다운로드를 시작하므로 별도 prefetch 불필요(대역폭 절약) */
     if (prev?.coverImage) {
       const im = new Image()
       im.decoding = 'async'
@@ -350,7 +384,7 @@ export default function ProjectDetail() {
 
   if (!project) {
     return (
-      <main className="detail-page detail-page--awaiting" aria-busy="true">
+      <main id="main-content" tabIndex={-1} className="detail-page detail-page--awaiting" aria-busy="true">
         <div className="detail-entrance-overlay detail-entrance-overlay--boot" aria-hidden />
       </main>
     )
@@ -363,7 +397,7 @@ export default function ProjectDetail() {
     collectProjectVideos(project)
 
   return (
-    <main ref={detailLayoutRef} className="detail-layout">
+    <main id="main-content" tabIndex={-1} ref={detailLayoutRef} className="detail-layout">
       {showEntranceLayer && (
         <div
           ref={entranceOverlayRef}
@@ -470,43 +504,61 @@ export default function ProjectDetail() {
 
       <div ref={navRef} className="detail-nav-outer">
         <div className="detail-nav">
-          <div
-            className={`detail-nav-item detail-nav-prev${prev ? '' : ' disabled'}`}
-            onClick={() => prev && goToSibling(prev.slug)}
-          >
-            <div className="detail-nav-thumb">
-              {prev?.coverImage && (
-                <img
-                  src={urlFor(prev.coverImage).width(200).url()}
-                  alt={prev.title}
-                  className="detail-nav-thumb-img"
-                />
-              )}
+          {prev ? (
+            <Link
+              to={`/${category}/${prev.slug}`}
+              className="detail-nav-item detail-nav-prev"
+              aria-label={`이전 프로젝트: ${prev.title}`}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                e.preventDefault()
+                goToSibling(prev.slug)
+              }}
+            >
+              <div className="detail-nav-thumb">
+                <NavThumbMedia project={prev} side="prev" />
+              </div>
+              <div className="detail-nav-text">
+                <span className="detail-nav-label">PREV</span>
+                <span className="detail-nav-title">{prev.title}</span>
+              </div>
+            </Link>
+          ) : (
+            <div className="detail-nav-item detail-nav-prev disabled" aria-disabled="true">
+              <div className="detail-nav-thumb" />
+              <div className="detail-nav-text">
+                <span className="detail-nav-label">PREV</span>
+              </div>
             </div>
-            <div className="detail-nav-text">
-              <span className="detail-nav-label">PREV</span>
-              {prev && <span className="detail-nav-title">{prev.title}</span>}
-            </div>
-          </div>
+          )}
 
-          <div
-            className={`detail-nav-item detail-nav-next${next ? '' : ' disabled'}`}
-            onClick={() => next && goToSibling(next.slug)}
-          >
-            <div className="detail-nav-text detail-nav-text--right">
-              <span className="detail-nav-label">NEXT</span>
-              {next && <span className="detail-nav-title">{next.title}</span>}
+          {next ? (
+            <Link
+              to={`/${category}/${next.slug}`}
+              className="detail-nav-item detail-nav-next"
+              aria-label={`다음 프로젝트: ${next.title}`}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                e.preventDefault()
+                goToSibling(next.slug)
+              }}
+            >
+              <div className="detail-nav-text detail-nav-text--right">
+                <span className="detail-nav-label">NEXT</span>
+                <span className="detail-nav-title">{next.title}</span>
+              </div>
+              <div className="detail-nav-thumb">
+                <NavThumbMedia project={next} side="next" />
+              </div>
+            </Link>
+          ) : (
+            <div className="detail-nav-item detail-nav-next disabled" aria-disabled="true">
+              <div className="detail-nav-text detail-nav-text--right">
+                <span className="detail-nav-label">NEXT</span>
+              </div>
+              <div className="detail-nav-thumb" />
             </div>
-            <div className="detail-nav-thumb">
-              {next?.coverImage && (
-                <img
-                  src={urlFor(next.coverImage).width(200).url()}
-                  alt={next.title}
-                  className="detail-nav-thumb-img"
-                />
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </main>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react'
 import { flushSync } from 'react-dom'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
@@ -53,25 +53,14 @@ function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
 }
 
 function ProjectCard({ project, category }) {
-  const navigate = useNavigate()
   const { start: startEnter } = useRouteEnter()
   const [hovered, setHovered] = useState(false)
   const noDetail = isComingSoonTitle(project.title)
   const hasCover = Boolean(project.coverImage || project.coverVideoUrl)
   const hasHover = Boolean(project.hoverImage || project.hoverVideoUrl)
 
-  return (
-    <div
-      className={`project-card${noDetail ? ' project-card--no-detail' : ''}`}
-      onClick={() => {
-        if (noDetail) return
-        flushSync(() => startEnter())
-        navigate(`/${category}/${project.slug?.current}`)
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ cursor: noDetail ? 'default' : 'pointer' }}
-    >
+  const inner = (
+    <>
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         {hasCover && (
           <CoverMedia
@@ -104,7 +93,37 @@ function ProjectCard({ project, category }) {
       {project.client && (
         <p style={{ fontSize: '0.7rem', color: '#888' }}>{project.client}</p>
       )}
-    </div>
+    </>
+  )
+
+  /* Coming soon — 클릭 불가, Tab 순회 대상 아님 */
+  if (noDetail) {
+    return (
+      <div
+        className="project-card project-card--no-detail"
+        aria-disabled="true"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {inner}
+      </div>
+    )
+  }
+
+  /* 정상 카드 — 실제 <a> 라 Tab 포커스, Enter 활성화, 우클릭 새 탭 모두 동작 */
+  return (
+    <Link
+      to={`/${category}/${project.slug?.current}`}
+      className="project-card"
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+        flushSync(() => startEnter())
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {inner}
+    </Link>
   )
 }
 
@@ -204,7 +223,7 @@ export default function Category() {
   const canShowMore = displayedCount < projects.length
 
   return (
-    <main className="category-page">
+    <main id="main-content" tabIndex={-1} className="category-page">
       <div className="category-page-inner">
         <div ref={gridRef} className="project-grid">
           {visible.map((project) => (

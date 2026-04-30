@@ -63,7 +63,7 @@ export default function About() {
   }, [])
 
   return (
-    <main className="about-page">
+    <main id="main-content" tabIndex={-1} className="about-page">
       {typeof document !== 'undefined' &&
         createPortal(
           <div className="about-entrance-overlay" aria-hidden="true" />,

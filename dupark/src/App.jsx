@@ -127,6 +127,55 @@ function useSiteSettings() {
 
 const About = lazy(() => import('./pages/About'))
 
+/** 이미지 도용 방지 — 전역 이벤트 리스너
+ *  1. 이미지 위 우클릭 컨텍스트 메뉴 차단 ("이미지를 다른 이름으로 저장…" 봉쇄)
+ *  2. 이미지 dragstart 차단 (드래그&드롭 저장 봉쇄)
+ *  3. 키보드 단축키 차단 — F12 / Ctrl+S / Ctrl+U / Ctrl+Shift+I,J,C / Cmd+Option+I,U,J (mac)
+ *  ※ 100% 차단은 불가(스크린샷·캐시 등). "일반 사용자 진입 장벽"이 목적. */
+function useImageDownloadGuard() {
+  useEffect(() => {
+    const isMediaTarget = (el) => {
+      if (!el || !el.closest) return false
+      return Boolean(el.closest('img, picture, svg, video, canvas'))
+    }
+
+    const onContextMenu = (e) => {
+      if (isMediaTarget(e.target)) e.preventDefault()
+    }
+
+    const onDragStart = (e) => {
+      if (isMediaTarget(e.target)) e.preventDefault()
+    }
+
+    const onKeyDown = (e) => {
+      const key = (e.key || '').toLowerCase()
+      const ctrlOrMeta = e.ctrlKey || e.metaKey
+
+      if (key === 'f12') { e.preventDefault(); return }
+      if (ctrlOrMeta && !e.shiftKey && !e.altKey && (key === 's' || key === 'u')) {
+        e.preventDefault()
+        return
+      }
+      if (ctrlOrMeta && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')) {
+        e.preventDefault()
+        return
+      }
+      if (e.metaKey && e.altKey && (key === 'i' || key === 'u' || key === 'j' || key === 'c')) {
+        e.preventDefault()
+      }
+    }
+
+    document.addEventListener('contextmenu', onContextMenu)
+    document.addEventListener('dragstart', onDragStart)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('contextmenu', onContextMenu)
+      document.removeEventListener('dragstart', onDragStart)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [])
+}
+
 /** 라우트·새로고침마다 세로 스크롤 맨 위 — 브라우저 복원 끈 뒤 Lenis·네이티브 동기화 */
 function ScrollToTop() {
   const { pathname, key } = useLocation()
@@ -184,6 +233,7 @@ function CustomScrollbar() {
 
 function AppShell() {
   useSiteSettings()
+  useImageDownloadGuard()
   return (
     <>
       <CustomScrollbar />
@@ -258,11 +308,33 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <SkipLink />
       {loading && (
         <Loader onComplete={handleLoaderComplete} waitForUrl={introVideoUrl} />
       )}
       <AppShell />
     </BrowserRouter>
+  )
+}
+
+/** Tab 한 번 누르면 첫 포커스로 잡히는 스킵 링크
+ *  - 일반 페이지: <main> 으로 포커스 + 스크롤 이동 (헤더 통과)
+ *  - 홈 인트로: skipToMain 이벤트로 인트로 자체를 건너뛰고 그리드로 (HomeDesktop / HomeMobileIntro 가 처리) */
+function SkipLink() {
+  const handleClick = (e) => {
+    e.preventDefault()
+    window.dispatchEvent(new CustomEvent('skipToMain'))
+    requestAnimationFrame(() => {
+      const main = document.getElementById('main-content') || document.querySelector('main')
+      if (!main) return
+      if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1')
+      main.focus({ preventScroll: false })
+    })
+  }
+  return (
+    <a href="#main-content" className="dupark-skip-link" onClick={handleClick}>
+      메인으로 바로가기
+    </a>
   )
 }
 
