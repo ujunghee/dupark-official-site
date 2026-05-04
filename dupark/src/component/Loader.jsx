@@ -3,10 +3,10 @@ import gsap from 'gsap'
 import './Loader.css'
 
 /** 인트로 영상이 너무 오래 걸리면 무한 대기는 위험 — 8초 안전 타임아웃 */
-const FALLBACK_TIMEOUT_MS = 8000
+const FALLBACK_TIMEOUT_MS = 6000
 
 /** 100% 도달 후 페이드 아웃 시작까지의 대기 시간 — 사용자에게 "완료" 를 체감 시킴 */
-const HOLD_AT_100_MS = 2000
+const HOLD_AT_100_MS = 1000
 
 /** 진행 단계별 목표 퍼센트 — 실제 로딩 이벤트에 묶여 있어 "100% 에서 대기" 상황이 생기지 않음 */
 const PCT_BOOT     = 25   // 마운트 직후 (사용자에게 "시작됐다" 인지 시키는 초기 움직임)
