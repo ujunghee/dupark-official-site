@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { lenis } from './lib/lenis'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { RouteEnterProvider } from './context/RouteEnterContext'
+import { IntroMediaProvider, useIntroMedia } from './context/IntroMediaContext'
 import { client, urlFor } from './lib/sanity'
 import Header from './component/header'
 import Footer from './component/footer'
@@ -261,13 +262,12 @@ function AppShell() {
   )
 }
 
-/** Sanity fetch가 너무 늦어지면 로더가 영원히 안 닫히는 걸 막기 위한 안전 타임아웃 */
-const INTRO_URL_FETCH_TIMEOUT_MS = 3000
-
-function App() {
+/** 로더 수명 주기 — IntroMediaProvider 안쪽에서 useIntroMedia() 를 구독해야 하므로
+ *  별도 컴포넌트로 분리. 여기에서 앱 전역 Sanity fetch 는 하지 않고, 오직 loader UI 만 책임. */
+function LoaderManager() {
   const [loading, setLoading] = useState(() => !sessionStorage.getItem('dupark_loaded'))
-  /* undefined = 아직 모름(Sanity fetch 중), null = 영상 없음, string = 다운로드할 URL */
-  const [introVideoUrl, setIntroVideoUrl] = useState(undefined)
+  /* videoUrl: undefined = fetch 중, null = 영상 없음, string = 다운로드할 URL */
+  const { videoUrl } = useIntroMedia()
 
   /* loaderComplete 시점과 동일 프레임에 플래그 저장 — 비디오 등이 `loaderComplete` 리스너를
      나중에 달았을 때(예: Sanity로 videoSrc가 늦게 도착) 이미 지나간 이벤트에
@@ -284,35 +284,23 @@ function App() {
     return () => window.removeEventListener('loaderComplete', onLoaderComplete)
   }, [])
 
-  /* 첫 진입(loader가 떠 있는 동안)에만 인트로 영상 URL을 받아 두고 Loader 가 미리 다운로드 → 본 페이지로 넘어갈 때 끊김 없음 */
-  useEffect(() => {
-    if (!loading) return
-    let resolved = false
-    const resolve = (url) => {
-      if (resolved) return
-      resolved = true
-      setIntroVideoUrl(url ?? null)
-    }
-    client
-      .fetch(`*[_type == "siteSettings"][0]{ "videoUrl": introVideo.asset->url }`)
-      .then((data) => resolve(data?.videoUrl))
-      .catch(() => resolve(null))
-    const timer = window.setTimeout(() => resolve(null), INTRO_URL_FETCH_TIMEOUT_MS)
-    return () => window.clearTimeout(timer)
-  }, [loading])
-
   const handleLoaderComplete = useCallback(() => {
     setLoading(false)
   }, [])
 
+  if (!loading) return null
+  return <Loader onComplete={handleLoaderComplete} waitForUrl={videoUrl} />
+}
+
+function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <SkipLink />
-      {loading && (
-        <Loader onComplete={handleLoaderComplete} waitForUrl={introVideoUrl} />
-      )}
-      <AppShell />
+      <IntroMediaProvider>
+        <ScrollToTop />
+        <SkipLink />
+        <LoaderManager />
+        <AppShell />
+      </IntroMediaProvider>
     </BrowserRouter>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
+import { useIntroMedia } from '../context/IntroMediaContext'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './Home.css'
@@ -73,8 +74,8 @@ export default function HomeDesktop() {
   const videoRef      = useRef(null)
   const spacerRef     = useRef(null)
   const [categories,   setCategories]   = useState([])
-  const [videoSrc,     setVideoSrc]     = useState(null)
-  const [videoPoster,  setVideoPoster]  = useState(null)
+  /* 인트로 영상/포스터 URL 은 IntroMediaProvider 가 단일 fetch 로 공급 — 중복 요청 제거 */
+  const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
   const [hideIntro, setHideIntro] = useState(false)
 
   useEffect(() => {
@@ -85,15 +86,6 @@ export default function HomeDesktop() {
         "hoverVideoUrl": hoverVideo.asset->url
       }`
     ).then(setCategories)
-  }, [])
-
-  useEffect(() => {
-    client
-      .fetch(`*[_type == "siteSettings"][0]{ "videoUrl": introVideo.asset->url, "posterUrl": introVideoPoster.asset->url }`)
-      .then((data) => {
-        if (data?.videoUrl)  setVideoSrc(data.videoUrl)
-        if (data?.posterUrl) setVideoPoster(data.posterUrl)
-      })
   }, [])
 
   useEffect(() => {

@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { client } from '../lib/sanity'
 import { DUPARK_M_SPA_OK } from '../lib/mobileGridSession'
 import { lenis } from '../lib/lenis'
+import { useIntroMedia } from '../context/IntroMediaContext'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './Home.css'
@@ -17,17 +17,8 @@ export default function HomeMobileIntro() {
   const videoRef      = useRef(null)
   const spacerRef     = useRef(null)
   const whiteRiseRef  = useRef(null)
-  const [videoSrc,    setVideoSrc]    = useState(null)
-  const [videoPoster, setVideoPoster] = useState(null)
-
-  useEffect(() => {
-    client
-      .fetch(`*[_type == "siteSettings"][0]{ "videoUrl": introVideo.asset->url, "posterUrl": introVideoPoster.asset->url }`)
-      .then((data) => {
-        if (data?.videoUrl)  setVideoSrc(data.videoUrl)
-        if (data?.posterUrl) setVideoPoster(data.posterUrl)
-      })
-  }, [])
+  /* 인트로 영상/포스터 URL 은 IntroMediaProvider 가 단일 fetch 로 공급 — 중복 요청 제거 */
+  const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
 
   useEffect(() => {
     const video = videoRef.current

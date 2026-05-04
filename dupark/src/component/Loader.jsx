@@ -1,69 +1,107 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import './Loader.css'
 
 /** 인트로 영상이 너무 오래 걸리면 무한 대기는 위험 — 8초 안전 타임아웃 */
 const FALLBACK_TIMEOUT_MS = 8000
 
+/** 진행 단계별 목표 퍼센트 — 실제 로딩 이벤트에 묶여 있어 "100% 에서 대기" 상황이 생기지 않음 */
+const PCT_BOOT     = 25   // 마운트 직후(사용자에게 "시작됐다" 인지 시키는 초기 움직임)
+const PCT_URL      = 50   // Sanity 에서 인트로 영상 URL 확정
+const PCT_DOWNLOAD = 75   // 실제 네트워크 다운로드 시작 (probe `loadstart`)
+const PCT_METADATA = 90   // 메타데이터 수신 (헤더/해상도/길이 확정)
+const PCT_DONE     = 100  // 첫 프레임 디코드 완료 = 재생 가능 시점
+
 /**
  * onComplete   : 페이드 아웃이 끝나 로더 DOM이 사라져도 된다는 신호
- * waitForUrl   : 인트로 영상 URL — 다운로드가 끝나야 페이드 시작
- *                 - undefined : 부모가 아직 결정 중 (Sanity fetch 중)
- *                 - null/''   : 기다릴 영상 없음 → 카운트만 끝나면 마무리
- *                 - string    : 그 URL을 미리 받아 readyState 진입 시 마무리
+ * waitForUrl   : 인트로 영상 URL — 실제 로딩 진행도와 연동
+ *                 - undefined : 부모가 아직 결정 중 (Sanity fetch 중) → 25% 에서 대기
+ *                 - null/''   : 기다릴 영상 없음 → 바로 100% 로 점프
+ *                 - string    : probe 로 로딩 이벤트를 단계별로 받아 퍼센트 갱신
  */
 export default function Loader({ onComplete, waitForUrl }) {
   const wrapRef = useRef(null)
   const [num, setNum] = useState(0)
   const [animDone, setAnimDone] = useState(false)
-  const [mediaReady, setMediaReady] = useState(false)
   const finalizedRef = useRef(false)
 
-  /* 0 → 100% 카운터 (1초). 미디어 준비가 늦으면 100% 에서 잠깐 정지 */
-  useEffect(() => {
-    const counter = { val: 0 }
-    const tween = gsap.to(counter, {
-      val: 100,
-      duration: 1,
-      ease: 'power1.inOut',
+  /* 단일 숫자 트윈 — 다음 단계 목표(pct)가 현재보다 높을 때만 위로 끌어올림.
+     mutable ref 로 "현재 표시값"을 간직해, 다음 트윈이 항상 현 값에서 이어 붙음 */
+  const targetRef  = useRef(0)
+  const counterRef = useRef({ val: 0 })
+  const tweenRef   = useRef(null)
+
+  const setTarget = useCallback((pct, opts) => {
+    const fast = opts?.fast === true
+    if (pct <= targetRef.current) return
+    targetRef.current = pct
+    tweenRef.current?.kill()
+    const counter = counterRef.current
+    /* 100% 로 마무리될 땐 좀 더 빠르게 — 사용자가 "완료" 를 체감 */
+    const duration = fast ? 0.25 : 0.55
+    tweenRef.current = gsap.to(counter, {
+      val: pct,
+      duration,
+      ease: 'power2.out',
       onUpdate: () => setNum(Math.floor(counter.val)),
-      onComplete: () => setAnimDone(true),
+      onComplete: () => {
+        if (pct >= PCT_DONE) setAnimDone(true)
+      },
     })
-    return () => {
-      tween.kill()
-    }
   }, [])
 
-  /* 영상 프리로드 — waitForUrl 이 string 일 때만 hidden video 로 다운로드 시도 */
+  /* 마운트 — 항상 먼저 25% 까지 끌어올려 "움직인다" 는 인식 확보 */
+  useEffect(() => {
+    setTarget(PCT_BOOT)
+    return () => {
+      tweenRef.current?.kill()
+    }
+  }, [setTarget])
+
+  /* URL 확정 후 probe 로 실제 네트워크 단계를 관측 → 각 이벤트마다 목표 퍼센트 갱신 */
   useEffect(() => {
     if (waitForUrl === undefined) return
     if (!waitForUrl) {
-      setMediaReady(true)
+      /* 기다릴 영상이 없는 경우 — 바로 완료로 */
+      setTarget(PCT_DONE, { fast: true })
       return
     }
+
+    setTarget(PCT_URL)
+
     const probe = document.createElement('video')
     probe.muted = true
-    probe.preload = 'auto'
+    /* 'metadata' — 메타데이터/헤더만 받아도 loadeddata 가 발사됨.
+       모바일 셀룰러에서 영상 전체 다운로드(수 MB~수십 MB)를 기다리지 않음. */
+    probe.preload = 'metadata'
     probe.playsInline = true
-    const markReady = () => setMediaReady(true)
-    probe.addEventListener('canplaythrough', markReady, { once: true })
-    probe.addEventListener('loadeddata', markReady, { once: true })
-    probe.addEventListener('error', markReady, { once: true })
+
+    const onLoadStart = () => setTarget(PCT_DOWNLOAD)
+    const onMetadata  = () => setTarget(PCT_METADATA)
+    const onReady     = () => setTarget(PCT_DONE, { fast: true })
+
+    probe.addEventListener('loadstart',      onLoadStart, { once: true })
+    probe.addEventListener('loadedmetadata', onMetadata,  { once: true })
+    probe.addEventListener('loadeddata',     onReady,     { once: true })
+    probe.addEventListener('error',          onReady,     { once: true })
+
     probe.src = waitForUrl
-    const timeoutId = window.setTimeout(markReady, FALLBACK_TIMEOUT_MS)
+    const timeoutId = window.setTimeout(onReady, FALLBACK_TIMEOUT_MS)
+
     return () => {
-      probe.removeEventListener('canplaythrough', markReady)
-      probe.removeEventListener('loadeddata', markReady)
-      probe.removeEventListener('error', markReady)
+      probe.removeEventListener('loadstart',      onLoadStart)
+      probe.removeEventListener('loadedmetadata', onMetadata)
+      probe.removeEventListener('loadeddata',     onReady)
+      probe.removeEventListener('error',          onReady)
       probe.src = ''
       probe.load?.()
       window.clearTimeout(timeoutId)
     }
-  }, [waitForUrl])
+  }, [waitForUrl, setTarget])
 
-  /* 카운트 + 미디어 모두 준비되면 loaderComplete 발사 + 페이드 아웃 */
+  /* 100% 도달(= 실제 로딩 완료) 시점에서만 loaderComplete 발사 + 페이드 아웃 */
   useEffect(() => {
-    if (!animDone || !mediaReady) return
+    if (!animDone) return
     if (finalizedRef.current) return
     finalizedRef.current = true
     window.dispatchEvent(new CustomEvent('loaderComplete'))
@@ -73,7 +111,7 @@ export default function Loader({ onComplete, waitForUrl }) {
       ease: 'power2.inOut',
       onComplete,
     })
-  }, [animDone, mediaReady, onComplete])
+  }, [animDone, onComplete])
 
   return (
     <div ref={wrapRef} className="loader">
