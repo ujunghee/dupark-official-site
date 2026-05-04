@@ -142,14 +142,43 @@ export default function HomeDesktop() {
     lenis.scrollTo(0, { immediate: true, force: true })
   }, [])
 
+  /* 로더 대기 중엔 로고가 정위치에 잠깐 보이지 않도록 — 페인트 전에 아래로 숨김 */
+  useLayoutEffect(() => {
+    if (logoRef.current) gsap.set(logoRef.current, { yPercent: 100 })
+  }, [])
+
+  /* DUPARK 로고: 로더가 끝날 때(`loaderComplete`) 아래→위 리빌.
+     첫 방문(로더 있음) → `loaderComplete` 한 번만 기다렸다가 실행.
+     재방문(`dupark_loaded` 이미 있음) → 로더 없으므로 마운트 직후 실행. */
   useEffect(() => {
     if (!logoRef.current) return
-    const tween = gsap.fromTo(
-      logoRef.current,
-      { yPercent: 100 },
-      { yPercent: 0, duration: 2.4, ease: 'power4.out', delay: 0.6 }
-    )
-    return () => tween.kill()
+    let cancelled = false
+    let tween = null
+
+    const runAnim = () => {
+      if (cancelled || !logoRef.current) return
+      tween = gsap.fromTo(
+        logoRef.current,
+        { yPercent: 100 },
+        { yPercent: 0, duration: 2.4, ease: 'power4.out', delay: 0.6 }
+      )
+    }
+
+    const loaderActive = !sessionStorage.getItem('dupark_loaded')
+    if (!loaderActive) {
+      queueMicrotask(runAnim)
+      return () => {
+        cancelled = true
+        tween?.kill()
+      }
+    }
+
+    window.addEventListener('loaderComplete', runAnim, { once: true })
+    return () => {
+      cancelled = true
+      window.removeEventListener('loaderComplete', runAnim)
+      tween?.kill()
+    }
   }, [])
 
   useEffect(() => {

@@ -12,7 +12,7 @@ const HOLD_AT_100_MS = 1000
 const PCT_BOOT     = 25   // 마운트 직후 (사용자에게 "시작됐다" 인지 시키는 초기 움직임)
 const PCT_URL      = 50   // Sanity 에서 인트로 영상 URL 확정
 const PCT_DOWNLOAD = 70   // 실제 네트워크 다운로드 시작 (probe `loadstart`)
-const PCT_METADATA = 90   // 메타데이터 수신 (헤더/해상도/길이 확정)
+const PCT_METADATA = 85   // 메타데이터 수신 (헤더/해상도/길이 확정)
 const PCT_DONE     = 100  // 첫 프레임 디코드 완료 = 재생 가능 시점
 
 /** 트윈 시간 — 선형 이징(none)으로 "카운트업" 느낌을 준다 */
