@@ -46,12 +46,13 @@ export default function HomeMobileGrid() {
   const [categories, setCategories] = useState([])
   const gridSectionRef = useRef(null)
 
-  let spaOk = false
-  try {
-    spaOk = sessionStorage.getItem(DUPARK_M_SPA_OK) === '1'
-  } catch {
-    spaOk = false
-  }
+  const spaOk = (() => {
+    try {
+      return sessionStorage.getItem(DUPARK_M_SPA_OK) === '1'
+    } catch {
+      return false
+    }
+  })()
   const fromIntro = location.state?.fromIntro === true
   const allowed = fromIntro && spaOk
 
