@@ -131,8 +131,7 @@ const About = lazy(() => import('./pages/About'))
 /** 이미지 도용 방지 — 전역 이벤트 리스너
  *  1. 이미지 위 우클릭 컨텍스트 메뉴 차단 ("이미지를 다른 이름으로 저장…" 봉쇄)
  *  2. 이미지 dragstart 차단 (드래그&드롭 저장 봉쇄)
- *  3. 키보드 단축키 차단 — F12 / Ctrl+S / Ctrl+U / Ctrl+Shift+I,J,C / Cmd+Option+I,U,J (mac)
- *  ※ 100% 차단은 불가(스크린샷·캐시 등). "일반 사용자 진입 장벽"이 목적. */
+ *  개발자도구·페이지 저장 등 키보드 단축키는 막지 않음(접근성·디버깅). */
 function useImageDownloadGuard() {
   useEffect(() => {
     const isMediaTarget = (el) => {
@@ -148,31 +147,11 @@ function useImageDownloadGuard() {
       if (isMediaTarget(e.target)) e.preventDefault()
     }
 
-    const onKeyDown = (e) => {
-      const key = (e.key || '').toLowerCase()
-      const ctrlOrMeta = e.ctrlKey || e.metaKey
-
-      if (key === 'f12') { e.preventDefault(); return }
-      if (ctrlOrMeta && !e.shiftKey && !e.altKey && (key === 's' || key === 'u')) {
-        e.preventDefault()
-        return
-      }
-      if (ctrlOrMeta && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')) {
-        e.preventDefault()
-        return
-      }
-      if (e.metaKey && e.altKey && (key === 'i' || key === 'u' || key === 'j' || key === 'c')) {
-        e.preventDefault()
-      }
-    }
-
     document.addEventListener('contextmenu', onContextMenu)
     document.addEventListener('dragstart', onDragStart)
-    document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('contextmenu', onContextMenu)
       document.removeEventListener('dragstart', onDragStart)
-      document.removeEventListener('keydown', onKeyDown)
     }
   }, [])
 }

@@ -455,6 +455,8 @@ export default function ProjectDetail() {
             <video
               src={src}
               controls
+              /* Chromium/Fx: 네이티브 컨트롤 ⋯ 메뉴의 "동영상 저장" 등 숨김 — 완벽 차단은 불가(iOS·구형 브라우저) */
+              controlsList="nodownload"
               playsInline
               className="detail-video"
               onLoadedData={bumpMedia}
