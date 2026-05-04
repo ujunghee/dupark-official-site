@@ -74,7 +74,6 @@ export default function HomeDesktop() {
   const videoRef      = useRef(null)
   const spacerRef     = useRef(null)
   const [categories,   setCategories]   = useState([])
-  /* 인트로 영상/포스터 URL 은 IntroMediaProvider 가 단일 fetch 로 공급 — 중복 요청 제거 */
   const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
   const [hideIntro, setHideIntro] = useState(false)
 
@@ -142,14 +141,11 @@ export default function HomeDesktop() {
     lenis.scrollTo(0, { immediate: true, force: true })
   }, [])
 
-  /* 로더 대기 중엔 로고가 정위치에 잠깐 보이지 않도록 — 페인트 전에 아래로 숨김 */
   useLayoutEffect(() => {
     if (logoRef.current) gsap.set(logoRef.current, { yPercent: 100 })
   }, [])
 
-  /* DUPARK 로고: 로더가 끝날 때(`loaderComplete`) 아래→위 리빌.
-     첫 방문(로더 있음) → `loaderComplete` 한 번만 기다렸다가 실행.
-     재방문(`dupark_loaded` 이미 있음) → 로더 없으므로 마운트 직후 실행. */
+  /* 로고: loaderComplete(또는 재방문 시 즉시) */
   useEffect(() => {
     if (!logoRef.current) return
     let cancelled = false
@@ -413,8 +409,8 @@ export default function HomeDesktop() {
           style={{
             display: 'block',
             width: 'auto',
-            height: 'clamp(3.25rem, 24vw, 7.5rem)',
-            maxWidth: 'min(90vw, 20rem)',
+            height: 'clamp(3.25rem, 24vw, 18.5rem)',
+            maxWidth: 'min(90vw, 48rem)',
             objectFit: 'contain',
             userSelect: 'none',
           }}

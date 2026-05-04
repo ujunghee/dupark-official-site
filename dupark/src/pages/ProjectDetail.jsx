@@ -42,9 +42,7 @@ function countProjectMedia(p) {
   return nImg + fileUrls.length + embedUrls.length
 }
 
-/** prev/next 미리보기 — 이미지가 있으면 이미지, 없고 coverVideo가 있으면 영상으로 폴백.
- *  CSS는 .detail-nav-thumb-img 클래스 기준으로 슬라이드/사이즈/반응형이 걸려있으므로
- *  video 에도 동일 클래스를 주면 그대로 같은 모션·레이아웃이 적용된다. */
+/** prev/next: 이미지 없으면 coverVideo */
 function NavThumbMedia({ project, side }) {
   if (project?.coverImage) {
     return (
@@ -368,8 +366,6 @@ export default function ProjectDetail() {
   }, [])
 
   useEffect(() => {
-    /* 이미지만 prefetch — 영상은 NavThumbMedia 의 <video preload=metadata autoPlay> 가
-       마운트 직후부터 자체적으로 다운로드를 시작하므로 별도 prefetch 불필요(대역폭 절약) */
     if (prev?.coverImage) {
       const im = new Image()
       im.decoding = 'async'
@@ -414,13 +410,13 @@ export default function ProjectDetail() {
       >
       {/* ── 왼쪽: sticky 정보 ── */}
       <aside className="detail-info">
-        {project.category && (
+        {/* {project.category && (
           <div className="detail-reveal-clip">
             <p className="detail-category detail-reveal-track">
               {project.category} / WORK
             </p>
           </div>
-        )}
+        )} */}
         <div className="detail-reveal-clip">
           <h1 className="detail-title detail-reveal-track">{project.title}</h1>
         </div>
@@ -455,7 +451,6 @@ export default function ProjectDetail() {
             <video
               src={src}
               controls
-              /* Chromium/Fx: 네이티브 컨트롤 ⋯ 메뉴의 "동영상 저장" 등 숨김 — 완벽 차단은 불가(iOS·구형 브라우저) */
               controlsList="nodownload"
               playsInline
               className="detail-video"

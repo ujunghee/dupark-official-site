@@ -128,10 +128,7 @@ function useSiteSettings() {
 
 const About = lazy(() => import('./pages/About'))
 
-/** 이미지 도용 방지 — 전역 이벤트 리스너
- *  1. 이미지 위 우클릭 컨텍스트 메뉴 차단 ("이미지를 다른 이름으로 저장…" 봉쇄)
- *  2. 이미지 dragstart 차단 (드래그&드롭 저장 봉쇄)
- *  개발자도구·페이지 저장 등 키보드 단축키는 막지 않음(접근성·디버깅). */
+/** 미디어 위 우클릭·드래그 저장 완화 (devtools 단축키는 막지 않음) */
 function useImageDownloadGuard() {
   useEffect(() => {
     const isMediaTarget = (el) => {
@@ -241,22 +238,17 @@ function AppShell() {
   )
 }
 
-/** 로더 수명 주기 — IntroMediaProvider 안쪽에서 useIntroMedia() 를 구독해야 하므로
- *  별도 컴포넌트로 분리. 여기에서 앱 전역 Sanity fetch 는 하지 않고, 오직 loader UI 만 책임. */
+/** useIntroMedia 구독용 — 로더만 */
 function LoaderManager() {
   const [loading, setLoading] = useState(() => !sessionStorage.getItem('dupark_loaded'))
-  /* videoUrl: undefined = fetch 중, null = 영상 없음, string = 다운로드할 URL */
   const { videoUrl } = useIntroMedia()
 
-  /* loaderComplete 시점과 동일 프레임에 플래그 저장 — 비디오 등이 `loaderComplete` 리스너를
-     나중에 달았을 때(예: Sanity로 videoSrc가 늦게 도착) 이미 지나간 이벤트에
-     묶이지 않도록. 페이드 onComplete는 UI만 닫음 */
   useEffect(() => {
     const onLoaderComplete = () => {
       try {
         sessionStorage.setItem('dupark_loaded', '1')
       } catch {
-        /* private mode 등 */
+        /* ignore */
       }
     }
     window.addEventListener('loaderComplete', onLoaderComplete)
@@ -284,9 +276,7 @@ function App() {
   )
 }
 
-/** Tab 한 번 누르면 첫 포커스로 잡히는 스킵 링크
- *  - 일반 페이지: <main> 으로 포커스 + 스크롤 이동 (헤더 통과)
- *  - 홈 인트로: skipToMain 이벤트로 인트로 자체를 건너뛰고 그리드로 (HomeDesktop / HomeMobileIntro 가 처리) */
+/** 스킵 링크: main 포커스 / 홈은 skipToMain */
 function SkipLink() {
   const handleClick = (e) => {
     e.preventDefault()

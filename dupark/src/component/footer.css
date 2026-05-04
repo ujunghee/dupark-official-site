@@ -4,7 +4,8 @@
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  font-size: 0.75rem;
+  font-family: 'Inter Variable', Helvetica, sans-serif;
+  font-size: 0.85rem;
   background: var(--site-bg, #fff);
   color: var(--site-text, #000);
 }
@@ -13,17 +14,21 @@
   display: flex;
   gap: 1.25rem;
   align-items: center;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  font-kerning: normal;
 }
 
 .footer-link {
   text-decoration: none;
   color: var(--site-text, #000);
-  font-weight: 800;
 }
 
 .footer-copy {
-  font-weight: 800;
   color: var(--site-text, #000);
+  text-transform: uppercase;
+  font-weight: 500 !important;
+  font-kerning: normal;
 }
 
 /* About: 본문과 맞춘 검정 푸터 */

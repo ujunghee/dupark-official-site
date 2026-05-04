@@ -119,7 +119,6 @@ export default function HomeMobileGrid() {
     }
 
     gsap.killTweensOf(items)
-    /* y + opacity 한 세트로 같은 이징·길이 — 긴 메인 페이드와 분리돼 어색함 제거 */
     gsap.fromTo(
       items,
       { y: 10, autoAlpha: 0 },

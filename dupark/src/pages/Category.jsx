@@ -19,6 +19,8 @@ function getColumnCount() {
 }
 
 const ROWS_PER_STEP = 2
+/** 데스크톱: 첫 화면·More 모두 4행 단위 (모바일은 2행) */
+const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
 
 /** 이미지가 있으면 이미지, 없고 영상 URL이 있으면 영상으로 폴백해 같은 자리에 그려주는 헬퍼 */
@@ -155,7 +157,11 @@ export default function Category() {
       .then((data) => {
         setProjects(data)
         const cols = getColumnCount()
-        setDisplayedCount(Math.min(data.length, ROWS_PER_STEP * cols))
+        const initialRows =
+          typeof window !== 'undefined' && window.matchMedia(MQL_MOBILE).matches
+            ? ROWS_PER_STEP
+            : ROWS_PER_MORE_DESKTOP
+        setDisplayedCount(Math.min(data.length, initialRows * cols))
       })
   }, [category])
 
@@ -193,7 +199,7 @@ export default function Category() {
     if (isMobile) return
     setDisplayedCount((c) => {
       const cols = getColumnCount()
-      return Math.min(c + ROWS_PER_STEP * cols, projects.length)
+      return Math.min(c + ROWS_PER_MORE_DESKTOP * cols, projects.length)
     })
   }, [isMobile, projects.length])
 

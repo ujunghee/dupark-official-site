@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DUPARK_M_SPA_OK } from '../lib/mobileGridSession'
 import { lenis } from '../lib/lenis'
@@ -7,17 +7,13 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './Home.css'
 
-/**
- * 모바일 전용 인트로만 (`/` + ≤768).
- * 터치/휠 스냅으로 한 뷰포트 아래로 내린 뒤 `/m` 으로 replace 이동 — 그리드·클램프·hideIntro 는 `/m` 페이지에서만 처리.
- */
+/** 모바일 인트로 `/` (≤768) → 스냅 후 `/m` */
 export default function HomeMobileIntro() {
   const navigate      = useNavigate()
   const logoRef       = useRef(null)
   const videoRef      = useRef(null)
   const spacerRef     = useRef(null)
   const whiteRiseRef  = useRef(null)
-  /* 인트로 영상/포스터 URL 은 IntroMediaProvider 가 단일 fetch 로 공급 — 중복 요청 제거 */
   const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
 
   useEffect(() => {
@@ -33,8 +29,7 @@ export default function HomeMobileIntro() {
       void video.play().catch(() => {})
     }
 
-    /* `<source>` 반영 직후엔 readyState=0 인 채로 play()만 호출하면 거절되고(조용히 catch),
-       새로고침·dupark_loaded 있음(로더 없음)일 때 특히 자주 남 */
+    /* source 반영 직후 play() 거절 방지 */
     const onMediaReady = () => {
       if (cancelled) return
       video.removeEventListener('canplay', onMediaReady)
@@ -327,7 +322,7 @@ export default function HomeMobileIntro() {
           style={{
             display: 'block',
             width: 'auto',
-            height: 'clamp(2rem, 11vw, 3.25rem)',
+            height: 'clamp(4rem, 11vw, 6.25rem)',
             maxWidth: 'min(88vw, 17.5rem)',
             objectFit: 'contain',
             userSelect: 'none',
