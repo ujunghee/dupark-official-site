@@ -2,7 +2,6 @@ import { useEffect, useRef, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { lenis } from '../lib/lenis.js'
-import AboutGlobe from '../component/AboutGlobe'
 import './About.css'
 
 const ABOUT_BODY_LINES = [
@@ -11,6 +10,10 @@ const ABOUT_BODY_LINES = [
   'The studio develops and delivers projects that combine art direction,',
   'production design, and prop styling to create refined and contemporary visual experiences.',
 ]
+
+/** 기본 메일 앱에서 수신·작성 화면이 열리도록 mailto: 사용 */
+const CONTACT_EMAIL = 'info@dupark.studio'
+const MAILTO_CONTACT = `mailto:${CONTACT_EMAIL}`
 
 export default function About() {
   const pageInnerRef = useRef(null)
@@ -70,8 +73,17 @@ export default function About() {
           document.body
         )}
       <div ref={pageInnerRef} className="about-page-inner">
-        <div className="about-globe-column">
-          <AboutGlobe />
+        <div className="about-logo-column">
+          <div className="about-logo-center">
+            <img
+              src="/logo-white.svg"
+              alt="DUPARK"
+              className="about-logo-mark"
+              width={480}
+              height={120}
+              decoding="async"
+            />
+          </div>
         </div>
 
         <div className="about-content">
@@ -122,7 +134,13 @@ export default function About() {
               <div className="about-reveal-clip">
                 <div className="about-reveal-track about-contact-row">
                   <span className="about-contact-label">EMAIL</span>
-                  <a className="about-contact-link" href="mailto:info@dupark.studio">info@dupark.studio</a>
+                  <a
+                    className="about-contact-link"
+                    href={MAILTO_CONTACT}
+                    title="메일 앱에서 새 메일 작성"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
                 </div>
               </div>
               <div className="about-reveal-clip">

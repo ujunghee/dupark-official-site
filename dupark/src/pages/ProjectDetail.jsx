@@ -83,6 +83,74 @@ function toEmbedUrl(url) {
   return url
 }
 
+/** 뷰포트 ± 여유만큼 가까워지기 전엔 src 미 attach → ~10MB 영상 여러 개 동시 요청 방지 */
+const LAZY_MEDIA_ROOT_MARGIN = '400px 0px'
+
+function useLoadMediaWhenNear(eager) {
+  const ref = useRef(null)
+  const [load, setLoad] = useState(Boolean(eager))
+
+  useEffect(() => {
+    if (eager) {
+      setLoad(true)
+      return
+    }
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLoad(true)
+          io.disconnect()
+        }
+      },
+      { root: null, rootMargin: LAZY_MEDIA_ROOT_MARGIN, threshold: 0 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [eager])
+
+  return [ref, load]
+}
+
+function DetailLazyFileVideo({ src, eager, bumpMedia }) {
+  const [hostRef, load] = useLoadMediaWhenNear(eager)
+  return (
+    <div ref={hostRef} className="detail-lazy-media-host">
+      {load ? (
+        <video
+          src={src}
+          controls
+          controlsList="nodownload"
+          playsInline
+          preload="metadata"
+          className="detail-video"
+          onLoadedData={bumpMedia}
+          onError={bumpMedia}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function DetailLazyEmbed({ embedSrc, title, bumpMedia, eager }) {
+  const [hostRef, load] = useLoadMediaWhenNear(eager)
+  return (
+    <div ref={hostRef} className="detail-lazy-media-host">
+      {load ? (
+        <iframe
+          src={embedSrc}
+          className="detail-video"
+          allow="fullscreen; picture-in-picture"
+          allowFullScreen
+          onLoad={bumpMedia}
+          title={title}
+        />
+      ) : null}
+    </div>
+  )
+}
+
 export default function ProjectDetail() {
   const { category, id } = useParams()
   const navigate           = useNavigate()
@@ -448,15 +516,7 @@ export default function ProjectDetail() {
             key={`${project.slug}-vfile-${i}`}
             className="detail-video-wrap detail-grid-cell"
           >
-            <video
-              src={src}
-              controls
-              controlsList="nodownload"
-              playsInline
-              className="detail-video"
-              onLoadedData={bumpMedia}
-              onError={bumpMedia}
-            />
+            <DetailLazyFileVideo src={src} eager={i === 0} bumpMedia={bumpMedia} />
           </div>
         ))}
         {detailEmbedUrls.map((url, i) => (
@@ -464,13 +524,11 @@ export default function ProjectDetail() {
             key={`${project.slug}-vembed-${i}`}
             className="detail-video-wrap detail-grid-cell"
           >
-            <iframe
-              src={toEmbedUrl(url)}
-              className="detail-video"
-              allow="fullscreen; picture-in-picture"
-              allowFullScreen
-              onLoad={bumpMedia}
+            <DetailLazyEmbed
+              embedSrc={toEmbedUrl(url)}
               title={`${project.title} 영상 ${i + 1}`}
+              bumpMedia={bumpMedia}
+              eager={detailFileUrls.length === 0 && i === 0}
             />
             {/* 클릭 캐처: iframe 위에 깔린 투명 버튼.
                 기본 상태에서는 iframe이 휠/터치를 빨아들이지 않도록 pointer-events 차단,

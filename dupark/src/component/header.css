@@ -51,6 +51,11 @@ body.dupark-about-page .header .hamburger span {
   background: #fff;
 }
 
+/* About: 진입 후 자동 축소 — 상단/헤더 호버 시에만 펼침 */
+body.dupark-about-page .header.header--about-retracted {
+  transform: translateY(-100%);
+}
+
 /* 위로 스크롤 → 헤더 숨김 */
 .header.hidden {
   transform: translateY(-100%);

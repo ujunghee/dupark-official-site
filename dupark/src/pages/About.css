@@ -82,8 +82,8 @@ body.dupark-about-page #root {
   }
 }
 
-/* ── 왼쪽: Three.js 점박이 지구 + 서울 로고 — 모바일은 상단 행 */
-.about-globe-column {
+/* ── 왼쪽: DUPARK 로고 — 모바일은 상단 행 */
+.about-logo-column {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,6 +92,24 @@ body.dupark-about-page #root {
   min-height: 0;
   box-sizing: border-box;
   align-self: stretch;
+}
+
+.about-logo-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.about-logo-mark {
+  width: min(42vw, 22rem);
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
 }
 
 /* ── 오른쪽: 내용 — 마스크 + 내부 reveal ── */
@@ -181,6 +199,7 @@ body.dupark-about-page #root {
   font-weight: 700;
   color: #fff;
   text-decoration: none;
+  cursor: pointer;
   transition: opacity 0.2s ease;
 }
 
@@ -202,12 +221,19 @@ body.dupark-about-page #root {
   .about-page-inner {
     height: auto;
     grid-template-columns: 1fr;
-    /* svh 사용 — URL 바 토글 시 행 높이가 변동되어 globe 캔버스가 리사이즈되며 깜빡이는 현상 방지 */
-    grid-template-rows: minmax(32svh, 40svh) auto;
+    grid-template-rows: minmax(28svh, 36svh) auto;
   }
 
-  .about-globe-column {
+  .about-logo-column {
     padding: 0.75rem 1.25rem 0.5rem;
+    display: none;
+  }
+  .about-logo-center {
+    display: none;
+  }
+
+  .about-logo-mark {
+  display: none;
   }
 
   .about-content {

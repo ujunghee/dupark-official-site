@@ -24,7 +24,16 @@ const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
 
 /** 이미지가 있으면 이미지, 없고 영상 URL이 있으면 영상으로 폴백해 같은 자리에 그려주는 헬퍼 */
-function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
+function CoverMedia({
+  image,
+  videoUrl,
+  alt,
+  layered,
+  style,
+  width = 400,
+  videoPreload = 'metadata',
+  imgLoading = 'lazy',
+}) {
   const baseStyle = {
     width: '100%',
     aspectRatio: '3/4',
@@ -35,7 +44,15 @@ function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
     ...style,
   }
   if (image) {
-    return <img src={urlFor(image).width(width).url()} alt={alt} style={baseStyle} />
+    return (
+      <img
+        loading={imgLoading}
+        decoding="async"
+        src={urlFor(image).width(width).url()}
+        alt={alt}
+        style={baseStyle}
+      />
+    )
   }
   if (videoUrl) {
     return (
@@ -45,7 +62,7 @@ function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
         muted
         loop
         playsInline
-        preload="metadata"
+        preload={videoPreload}
         aria-label={alt}
         style={baseStyle}
       />
@@ -56,33 +73,69 @@ function CoverMedia({ image, videoUrl, alt, layered, style, width = 400 }) {
 
 function ProjectCard({ project, category }) {
   const { start: startEnter } = useRouteEnter()
+  const cardRef = useRef(null)
   const [hovered, setHovered] = useState(false)
   const noDetail = isComingSoonTitle(project.title)
   const hasCover = Boolean(project.coverImage || project.coverVideoUrl)
   const hasHover = Boolean(project.hoverImage || project.hoverVideoUrl)
+  const isVideoOnlyCover = Boolean(project.coverVideoUrl && !project.coverImage)
+  const [coverVideoUnlocked, setCoverVideoUnlocked] = useState(() => !isVideoOnlyCover)
+
+  /* 커버가 ‘영상만’인 카드: 뷰포트 근처에서만 <video> 마운트 — 카테고리 진입 시 N개 동시 디코딩 방지 */
+  useEffect(() => {
+    if (!isVideoOnlyCover) return
+    const el = cardRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCoverVideoUnlocked(true)
+          io.disconnect()
+        }
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [isVideoOnlyCover, project._id])
 
   const inner = (
     <>
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {hasCover && (
-          <CoverMedia
-            image={project.coverImage}
-            videoUrl={project.coverVideoUrl}
-            alt={project.title}
-            style={{
-              opacity: !noDetail && hovered && hasHover ? 0 : 1,
-            }}
-          />
-        )}
-        {hasHover && (
+        {hasCover &&
+          (isVideoOnlyCover && !coverVideoUnlocked ? (
+            <div
+              className="project-card-cover-skeleton"
+              style={{
+                width: '100%',
+                aspectRatio: '3/4',
+                background:
+                  'color-mix(in srgb, var(--site-text, #000) 6%, var(--site-bg, #fff))',
+              }}
+              aria-hidden
+            />
+          ) : (
+            <CoverMedia
+              image={project.coverImage}
+              videoUrl={project.coverVideoUrl}
+              alt={project.title}
+              videoPreload={isVideoOnlyCover ? 'none' : 'metadata'}
+              imgLoading="lazy"
+              style={{
+                opacity: !noDetail && hovered && hasHover ? 0 : 1,
+              }}
+            />
+          ))}
+        {/* 호버 에셋: 올렸을 때만 마운트 → 보이지 않는 카드까지 호버 영상 전부 prefetch 되던 부담 제거 */}
+        {hasHover && hovered && !noDetail && (
           <CoverMedia
             image={project.hoverImage}
             videoUrl={project.hoverVideoUrl}
             alt={project.title}
             layered
-            style={{
-              opacity: !noDetail && hovered ? 1 : 0,
-            }}
+            videoPreload="none"
+            imgLoading="lazy"
+            style={{ opacity: 1 }}
           />
         )}
       </div>
@@ -102,6 +155,7 @@ function ProjectCard({ project, category }) {
   if (noDetail) {
     return (
       <div
+        ref={cardRef}
         className="project-card project-card--no-detail"
         aria-disabled="true"
         onMouseEnter={() => setHovered(true)}
@@ -115,6 +169,7 @@ function ProjectCard({ project, category }) {
   /* 정상 카드 — 실제 <a> 라 Tab 포커스, Enter 활성화, 우클릭 새 탭 모두 동작 */
   return (
     <Link
+      ref={cardRef}
       to={`/${category}/${project.slug?.current}`}
       className="project-card"
       onClick={(e) => {

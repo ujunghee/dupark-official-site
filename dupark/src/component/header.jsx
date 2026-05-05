@@ -14,6 +14,11 @@ const getHomeVideoHeroShouldHideHeader = () => {
   return !document.body.classList.contains('dupark-home-content')
 }
 
+/** About: /about 진입할 때마다 ABOUT_AUTO_HIDE_MS 뒤 자동 축소 — 769px 이상(PC)만. 모바일(≤768px)은 기본 헤더 */
+const ABOUT_AUTO_HIDE_MS = 2000
+const ABOUT_PEEK_EDGE_PX = 80
+const ABOUT_PEEK_COLLAPSE_DEBOUNCE_MS = 100
+
 export default function Header() {
   const [isOpen, setIsOpen]     = useState(false)
   const [navItems, setNavItems] = useState([])
@@ -25,6 +30,10 @@ export default function Header() {
   const [isNarrow, setIsNarrow] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(MQL_NARROW).matches
   )
+  /** /about 전용: 타이머 경과 후 true → 헤더 위로 축소(피크 존에서만 다시 펼침) */
+  const [aboutAutoHidden, setAboutAutoHidden] = useState(false)
+  const [aboutPeekOpen, setAboutPeekOpen] = useState(false)
+  const aboutCollapseTimerRef = useRef(null)
   const lastScrollY             = useRef(0)
   /* 모바일 한정 hysteresis 앵커
      · `lastScrollY` 는 PC 분기(가로 스크롤 시작점 clamp bounce 등)가 의존하는 frame-to-frame 위치라 절대 손대면 안 됨
@@ -60,6 +69,83 @@ export default function Header() {
     }
   }, [isHome, location.key, location.pathname])
 
+  const isAboutPage = location.pathname === '/about'
+
+  /* About 진입 시 이전 페이지에서 남은 스크롤 숨김(hidden) 제거 — 안 하면 .header.hidden 이 유지돼 헤더가 안 보임 */
+  useEffect(() => {
+    if (isAboutPage) setHidden(false)
+  }, [isAboutPage, location.pathname])
+
+  /* About: /about 진입할 때마다 타이머 후 자동 숨김 — 769px+ 만. 모바일은 타이머·피크 미적용 */
+  useEffect(() => {
+    if (!isAboutPage) {
+      setAboutAutoHidden(false)
+      setAboutPeekOpen(false)
+      return
+    }
+    if (isNarrow) {
+      setAboutAutoHidden(false)
+      setAboutPeekOpen(false)
+      return
+    }
+
+    setAboutAutoHidden(false)
+    setAboutPeekOpen(false)
+    const t = window.setTimeout(() => {
+      setAboutAutoHidden(true)
+    }, ABOUT_AUTO_HIDE_MS)
+    return () => window.clearTimeout(t)
+  }, [isAboutPage, isNarrow, location.key])
+
+  /* About + 데스크톱 + 축소: 상단 가장자리·마우스로만 펼침 (모바일은 미등록) */
+  useEffect(() => {
+    if (!isAboutPage || !aboutAutoHidden || isNarrow) return
+
+    const clearCollapseTimer = () => {
+      if (aboutCollapseTimerRef.current != null) {
+        window.clearTimeout(aboutCollapseTimerRef.current)
+        aboutCollapseTimerRef.current = null
+      }
+    }
+
+    const scheduleCollapse = () => {
+      clearCollapseTimer()
+      aboutCollapseTimerRef.current = window.setTimeout(() => {
+        setAboutPeekOpen(false)
+        aboutCollapseTimerRef.current = null
+      }, ABOUT_PEEK_COLLAPSE_DEBOUNCE_MS)
+    }
+
+    const openPeek = () => {
+      clearCollapseTimer()
+      setAboutPeekOpen(true)
+    }
+
+    const onMove = (e) => {
+      if (e.clientY <= ABOUT_PEEK_EDGE_PX) {
+        openPeek()
+        return
+      }
+      const under = document.elementFromPoint(e.clientX, e.clientY)
+      if (under?.closest('.header')) {
+        openPeek()
+        return
+      }
+      scheduleCollapse()
+    }
+
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      clearCollapseTimer()
+    }
+  }, [isAboutPage, aboutAutoHidden, isNarrow])
+
+  /* 드로어 열림 중에는 헤더가 필요하므로 펼침 유지 (About 데스크톱 피크 모드에서만 의미 있음) */
+  useEffect(() => {
+    if (isOpen && isAboutPage && !isNarrow && aboutAutoHidden) setAboutPeekOpen(true)
+  }, [isOpen, isAboutPage, isNarrow, aboutAutoHidden])
+
   /* ── 스크롤 핸들러 ── */
   //  · PC 분기는 원본 그대로 — `setHidden(scrollingUp)` + `lastScrollY` 매 프레임 갱신
   //    (홈 가로 스크롤 시작점 clamp bounce 의 0.6px delta 가 헤더를 노출시키는 메커니즘 의존)
@@ -73,6 +159,13 @@ export default function Header() {
       const scrollingUp = current < lastScrollY.current
 
       setAtTop(current < 10)
+
+      /* About + 데스크톱(769px+): 스크롤 기반 hidden 끔 — 피크만 사용. 진입 시 타 페이지 hidden 해제 */
+      if (location.pathname === '/about' && !isNarrow) {
+        setHidden(false)
+        lastScrollY.current = current
+        return
+      }
 
       const fromBody = document.body.classList.contains('dupark-home-content')
       if (isHome) {
@@ -217,7 +310,10 @@ export default function Header() {
     'header',
     transparent ? 'at-top' : '',
     !atTop ? 'header--scrolled' : '',
-    hidden      ? 'hidden'  : '',
+    hidden && (!isAboutPage || isNarrow) ? 'hidden'  : '',
+    isAboutPage && !isNarrow && aboutAutoHidden && !aboutPeekOpen && !isOpen
+      ? 'header--about-retracted'
+      : '',
   ].filter(Boolean).join(' ')
 
   /* 흰 로고: About 본문·홈 히어로(데스크톱) — 모바일은 헤더가 흰 바 = 검은 로고 */
@@ -227,7 +323,24 @@ export default function Header() {
 
   return (
     <>
-      <header className={headerClass}>
+      <header
+        className={headerClass}
+        onMouseEnter={() => {
+          if (!isAboutPage || isNarrow || !aboutAutoHidden) return
+          if (aboutCollapseTimerRef.current != null) {
+            window.clearTimeout(aboutCollapseTimerRef.current)
+            aboutCollapseTimerRef.current = null
+          }
+          setAboutPeekOpen(true)
+        }}
+        onMouseLeave={() => {
+          if (!isAboutPage || isNarrow || !aboutAutoHidden) return
+          aboutCollapseTimerRef.current = window.setTimeout(() => {
+            setAboutPeekOpen(false)
+            aboutCollapseTimerRef.current = null
+          }, ABOUT_PEEK_COLLAPSE_DEBOUNCE_MS)
+        }}
+      >
         {/* 로고: 클리핑 래퍼 → 내부 img가 위에서 아래로 reveal */}
         <NavLink to="/" className="logo">
           <div className="header-clip">
