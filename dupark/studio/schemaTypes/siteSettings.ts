@@ -100,6 +100,20 @@ export default defineType({
       description: '푸터에 표시될 SNS 링크 목록',
     }),
     defineField({
+      name: 'aboutInstagramUrl',
+      title: 'About 페이지 — Instagram URL',
+      type: 'url',
+      description: '프로필 링크 (예: https://www.instagram.com/계정/)',
+      validation: (Rule) =>
+        Rule.uri({ scheme: ['http', 'https'], allowRelative: false }).optional(),
+    }),
+    defineField({
+      name: 'aboutInstagramHandle',
+      title: 'About 페이지 — Instagram 표시명',
+      type: 'string',
+      description: '화면에 보일 텍스트 (예: @dupark.studio). 비우면 URL에서 계정명을 추출합니다.',
+    }),
+    defineField({
       name: 'favicon',
       title: '파비콘 이미지',
       type: 'image',

@@ -17,6 +17,7 @@
   font-weight: 500 !important;
   text-transform: uppercase;
   font-kerning: normal;
+  font-size: 0.65rem;
 }
 
 .footer-link {
@@ -29,6 +30,7 @@
   text-transform: uppercase;
   font-weight: 500 !important;
   font-kerning: normal;
+  font-size: 0.65rem;
 }
 
 /* About: 본문과 맞춘 검정 푸터 */

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useLayoutEffect } from 'react'
+import { useEffect, useRef, useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { lenis } from '../lib/lenis.js'
+import { client } from '../lib/sanity'
 import './About.css'
 
 const ABOUT_BODY_LINES = [
@@ -15,8 +16,28 @@ const ABOUT_BODY_LINES = [
 const CONTACT_EMAIL = 'info@dupark.studio'
 const MAILTO_CONTACT = `mailto:${CONTACT_EMAIL}`
 
+/** About Instagram — Studio 미입력 시 기존 하드코딩과 동일(마이그레이션) */
+const FALLBACK_INSTAGRAM = {
+  url: 'https://www.instagram.com/duapark.stuio/',
+  label: '@duapark.stuio',
+}
+
+function labelFromInstagramUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  try {
+    const u = new URL(url.trim().startsWith('http') ? url.trim() : `https://${url.trim()}`)
+    const parts = u.pathname.split('/').filter(Boolean)
+    const user = parts[0]
+    if (!user || user === 'p' || user === 'reel' || user === 'stories') return ''
+    return `@${user}`
+  } catch {
+    return ''
+  }
+}
+
 export default function About() {
   const pageInnerRef = useRef(null)
+  const [instagram, setInstagram] = useState(() => ({ ...FALLBACK_INSTAGRAM }))
 
   useLayoutEffect(() => {
     document.body.classList.add('dupark-about-page')
@@ -32,6 +53,32 @@ export default function About() {
 
   useLayoutEffect(() => {
     lenis.scrollTo(0, { immediate: true, force: true })
+  }, [])
+
+  useEffect(() => {
+    client
+      .fetch(
+        `*[_type == "siteSettings"][0]{ aboutInstagramUrl, aboutInstagramHandle }`
+      )
+      .then((data) => {
+        const url =
+          typeof data?.aboutInstagramUrl === 'string'
+            ? data.aboutInstagramUrl.trim()
+            : ''
+        const handle =
+          typeof data?.aboutInstagramHandle === 'string'
+            ? data.aboutInstagramHandle.trim()
+            : ''
+        if (url) {
+          setInstagram({
+            url,
+            label: handle || labelFromInstagramUrl(url) || url,
+          })
+        } else {
+          setInstagram({ ...FALLBACK_INSTAGRAM })
+        }
+      })
+      .catch(() => setInstagram({ ...FALLBACK_INSTAGRAM }))
   }, [])
 
   useLayoutEffect(() => {
@@ -148,11 +195,11 @@ export default function About() {
                   <span className="about-contact-label">Instagram</span>
                   <a
                     className="about-contact-link"
-                    href="https://www.instagram.com/duapark.stuio/"
+                    href={instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    @duapark.stuio
+                    {instagram.label}
                   </a>
                 </div>
               </div>
