@@ -222,7 +222,7 @@ body.dupark-about-page #root {
   .about-page-inner {
     height: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(28svh, 36svh) auto;
+    /* grid-template-rows: minmax(28svh, 36svh) auto; */
   }
 
   .about-logo-column {
