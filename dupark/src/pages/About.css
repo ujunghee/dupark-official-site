@@ -192,6 +192,7 @@ body.dupark-about-page #root {
   color: rgba(255, 255, 255, 0.45);
   letter-spacing: 0.08em;
   min-width: 5rem;
+  text-transform: uppercase;
 }
 
 .about-contact-link {
@@ -248,6 +249,17 @@ body.dupark-about-page #root {
 
   .about-section-title {
     font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+  }
+
+  /* 라벨 고정폭 + baseline 정렬 → 좁은 화면에서 링크와 어긋남·줄바꿈 깨짐 */
+  .about-contact-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+
+  .about-contact-label {
+    min-width: 0;
   }
 }
 

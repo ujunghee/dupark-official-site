@@ -416,7 +416,9 @@ export default function Header() {
       <nav className={`drawer${isOpen ? ' open' : ''}`}>
         {/* 상단: 로고 + 닫기 버튼 */}
         <div className="drawer-header">
-          <img src="/logo-white.svg" alt="DUPARK" className="logo-img" />
+          <NavLink to="/" className="logo" onClick={() => setIsOpen(false)}>
+            <img src="/logo-white.svg" alt="DUPARK" className="logo-img" />
+          </NavLink>
           <button className="drawer-close" onClick={() => setIsOpen(false)} aria-label="닫기">
             <span /><span />
           </button>
