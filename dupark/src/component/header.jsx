@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, startTransition } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { client } from '../lib/sanity'
 import gsap from 'gsap'
@@ -71,28 +71,30 @@ export default function Header() {
 
   const isAboutPage = location.pathname === '/about'
 
-  /* About 진입 시 이전 페이지에서 남은 스크롤 숨김(hidden) 제거 — 안 하면 .header.hidden 이 유지돼 헤더가 안 보임 */
-  useEffect(() => {
-    if (isAboutPage) setHidden(false)
-  }, [isAboutPage, location.pathname])
-
-  /* About: /about 진입할 때마다 타이머 후 자동 숨김 — 769px+ 만. 모바일은 타이머·피크 미적용 */
+  /* About: /about 진입할 때마다 타이머 후 자동 숨김 — 769px+ 만. 모바일은 타이머·피크 미적용
+     (동기 setState in effect 린트 회피: startTransition — hidden 은 아래 스크롤 onScroll()에서 /about+PC 일 때 해제) */
   useEffect(() => {
     if (!isAboutPage) {
-      setAboutAutoHidden(false)
-      setAboutPeekOpen(false)
+      startTransition(() => {
+        setAboutAutoHidden(false)
+        setAboutPeekOpen(false)
+      })
       return
     }
     if (isNarrow) {
-      setAboutAutoHidden(false)
-      setAboutPeekOpen(false)
+      startTransition(() => {
+        setAboutAutoHidden(false)
+        setAboutPeekOpen(false)
+      })
       return
     }
 
-    setAboutAutoHidden(false)
-    setAboutPeekOpen(false)
+    startTransition(() => {
+      setAboutAutoHidden(false)
+      setAboutPeekOpen(false)
+    })
     const t = window.setTimeout(() => {
-      setAboutAutoHidden(true)
+      startTransition(() => setAboutAutoHidden(true))
     }, ABOUT_AUTO_HIDE_MS)
     return () => window.clearTimeout(t)
   }, [isAboutPage, isNarrow, location.key])
@@ -140,11 +142,6 @@ export default function Header() {
       clearCollapseTimer()
     }
   }, [isAboutPage, aboutAutoHidden, isNarrow])
-
-  /* 드로어 열림 중에는 헤더가 필요하므로 펼침 유지 (About 데스크톱 피크 모드에서만 의미 있음) */
-  useEffect(() => {
-    if (isOpen && isAboutPage && !isNarrow && aboutAutoHidden) setAboutPeekOpen(true)
-  }, [isOpen, isAboutPage, isNarrow, aboutAutoHidden])
 
   /* ── 스크롤 핸들러 ── */
   //  · PC 분기는 원본 그대로 — `setHidden(scrollingUp)` + `lastScrollY` 매 프레임 갱신

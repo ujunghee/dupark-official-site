@@ -205,7 +205,6 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
 
 /* ── 하단 Prev / Next (detail-stage 밖) ── */
 .detail-layout > .detail-nav-outer {
-  grid-column: 1 / -1;
   position: relative;
   z-index: 1;
 }
@@ -355,12 +354,16 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
 /* ── 모바일 ── */
 @media (max-width: 768px) {
   .detail-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     padding-top: var(--dupark-mobile-header-stack);
   }
 
   .detail-stage {
-    grid-template-columns: 1fr;
+    width: 100%;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
   }
 
   .detail-info {
@@ -371,6 +374,7 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
   .detail-grid {
     padding: 0 1.25rem;
     gap: 0.3rem;
+    flex: 1;
   }
 
   .detail-nav-outer {
