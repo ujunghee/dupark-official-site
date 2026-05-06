@@ -135,9 +135,9 @@
   transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.detail-img-wrap:hover .detail-img {
+/* .detail-img-wrap:hover .detail-img {
   transform: scale(1.05);
-}
+} */
 
 /* 영상: 2열 전체 너비 차지 */
 .detail-video-wrap {
