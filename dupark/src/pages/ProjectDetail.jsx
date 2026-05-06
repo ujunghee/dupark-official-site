@@ -83,24 +83,29 @@ function toEmbedUrl(url) {
   return url
 }
 
+/** 파일 `<video>`용 포스터: CMS 커버 → 갤러리 첫 장 (모바일에서 흰 화면 완화) */
+function projectFileVideoPosterUrl(project) {
+  if (!project) return undefined
+  if (project.coverImage) return urlFor(project.coverImage).width(1200).quality(82).url()
+  if (project.images?.[0]) return urlFor(project.images[0]).width(1200).quality(82).url()
+  return undefined
+}
+
 /** 뷰포트 ± 여유만큼 가까워지기 전엔 src 미 attach → ~10MB 영상 여러 개 동시 요청 방지 */
 const LAZY_MEDIA_ROOT_MARGIN = '400px 0px'
 
 function useLoadMediaWhenNear(eager) {
   const ref = useRef(null)
-  const [load, setLoad] = useState(Boolean(eager))
+  const [lazyLoaded, setLazyLoaded] = useState(false)
 
   useEffect(() => {
-    if (eager) {
-      setLoad(true)
-      return
-    }
+    if (eager) return
     const el = ref.current
     if (!el) return
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setLoad(true)
+          setLazyLoaded(true)
           io.disconnect()
         }
       },
@@ -110,11 +115,24 @@ function useLoadMediaWhenNear(eager) {
     return () => io.disconnect()
   }, [eager])
 
+  const load = Boolean(eager) || lazyLoaded
   return [ref, load]
 }
 
-function DetailLazyFileVideo({ src, eager, bumpMedia }) {
+function DetailLazyFileVideo({ src, eager, bumpMedia, poster }) {
   const [hostRef, load] = useLoadMediaWhenNear(eager)
+  const didBumpRef = useRef(false)
+
+  useEffect(() => {
+    didBumpRef.current = false
+  }, [src])
+
+  const onVideoReady = useCallback(() => {
+    if (didBumpRef.current) return
+    didBumpRef.current = true
+    bumpMedia()
+  }, [bumpMedia])
+
   return (
     <div ref={hostRef} className="detail-lazy-media-host">
       {load ? (
@@ -123,10 +141,13 @@ function DetailLazyFileVideo({ src, eager, bumpMedia }) {
           controls
           controlsList="nodownload"
           playsInline
-          preload="metadata"
+          /* 모바일 WebKit: metadata만으로는 첫 프레임·포스터가 안 나오는 경우 많음 → lazy 이후엔 auto */
+          preload="auto"
+          poster={poster || undefined}
           className="detail-video"
-          onLoadedData={bumpMedia}
-          onError={bumpMedia}
+          onLoadedData={onVideoReady}
+          onCanPlay={onVideoReady}
+          onError={onVideoReady}
         />
       ) : null}
     </div>
@@ -516,7 +537,12 @@ export default function ProjectDetail() {
             key={`${project.slug}-vfile-${i}`}
             className="detail-video-wrap detail-grid-cell"
           >
-            <DetailLazyFileVideo src={src} eager={i === 0} bumpMedia={bumpMedia} />
+            <DetailLazyFileVideo
+              src={src}
+              eager={i === 0}
+              bumpMedia={bumpMedia}
+              poster={projectFileVideoPosterUrl(project)}
+            />
           </div>
         ))}
         {detailEmbedUrls.map((url, i) => (

@@ -146,12 +146,14 @@
   aspect-ratio: 16/9;
   position: relative;
   overflow: hidden;
+  background: #000;
 }
 
 /* IntersectionObserver 기준 박스 — 지연 로드 전에도 16:9 자리 유지 */
 .detail-video-wrap .detail-lazy-media-host {
   position: absolute;
   inset: 0;
+  background: #000;
 }
 
 /* YouTube UI 가리는 투명 오버레이 */
