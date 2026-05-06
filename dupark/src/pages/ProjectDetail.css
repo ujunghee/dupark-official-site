@@ -208,6 +208,7 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
 /* ── 하단 Prev / Next (detail-stage 밖) ── */
 .detail-layout > .detail-nav-outer {
   position: relative;
+  grid-column: 1 / -1;
   z-index: 1;
 }
 
