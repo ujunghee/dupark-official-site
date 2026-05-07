@@ -93,7 +93,7 @@ a {
 :root {
   --site-font-family: 'ABCDiatype', system-ui, sans-serif;
   /* 데스크톱 .header: padding 세로 .8rem×2 + 로고 (--dupark-header-logo-height) */
-  --dupark-header-h: calc(1.6rem + var(--dupark-header-logo-height));
+  --dupark-header-h: calc(1.6rem + var(--dupark-header-logo-height) + .2rem);
   /* .site-footer: padding 1.5rem×2 + 본문 라인 */
   --dupark-footer-h: 4.125rem;
 
