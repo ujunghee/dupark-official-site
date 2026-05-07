@@ -1,4 +1,4 @@
-import { useEffect, useRef, useLayoutEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useLayoutEffect, useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { lenis } from '../lib/lenis.js'
@@ -52,6 +52,29 @@ function normalizeLines(value) {
     .filter(Boolean)
 }
 
+/** Studio에 mailto:까지 붙여 넣거나 공백·제로폭 문자가 섞여도 안전하게 */
+function cleanContactEmailInput(raw) {
+  if (typeof raw !== 'string') return ''
+  let s = raw.trim().replace(/[\u200B-\u200D\uFEFF]/g, '')
+  if (/^mailto:/i.test(s)) s = s.replace(/^mailto:/i, '').trim()
+  s = s.replace(/\s+/g, '')
+  return s
+}
+
+function isPlausibleEmail(s) {
+  if (!s || typeof s !== 'string') return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(s)
+}
+
+/** Windows·일부 클라이언트에서 mailto:user%40host 가 실패하는 경우가 있어 ASCII 주소는 비인코딩 */
+function mailtoHrefForAddress(email) {
+  const addr = typeof email === 'string' ? email.trim() : ''
+  if (!addr) return `mailto:${CONTACT_EMAIL}`
+  const asciiOnly = [...addr].every((ch) => ch.charCodeAt(0) < 128)
+  if (asciiOnly && isPlausibleEmail(addr)) return `mailto:${addr}`
+  return `mailto:${encodeURIComponent(addr)}`
+}
+
 function labelFromInstagramUrl(url) {
   if (!url || typeof url !== 'string') return ''
   try {
@@ -77,8 +100,10 @@ function mergeAboutContent(remote) {
   const svcFromStudio = normalizeLines(doc?.services)
   const services = svcFromStudio.length > 0 ? svcFromStudio : DEFAULT_SERVICES
 
-  const emailRaw = typeof doc?.contactEmail === 'string' ? doc.contactEmail.trim() : ''
-  const contactEmail = emailRaw || CONTACT_EMAIL
+  const emailClean = cleanContactEmailInput(
+    typeof doc?.contactEmail === 'string' ? doc.contactEmail : ''
+  )
+  const contactEmail = isPlausibleEmail(emailClean) ? emailClean : CONTACT_EMAIL
 
   const igUrl = typeof doc?.instagramUrl === 'string' ? doc.instagramUrl.trim() : ''
   const igLabelRaw = typeof doc?.instagramLabel === 'string' ? doc.instagramLabel.trim() : ''
@@ -107,7 +132,7 @@ function mergeAboutContent(remote) {
     location,
     services,
     contactEmail,
-    mailtoContact: `mailto:${contactEmail}`,
+    mailtoContact: mailtoHrefForAddress(contactEmail),
     instagram,
     headingAbout,
     headingLocation,
@@ -165,6 +190,20 @@ export default function About() {
       .then((doc) => setRemoteAbout(doc ?? null))
       .catch(() => setRemoteAbout(null))
   }, [])
+
+  /** Windows+일부 브라우저에서 <a> 기본 동작만으로 mailto 핸들러가 안 타는 경우 보완 */
+  const handleMailtoClick = useCallback(
+    (e) => {
+      if (e.button !== 0) return
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      const href = content.mailtoContact
+      if (!href.startsWith('mailto:')) return
+      e.preventDefault()
+      e.stopPropagation()
+      window.location.assign(href)
+    },
+    [content.mailtoContact]
+  )
 
   useLayoutEffect(() => {
     const root = pageInnerRef.current
@@ -267,7 +306,8 @@ export default function About() {
                   <a
                     className="about-contact-link"
                     href={content.mailtoContact}
-                    title="메일 앱에서 새 메일 작성"
+                    title="설정된 기본 메일 앱에서 열기 (Windows·Mac)"
+                    onClick={handleMailtoClick}
                   >
                     {content.contactEmail}
                   </a>

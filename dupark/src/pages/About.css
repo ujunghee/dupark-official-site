@@ -120,6 +120,8 @@ body.dupark-about-page #root {
   padding: 2.5rem 3rem 2.5rem 2rem;
   min-width: 0;
   min-height: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .about-content-reveal {
@@ -184,6 +186,8 @@ body.dupark-about-page #root {
   display: flex;
   align-items: baseline;
   gap: 1.25rem;
+  position: relative;
+  z-index: 1;
 }
 
 .about-contact-label {
@@ -202,13 +206,16 @@ body.dupark-about-page #root {
   text-decoration: none;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .about-contact-link:hover {
   opacity: 0.6;
 }
 
-/* ── 모바일: 지구 상단·텍스트 하단, 본문 길면 페이지 스크롤(100dvh 락 해제) ── */
 @media (max-width: 768px) {
   .about-page {
     height: auto;

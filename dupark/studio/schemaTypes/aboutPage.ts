@@ -29,7 +29,8 @@ export default defineType({
       name: 'contactEmail',
       title: '연락 이메일',
       type: 'string',
-      description: 'mailto 링크에 사용됩니다. 비우면 info@dupark.studio',
+      description:
+        '주소만 입력 (예: info@dupark.studio). mailto: 는 붙이지 마세요. 비우면 info@dupark.studio',
       validation: (Rule) => Rule.email().optional(),
     }),
     defineField({

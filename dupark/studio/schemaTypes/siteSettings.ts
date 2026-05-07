@@ -107,6 +107,29 @@ export default defineType({
       ],
       description: '푸터에 표시될 SNS 링크 목록',
     }),
+    /** 데이터셋에 남아 있으면 스키마 밖 필드 경고가 납니다. 앱은 사용하지 않으며 About 페이지 문서를 씁니다. */
+    defineField({
+      name: 'aboutInstagramUrl',
+      title: 'About Instagram URL (레거시)',
+      type: 'url',
+      hidden: true,
+      deprecated: {
+        reason:
+          '「About 페이지」문서의 instagramUrl을 사용합니다. 이 필드는 예전에 저장된 값 때문에 스키마와 맞추기만 합니다.',
+      },
+      validation: (Rule) =>
+        Rule.uri({scheme: ['http', 'https'], allowRelative: false}).optional(),
+    }),
+    defineField({
+      name: 'aboutInstagramHandle',
+      title: 'About Instagram 표시명 (레거시)',
+      type: 'string',
+      hidden: true,
+      deprecated: {
+        reason:
+          '「About 페이지」문서의 instagramLabel을 사용합니다. 예전 데이터 호환용입니다.',
+      },
+    }),
     defineField({
       name: 'favicon',
       title: '파비콘 이미지',
