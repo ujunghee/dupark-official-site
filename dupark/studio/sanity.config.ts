@@ -26,6 +26,12 @@ export default defineConfig({
                   .schemaType('siteSettings')
                   .documentId('siteSettings'),
               ),
+            S.listItem()
+              .title('About 페이지')
+              .id('aboutPage')
+              .child(
+                S.document().schemaType('aboutPage').documentId('aboutPage'),
+              ),
             S.divider(),
             S.documentTypeListItem('category').title('카테고리'),
             S.documentTypeListItem('project').title('프로젝트'),

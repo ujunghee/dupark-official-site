@@ -1,4 +1,4 @@
-import { useEffect, useRef, useLayoutEffect, useState } from 'react'
+import { useEffect, useRef, useLayoutEffect, useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { lenis } from '../lib/lenis.js'
@@ -12,14 +12,44 @@ const ABOUT_BODY_LINES = [
   'production design, and prop styling to create refined and contemporary visual experiences.',
 ]
 
+const DEFAULT_LOCATION = 'Seoul, South Korea'
+
+const DEFAULT_SERVICES = [
+  'Production Design',
+  'Set Design',
+  'Prop Styling',
+  'Spatial Design',
+]
+
 /** 기본 메일 앱에서 수신·작성 화면이 열리도록 mailto: 사용 */
 const CONTACT_EMAIL = 'info@dupark.studio'
-const MAILTO_CONTACT = `mailto:${CONTACT_EMAIL}`
 
-/** About Instagram — Studio 미입력 시 기존 하드코딩과 동일(마이그레이션) */
+/** Studio 미입력 시 기존 하드코딩과 동일 */
 const FALLBACK_INSTAGRAM = {
   url: 'https://www.instagram.com/duapark.stuio/',
   label: '@duapark.stuio',
+}
+
+const ABOUT_PAGE_QUERY = `*[_type == "aboutPage" && _id == "aboutPage"][0]{
+  bodyLines,
+  location,
+  services,
+  contactEmail,
+  instagramUrl,
+  instagramLabel,
+  headingAbout,
+  headingLocation,
+  headingServices,
+  headingContact,
+  labelEmail,
+  labelInstagram
+}`
+
+function normalizeLines(value) {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((s) => (typeof s === 'string' ? s.trim() : ''))
+    .filter(Boolean)
 }
 
 function labelFromInstagramUrl(url) {
@@ -35,9 +65,83 @@ function labelFromInstagramUrl(url) {
   }
 }
 
+function mergeAboutContent(remote) {
+  const doc = remote && typeof remote === 'object' ? remote : null
+
+  const bodyFromStudio = normalizeLines(doc?.bodyLines)
+  const bodyLines = bodyFromStudio.length > 0 ? bodyFromStudio : ABOUT_BODY_LINES
+
+  const loc = typeof doc?.location === 'string' ? doc.location.trim() : ''
+  const location = loc || DEFAULT_LOCATION
+
+  const svcFromStudio = normalizeLines(doc?.services)
+  const services = svcFromStudio.length > 0 ? svcFromStudio : DEFAULT_SERVICES
+
+  const emailRaw = typeof doc?.contactEmail === 'string' ? doc.contactEmail.trim() : ''
+  const contactEmail = emailRaw || CONTACT_EMAIL
+
+  const igUrl = typeof doc?.instagramUrl === 'string' ? doc.instagramUrl.trim() : ''
+  const igLabelRaw = typeof doc?.instagramLabel === 'string' ? doc.instagramLabel.trim() : ''
+  const instagram = igUrl
+    ? {
+        url: igUrl,
+        label: igLabelRaw || labelFromInstagramUrl(igUrl) || igUrl,
+      }
+    : { ...FALLBACK_INSTAGRAM }
+
+  const headingAbout =
+    (typeof doc?.headingAbout === 'string' && doc.headingAbout.trim()) || 'ABOUT'
+  const headingLocation =
+    (typeof doc?.headingLocation === 'string' && doc.headingLocation.trim()) || 'LOCATION'
+  const headingServices =
+    (typeof doc?.headingServices === 'string' && doc.headingServices.trim()) || 'SERVICES'
+  const headingContact =
+    (typeof doc?.headingContact === 'string' && doc.headingContact.trim()) || 'CONTACT'
+  const labelEmail =
+    (typeof doc?.labelEmail === 'string' && doc.labelEmail.trim()) || 'EMAIL'
+  const labelInstagram =
+    (typeof doc?.labelInstagram === 'string' && doc.labelInstagram.trim()) || 'Instagram'
+
+  return {
+    bodyLines,
+    location,
+    services,
+    contactEmail,
+    mailtoContact: `mailto:${contactEmail}`,
+    instagram,
+    headingAbout,
+    headingLocation,
+    headingServices,
+    headingContact,
+    labelEmail,
+    labelInstagram,
+  }
+}
+
 export default function About() {
   const pageInnerRef = useRef(null)
-  const [instagram, setInstagram] = useState(() => ({ ...FALLBACK_INSTAGRAM }))
+  const [remoteAbout, setRemoteAbout] = useState(undefined)
+
+  const content = useMemo(() => mergeAboutContent(remoteAbout), [remoteAbout])
+
+  const revealKey = useMemo(
+    () =>
+      [
+        content.bodyLines.join('\n'),
+        content.location,
+        content.services.join('\n'),
+        content.contactEmail,
+        content.instagram.url,
+        content.instagram.label,
+        content.headingAbout,
+        content.headingLocation,
+        content.headingServices,
+        content.headingContact,
+        content.labelEmail,
+        content.labelInstagram,
+      ].join('\u0001'),
+    [content]
+  )
 
   useLayoutEffect(() => {
     document.body.classList.add('dupark-about-page')
@@ -49,7 +153,7 @@ export default function About() {
   useEffect(() => {
     const id = requestAnimationFrame(() => lenis.resize())
     return () => cancelAnimationFrame(id)
-  }, [])
+  }, [revealKey])
 
   useLayoutEffect(() => {
     lenis.scrollTo(0, { immediate: true, force: true })
@@ -57,28 +161,9 @@ export default function About() {
 
   useEffect(() => {
     client
-      .fetch(
-        `*[_type == "siteSettings"][0]{ aboutInstagramUrl, aboutInstagramHandle }`
-      )
-      .then((data) => {
-        const url =
-          typeof data?.aboutInstagramUrl === 'string'
-            ? data.aboutInstagramUrl.trim()
-            : ''
-        const handle =
-          typeof data?.aboutInstagramHandle === 'string'
-            ? data.aboutInstagramHandle.trim()
-            : ''
-        if (url) {
-          setInstagram({
-            url,
-            label: handle || labelFromInstagramUrl(url) || url,
-          })
-        } else {
-          setInstagram({ ...FALLBACK_INSTAGRAM })
-        }
-      })
-      .catch(() => setInstagram({ ...FALLBACK_INSTAGRAM }))
+      .fetch(ABOUT_PAGE_QUERY)
+      .then((doc) => setRemoteAbout(doc ?? null))
+      .catch(() => setRemoteAbout(null))
   }, [])
 
   useLayoutEffect(() => {
@@ -110,7 +195,7 @@ export default function About() {
     }, root)
 
     return () => ctx.revert()
-  }, [])
+  }, [revealKey])
 
   return (
     <main id="main-content" tabIndex={-1} className="about-page">
@@ -137,11 +222,11 @@ export default function About() {
           <div className="about-content-reveal">
             <section className="about-section">
               <div className="about-reveal-clip">
-                <p className="about-section-title about-reveal-track">ABOUT</p>
+                <p className="about-section-title about-reveal-track">{content.headingAbout}</p>
               </div>
               <div className="about-body-lines">
-                {ABOUT_BODY_LINES.map((line) => (
-                  <div key={line} className="about-reveal-clip">
+                {content.bodyLines.map((line, i) => (
+                  <div key={`${i}-${line}`} className="about-reveal-clip">
                     <p className="about-section-body about-reveal-track">{line}</p>
                   </div>
                 ))}
@@ -150,56 +235,54 @@ export default function About() {
 
             <section className="about-section">
               <div className="about-reveal-clip">
-                <p className="about-section-title about-reveal-track">LOCATION</p>
+                <p className="about-section-title about-reveal-track">{content.headingLocation}</p>
               </div>
               <div className="about-reveal-clip">
-                <p className="about-section-body about-reveal-track">Seoul, South Korea</p>
+                <p className="about-section-body about-reveal-track">{content.location}</p>
               </div>
             </section>
 
             <section className="about-section">
               <div className="about-reveal-clip">
-                <p className="about-section-title about-reveal-track">SERVICES</p>
+                <p className="about-section-title about-reveal-track">{content.headingServices}</p>
               </div>
               <ul className="about-list">
-                {['Production Design', 'Set Design', 'Prop Styling', 'Spatial Design'].map(
-                  (label) => (
-                    <li key={label}>
-                      <div className="about-reveal-clip">
-                        <span className="about-reveal-track about-list__line">{label}</span>
-                      </div>
-                    </li>
-                  )
-                )}
+                {content.services.map((label, i) => (
+                  <li key={`${i}-${label}`}>
+                    <div className="about-reveal-clip">
+                      <span className="about-reveal-track about-list__line">{label}</span>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </section>
 
             <section className="about-section">
               <div className="about-reveal-clip">
-                <p className="about-section-title about-reveal-track">CONTACT</p>
+                <p className="about-section-title about-reveal-track">{content.headingContact}</p>
               </div>
               <div className="about-reveal-clip">
                 <div className="about-reveal-track about-contact-row">
-                  <span className="about-contact-label">EMAIL</span>
+                  <span className="about-contact-label">{content.labelEmail}</span>
                   <a
                     className="about-contact-link"
-                    href={MAILTO_CONTACT}
+                    href={content.mailtoContact}
                     title="메일 앱에서 새 메일 작성"
                   >
-                    {CONTACT_EMAIL}
+                    {content.contactEmail}
                   </a>
                 </div>
               </div>
               <div className="about-reveal-clip">
                 <div className="about-reveal-track about-contact-row">
-                  <span className="about-contact-label">Instagram</span>
+                  <span className="about-contact-label">{content.labelInstagram}</span>
                   <a
                     className="about-contact-link"
-                    href={instagram.url}
+                    href={content.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {instagram.label}
+                    {content.instagram.label}
                   </a>
                 </div>
               </div>

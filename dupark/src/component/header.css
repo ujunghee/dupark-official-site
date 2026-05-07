@@ -9,7 +9,7 @@
   justify-content: space-between;
   align-items: center;
   padding: .8rem 2rem;
-
+  
   transform: translateY(0);
   background: transparent;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
