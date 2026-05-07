@@ -51,6 +51,7 @@ function useSiteSettings() {
     client
       .fetch(`*[_type == "siteSettings"][0]{
         accentColor, textColor, bgColor, logoSize, logoSizeMobile,
+        homeDesktopIntroLogoHeightPx,
         "fontKoUrl": coalesce(fontKoreanFile.asset->url, fontRegularFile.asset->url),
         "fontEnUrl": fontEnglishFile.asset->url,
         favicon{ asset->{ url } },
@@ -71,6 +72,14 @@ function useSiteSettings() {
         }
         if (Number.isFinite(logoPxMobile) && logoPxMobile > 0) {
           root.style.setProperty('--dupark-header-logo-height-mobile', `${logoPxMobile}px`)
+        }
+
+        const introLogoPx =
+          typeof data.homeDesktopIntroLogoHeightPx === 'number'
+            ? data.homeDesktopIntroLogoHeightPx
+            : Number(data.homeDesktopIntroLogoHeightPx)
+        if (Number.isFinite(introLogoPx) && introLogoPx > 0) {
+          root.style.setProperty('--dupark-home-desktop-intro-logo-h', `${introLogoPx}px`)
         }
 
         const prevFace = document.getElementById(SITE_FONT_FACE_STYLE_ID)

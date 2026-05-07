@@ -100,6 +100,9 @@ body {
   --dupark-header-logo-height-desktop: 32px;
   --dupark-header-logo-height-mobile: var(--dupark-header-logo-height-desktop);
   --dupark-header-logo-height: var(--dupark-header-logo-height-desktop);
+  /* 홈 데스크톱 인트로 중앙 로고 — 높이는 Sanity homeDesktopIntroLogoHeightPx(px), 가로 상한만 고정 */
+  --dupark-home-desktop-intro-logo-h: 240px;
+  --dupark-home-desktop-intro-logo-max-w: min(90vw, 48rem);
 }
 @media (max-width: 768px) {
   :root {

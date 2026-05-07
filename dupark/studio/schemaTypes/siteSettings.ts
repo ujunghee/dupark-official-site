@@ -33,6 +33,14 @@ export default defineType({
       description: '모바일(가로 768px 이하)에서 헤더 로고 높이(px). 비우면 데스크톱 값과 동일.',
     }),
     defineField({
+      name: 'homeDesktopIntroLogoHeightPx',
+      title: '홈 데스크톱 — 인트로 중앙 로고 높이 (px)',
+      type: 'number',
+      initialValue: 240,
+      description: '인트로 영상 위 가운데 로고의 세로 크기(픽셀). 가로는 로고 비율에 맞게 자동입니다.',
+      validation: (Rule) => Rule.min(32).max(640).integer(),
+    }),
+    defineField({
       name: 'accentColor',
       title: '포인트 컬러',
       type: 'string',

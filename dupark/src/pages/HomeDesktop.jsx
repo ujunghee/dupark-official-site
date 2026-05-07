@@ -409,8 +409,8 @@ export default function HomeDesktop() {
           style={{
             display: 'block',
             width: 'auto',
-            height: 'clamp(3.25rem, 24vw, 18.5rem)',
-            maxWidth: 'min(90vw, 48rem)',
+            height: 'var(--dupark-home-desktop-intro-logo-h)',
+            maxWidth: 'var(--dupark-home-desktop-intro-logo-max-w)',
             objectFit: 'contain',
             userSelect: 'none',
           }}
