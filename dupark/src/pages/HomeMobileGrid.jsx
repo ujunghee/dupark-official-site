@@ -25,7 +25,7 @@ function MobileCategoryItem({ cat }) {
       />
     )
   } else {
-    media = <div style={{ position: 'absolute', inset: 0, background: '#222' }} />
+    media = <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--site-text, #000) 8%, var(--site-bg, #fff))' }} />
   }
   return (
     <Link to={`/${cat.slug}`} className="mobile-grid-item">

@@ -60,6 +60,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* React Router <Link> 등: 브라우저 기본 밑줄·링크 색 제거, 본문 타이포와 통일 */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* 접근성 — Tab 첫 진입 시 보이는 “메인으로 바로가기” 스킵 링크 (WCAG 2.4.1) */
 .dupark-skip-link {
   position: fixed;
@@ -146,6 +152,8 @@ p {
   margin: 0;
 }
 
+ㅁ a
+
 /* 미디어: 드래그·길게누르기 저장 완화. 우클릭은 App.jsx */
 img,
 picture,
@@ -162,8 +170,9 @@ video {
 video {
   outline: none;
   border: 0;
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  /* mask 는 일부 iOS/WebKit 에서 줌·비율에 따라 가장자리 얇은 선(깜빡임)을 유발할 수 있음 */
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 

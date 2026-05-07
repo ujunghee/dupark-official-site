@@ -28,8 +28,14 @@
   color: var(--site-accent, #aaff00);
 }
 
-/* <Link> = <a> 기본 스타일 리셋 */
-.project-card {
+.project-card-cover img,
+.project-card-cover video {
+  transform: translateZ(0) scale(1.02);
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
   display: block;
   color: inherit;
   text-decoration: none;

@@ -101,7 +101,7 @@ function ProjectCard({ project, category }) {
 
   const inner = (
     <>
-      <div style={{ position: 'relative', overflow: 'hidden' }}>
+      <div className="project-card-cover" style={{ position: 'relative', overflow: 'hidden' }}>
         {hasCover &&
           (isVideoOnlyCover && !coverVideoUnlocked ? (
             <div
