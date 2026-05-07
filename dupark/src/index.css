@@ -159,6 +159,14 @@ video {
   user-select: none;
 }
 
+video {
+  outline: none;
+  border: 0;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-backface-visibility: hidden;
+}
+
+
 /* ── Category 페이지 레이아웃 ── */
 .category-page {
   padding-top: 8rem;
