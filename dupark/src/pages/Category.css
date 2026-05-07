@@ -36,6 +36,7 @@
   -webkit-backface-visibility: hidden;
 }
 
+a{
   display: block;
   color: inherit;
   text-decoration: none;
