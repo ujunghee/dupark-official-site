@@ -4,7 +4,6 @@
   display: flex;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  font-family: 'Inter Variable', Helvetica, sans-serif;
   font-size: 0.85rem;
   background: var(--site-bg, #fff);
   color: var(--site-text, #000);
@@ -14,7 +13,6 @@
   display: flex;
   gap: 1.25rem;
   align-items: center;
-  font-weight: 500 !important;
   text-transform: uppercase;
   font-kerning: normal;
   font-size: 0.65rem;
@@ -28,7 +26,6 @@
 .footer-copy {
   color: var(--site-text, #000);
   text-transform: uppercase;
-  font-weight: 500 !important;
   font-kerning: normal;
   font-size: 0.65rem;
 }

@@ -188,8 +188,8 @@ export default function HomeDesktop() {
       gsap.set(el, { autoAlpha: 0 })
       tween = gsap.to(el, {
         autoAlpha: 1,
-        duration: 1.5,
-        ease: 'power2.out',
+        duration: 2,
+        ease: 'power3.out',
         delay: 0.6,
       })
     }
