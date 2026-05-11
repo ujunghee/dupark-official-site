@@ -99,7 +99,7 @@ function detailGalleryImageDims(img) {
 }
 
 /** 갤러리: 로드 전 스켈레톤, 디코딩 후 페이드 인 (캐시 히트 시 onLoad 생략 대비) */
-function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia, imageKey }) {
+function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
   const imgRef = useRef(null)
   const didBumpRef = useRef(false)
   const [loaded, setLoaded] = useState(false)
@@ -112,16 +112,11 @@ function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia, imageKey 
     bumpMedia()
   }, [bumpMedia])
 
-  useEffect(() => {
-    didBumpRef.current = false
-    setLoaded(false)
-  }, [imageKey])
-
   useLayoutEffect(() => {
     const el = imgRef.current
     if (!el) return
     if (el.complete && el.naturalHeight > 0) finish()
-  }, [imageKey, finish])
+  }, [finish])
 
   return (
     <div
@@ -198,6 +193,7 @@ function DetailLazyFileVideo({ src, eager, bumpMedia, poster }) {
           src={src}
           controls
           controlsList="nodownload"
+          muted
           playsInline
           /* 모바일 WebKit: metadata만으로는 첫 프레임·포스터가 안 나오는 경우 많음 → lazy 이후엔 auto */
           preload="auto"
@@ -629,7 +625,6 @@ export default function ProjectDetail() {
         {project.images?.map((img, i) => (
           <DetailGalleryImageCell
             key={`${project.slug}-img-${img?._key ?? i}`}
-            imageKey={`${project.slug}-img-${img?._key ?? i}`}
             img={img}
             projectTitle={project.title}
             index={i}

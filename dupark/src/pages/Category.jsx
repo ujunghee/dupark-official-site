@@ -229,9 +229,11 @@ export default function Category() {
   }, [])
 
   useEffect(() => {
-    setProjectsLoadState('loading')
-    setProjects([])
-    setDisplayedCount(0)
+    queueMicrotask(() => {
+      setProjectsLoadState('loading')
+      setProjects([])
+      setDisplayedCount(0)
+    })
     client
       .fetch(
         `*[_type == "project" && category->slug == $category] | order(coalesce(order, 0) desc, _createdAt desc){ _id, title, slug, client, coverImage, "coverVideoUrl": coverVideo.asset->url, hoverImage, "hoverVideoUrl": hoverVideo.asset->url }`,
