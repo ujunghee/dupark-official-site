@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { lenis } from './lib/lenis'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { RouteEnterProvider } from './context/RouteEnterContext'
@@ -102,6 +102,9 @@ function AppShell() {
       <Header />
       <RouteEnterProvider>
         <Routes>
+          {/* 구글·구 Wix 등에서 /home 으로 인덱싱된 링크 — Vercel 301 없을 때도 `/:category` 오매칭 방지 */}
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/HOME" element={<Navigate to="/" replace />} />
           <Route path="/m" element={<HomeMobileGrid />} />
           <Route path="/" element={<Home />} />
           <Route
