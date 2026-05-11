@@ -71,3 +71,30 @@ a{
   pointer-events: none;
   visibility: hidden;
 }
+
+/* 첫 페인트~프로젝트 fetch 전: 그리드 자리 확보로 CLS 완화 */
+.category-grid-skeleton-cell {
+  min-width: 0;
+}
+
+.category-skeleton-media {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: color-mix(in srgb, var(--site-text, #000) 6%, var(--site-bg, #fff));
+}
+
+.category-skeleton-line {
+  margin-top: 0.45rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--site-text, #000) 10%, var(--site-bg, #fff));
+}
+
+.category-skeleton-line--wide {
+  width: 88%;
+}
+
+.category-skeleton-line--narrow {
+  width: 52%;
+  margin-top: 0.35rem;
+}

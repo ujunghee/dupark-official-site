@@ -25,6 +25,12 @@ const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
 const CARD_MEDIA_WIDTH = 400
 
+function skeletonSlotCount(isMobile) {
+  const cols = getColumnCount()
+  const rows = isMobile ? ROWS_PER_STEP : ROWS_PER_MORE_DESKTOP
+  return cols * rows
+}
+
 function coverVideoPosterUrl(project, width) {
   if (!project) return undefined
   if (project.coverImage) return urlFor(project.coverImage).width(width).url()
@@ -205,6 +211,7 @@ function ProjectCard({ project, category }) {
 export default function Category() {
   const { category } = useParams()
   const [projects, setProjects] = useState([])
+  const [projectsLoadState, setProjectsLoadState] = useState('loading')
   const [displayedCount, setDisplayedCount] = useState(0)
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(MQL_MOBILE).matches
@@ -222,19 +229,29 @@ export default function Category() {
   }, [])
 
   useEffect(() => {
+    setProjectsLoadState('loading')
+    setProjects([])
+    setDisplayedCount(0)
     client
       .fetch(
         `*[_type == "project" && category->slug == $category] | order(coalesce(order, 0) desc, _createdAt desc){ _id, title, slug, client, coverImage, "coverVideoUrl": coverVideo.asset->url, hoverImage, "hoverVideoUrl": hoverVideo.asset->url }`,
         { category }
       )
       .then((data) => {
-        setProjects(data)
+        const list = data || []
+        setProjects(list)
         const cols = getColumnCount()
         const initialRows =
           typeof window !== 'undefined' && window.matchMedia(MQL_MOBILE).matches
             ? ROWS_PER_STEP
             : ROWS_PER_MORE_DESKTOP
-        setDisplayedCount(Math.min(data.length, initialRows * cols))
+        setDisplayedCount(Math.min(list.length, initialRows * cols))
+        setProjectsLoadState('ready')
+      })
+      .catch(() => {
+        setProjects([])
+        setDisplayedCount(0)
+        setProjectsLoadState('error')
       })
   }, [category])
 
@@ -300,14 +317,28 @@ export default function Category() {
 
   const visible = projects.slice(0, displayedCount)
   const canShowMore = displayedCount < projects.length
+  const showSkeleton = projectsLoadState === 'loading'
+  const skeletonSlots = skeletonSlotCount(isMobile)
 
   return (
     <main id="main-content" tabIndex={-1} className="category-page">
       <div className="category-page-inner">
-        <div ref={gridRef} className="project-grid">
-          {visible.map((project) => (
-            <ProjectCard key={project._id} project={project} category={category} />
-          ))}
+        <div
+          ref={gridRef}
+          className="project-grid"
+          aria-busy={showSkeleton ? 'true' : undefined}
+        >
+          {showSkeleton
+            ? Array.from({ length: skeletonSlots }, (_, i) => (
+                <div key={`sk-${i}`} className="category-grid-skeleton-cell" aria-hidden>
+                  <div className="category-skeleton-media" />
+                  <div className="category-skeleton-line category-skeleton-line--wide" />
+                  <div className="category-skeleton-line category-skeleton-line--narrow" />
+                </div>
+              ))
+            : visible.map((project) => (
+                <ProjectCard key={project._id} project={project} category={category} />
+              ))}
         </div>
 
         {!isMobile && canShowMore && (

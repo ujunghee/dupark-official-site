@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/inter'
 import './index.css'
 import App from './App.jsx'
+import { fetchSiteSettings, applySiteSettingsFromSanity } from './lib/siteSettingsBootstrap.js'
 import { lenis } from './lib/lenis.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -41,4 +42,14 @@ gsap.ticker.add((time) => {
 
 gsap.ticker.lagSmoothing(0)
 
-createRoot(document.getElementById('root')).render(<App />)
+async function mountApp() {
+  try {
+    const data = await fetchSiteSettings()
+    applySiteSettingsFromSanity(data)
+  } catch {
+    /* Sanity 미응답 시 index.css 기본 변수 유지 */
+  }
+  createRoot(document.getElementById('root')).render(<App />)
+}
+
+mountApp()
