@@ -166,10 +166,10 @@ export default function HomeDesktop() {
   }, [])
 
   useLayoutEffect(() => {
-    if (logoRef.current) gsap.set(logoRef.current, { yPercent: 100 })
+    if (logoRef.current) gsap.set(logoRef.current, { autoAlpha: 0 })
   }, [])
 
-  /* 로고: loaderComplete(또는 재방문 시 즉시) */
+  /* 로고: loaderComplete(또는 재방문 시 즉시) — 페이드 인 */
   useEffect(() => {
     if (!logoRef.current) return
     let cancelled = false
@@ -177,11 +177,21 @@ export default function HomeDesktop() {
 
     const runAnim = () => {
       if (cancelled || !logoRef.current) return
-      tween = gsap.fromTo(
-        logoRef.current,
-        { yPercent: 100 },
-        { yPercent: 0, duration: 2.4, ease: 'power4.out', delay: 0.6 }
-      )
+      const el = logoRef.current
+      const reduce =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (reduce) {
+        gsap.set(el, { autoAlpha: 1 })
+        return
+      }
+      gsap.set(el, { autoAlpha: 0 })
+      tween = gsap.to(el, {
+        autoAlpha: 1,
+        duration: 1.5,
+        ease: 'power2.out',
+        delay: 0.6,
+      })
     }
 
     const loaderActive = !sessionStorage.getItem('dupark_loaded')
@@ -422,7 +432,6 @@ export default function HomeDesktop() {
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 0,
-        overflow: 'hidden',
         mixBlendMode: 'difference',
         display: hideIntro ? 'none' : 'block',
       }}>

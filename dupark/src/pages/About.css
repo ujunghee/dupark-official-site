@@ -112,7 +112,7 @@ body.dupark-about-page #root {
   object-position: center;
 }
 
-/* ── 오른쪽: 내용 — 마스크 + 내부 reveal ── */
+/* ── 오른쪽: 내용 — 클립 + 텍스트 페이드 인(.about-reveal-track) ── */
 .about-content {
   display: flex;
   flex-direction: column;

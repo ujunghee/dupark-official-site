@@ -54,7 +54,7 @@
   overflow: hidden;
 }
 
-/* y 이동 reveal — margin 붕괴로 overflow 밖으로 새는 것 방지 */
+/* 텍스트·블록 페이드 인용 클립 — margin 붕괴로 overflow 밖으로 새는 것 방지 */
 .detail-reveal-clip {
   display: flow-root;
   overflow: hidden;
@@ -125,14 +125,56 @@
 }
 
 .detail-img-wrap {
+  position: relative;
   overflow: hidden;
+  background: color-mix(in srgb, var(--site-text, #000) 4%, var(--site-bg, #fff));
+}
+
+.detail-img-wrap:not(.detail-img-wrap--has-dims) {
+  min-height: 12rem;
+}
+
+.detail-img-wrap--has-dims {
+  min-height: 0;
+}
+
+.detail-img-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--site-text, #000) 8%, var(--site-bg, #fff));
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.detail-img-skeleton--hidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .detail-img {
+  position: relative;
+  z-index: 0;
   width: 100%;
   display: block;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0;
+  transition:
+    opacity 0.45s ease,
+    transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.detail-img-wrap--has-dims .detail-img {
+  height: 100%;
+}
+
+.detail-img-wrap:not(.detail-img-wrap--has-dims) .detail-img {
+  height: auto;
+}
+
+.detail-img--loaded {
+  opacity: 1;
+  z-index: 2;
 }
 
 /* .detail-img-wrap:hover .detail-img {

@@ -274,9 +274,8 @@ export default function Category() {
     if (batch.length === 0) return
 
     gsap.killTweensOf(batch)
-    gsap.set(batch, { y: 20, autoAlpha: 0 })
+    gsap.set(batch, { autoAlpha: 0 })
     gsap.to(batch, {
-      y: 0,
       autoAlpha: 1,
       duration: 0.6,
       ease: 'power2.out',

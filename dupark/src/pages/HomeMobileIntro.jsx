@@ -126,13 +126,23 @@ export default function HomeMobileIntro() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!logoRef.current) return
-    const tween = gsap.fromTo(
-      logoRef.current,
-      { yPercent: 100 },
-      { yPercent: 0, duration: 2.4, ease: 'power4.out', delay: 0.6 }
-    )
+  useLayoutEffect(() => {
+    const el = logoRef.current
+    if (!el) return
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) {
+      gsap.set(el, { autoAlpha: 1 })
+      return
+    }
+    gsap.set(el, { autoAlpha: 0 })
+    const tween = gsap.to(el, {
+      autoAlpha: 1,
+      duration: 1.5,
+      ease: 'power2.out',
+      delay: 0.6,
+    })
     return () => tween.kill()
   }, [])
 
@@ -311,7 +321,6 @@ export default function HomeMobileIntro() {
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 0,
-        overflow: 'hidden',
         mixBlendMode: 'difference',
         pointerEvents: 'none',
       }}>

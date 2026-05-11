@@ -11,8 +11,7 @@ import './ProjectDetail.css'
 /* onLoad 전부를 기다리지 않고 상한으로 진입 — 흰 화면 최소화(나머지는 자연 로드) */
 const MEDIA_ENTRANCE_CAP_MS = 550
 const ENTRANCE_FADE_S = 0.05
-/* 퇴장: 진입(아래→위)과 반대 — 위 block부터 아래로 스태거, 아래로 내려가며 사라짐 */
-const EXIT_Y = 5
+/* 퇴장: 페이드 아웃 + 스태거 */
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.02
 
@@ -89,6 +88,65 @@ function projectFileVideoPosterUrl(project) {
   if (project.coverImage) return urlFor(project.coverImage).width(1200).quality(82).url()
   if (project.images?.[0]) return urlFor(project.images[0]).width(1200).quality(82).url()
   return undefined
+}
+
+/** Sanity metadata.dimensions — CLS·스켈레톤 박스 비율 */
+function detailGalleryImageDims(img) {
+  const d = img?.dims
+  if (!d || typeof d.width !== 'number' || typeof d.height !== 'number') return null
+  if (d.width < 1 || d.height < 1) return null
+  return { width: d.width, height: d.height }
+}
+
+/** 갤러리: 로드 전 스켈레톤, 디코딩 후 페이드 인 (캐시 히트 시 onLoad 생략 대비) */
+function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia, imageKey }) {
+  const imgRef = useRef(null)
+  const didBumpRef = useRef(false)
+  const [loaded, setLoaded] = useState(false)
+  const dims = detailGalleryImageDims(img)
+
+  const finish = useCallback(() => {
+    if (didBumpRef.current) return
+    didBumpRef.current = true
+    setLoaded(true)
+    bumpMedia()
+  }, [bumpMedia])
+
+  useEffect(() => {
+    didBumpRef.current = false
+    setLoaded(false)
+  }, [imageKey])
+
+  useLayoutEffect(() => {
+    const el = imgRef.current
+    if (!el) return
+    if (el.complete && el.naturalHeight > 0) finish()
+  }, [imageKey, finish])
+
+  return (
+    <div
+      className={`detail-img-wrap detail-grid-cell${dims ? ' detail-img-wrap--has-dims' : ''}`}
+      style={dims ? { aspectRatio: `${dims.width} / ${dims.height}` } : undefined}
+    >
+      <div
+        className={`detail-img-skeleton${loaded ? ' detail-img-skeleton--hidden' : ''}`}
+        aria-hidden
+      />
+      <img
+        ref={imgRef}
+        src={urlFor(img).width(900).url()}
+        alt={`${projectTitle} ${index + 1}`}
+        className={`detail-img${loaded ? ' detail-img--loaded' : ''}`}
+        width={dims?.width}
+        height={dims?.height}
+        sizes="(max-width: 768px) 50vw, 33vw"
+        loading={index < 2 ? 'eager' : 'lazy'}
+        decoding="async"
+        onLoad={finish}
+        onError={finish}
+      />
+    </div>
+  )
 }
 
 /** 뷰포트 ± 여유만큼 가까워지기 전엔 src 미 attach → ~10MB 영상 여러 개 동시 요청 방지 */
@@ -227,7 +285,11 @@ export default function ProjectDetail() {
           "videoFileUrls": videoFiles[].asset->url,
           "category": category->title,
           "categorySlug": category->slug,
-          coverImage, images,
+          coverImage,
+          "images": images[]{
+            ...,
+            "dims": asset->metadata.dimensions
+          },
           "siblings": *[_type == "project" && category._ref == ^.category._ref] | order(coalesce(order, 0) desc, _createdAt desc){
             title, "slug": slug.current, coverImage,
             "coverVideoUrl": coverVideo.asset->url
@@ -341,7 +403,7 @@ export default function ProjectDetail() {
     )
   }, [project, mediaAllLoaded, entranceComplete, id])
 
-  /* 본문·그리드: 흰 오버레이 제거 뒤 아래→위 스태거 */
+  /* 본문·그리드: 흰 오버레이 제거 뒤 페이드 인 스태거 */
   useLayoutEffect(() => {
     if (!entranceComplete || !project) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -352,17 +414,13 @@ export default function ProjectDetail() {
     const all = gsap.utils.toArray([...textEls, ...cells])
     if (all.length === 0) return
     gsap.killTweensOf(all)
-    gsap.fromTo(
-      all,
-      { y: 36, autoAlpha: 0 },
-      {
-        y: 0,
-        autoAlpha: 1,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: 'power3.out',
-      }
-    )
+    gsap.set(all, { autoAlpha: 0 })
+    gsap.to(all, {
+      autoAlpha: 1,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+    })
     return () => {
       gsap.killTweensOf(all)
     }
@@ -424,7 +482,6 @@ export default function ProjectDetail() {
         },
       })
       tl.to(all, {
-        y: EXIT_Y,
         autoAlpha: 0,
         duration: EXIT_DUR_S,
         stagger: EXIT_STAGGER_S,
@@ -499,13 +556,13 @@ export default function ProjectDetail() {
       >
       {/* ── 왼쪽: sticky 정보 ── */}
       <aside className="detail-info">
-        {/* {project.category && (
+        {project.category && (
           <div className="detail-reveal-clip">
             <p className="detail-category detail-reveal-track">
               {project.category} / WORK
             </p>
           </div>
-        )} */}
+        )}
         <div className="detail-reveal-clip">
           <h1 className="detail-title detail-reveal-track">{project.title}</h1>
         </div>
@@ -570,15 +627,14 @@ export default function ProjectDetail() {
           </div>
         ))}
         {project.images?.map((img, i) => (
-          <div key={`${project.slug}-${i}`} className="detail-img-wrap detail-grid-cell">
-            <img
-              src={urlFor(img).width(900).url()}
-              alt={`${project.title} ${i + 1}`}
-              className="detail-img"
-              onLoad={bumpMedia}
-              onError={bumpMedia}
-            />
-          </div>
+          <DetailGalleryImageCell
+            key={`${project.slug}-img-${img?._key ?? i}`}
+            imageKey={`${project.slug}-img-${img?._key ?? i}`}
+            img={img}
+            projectTitle={project.title}
+            index={i}
+            bumpMedia={bumpMedia}
+          />
         ))}
       </div>
       </div>

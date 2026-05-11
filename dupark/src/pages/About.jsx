@@ -214,21 +214,25 @@ export default function About() {
     if (!trackEls.length) return
 
     if (reduce) {
-      if (trackEls.length) gsap.set(trackEls, { yPercent: 0 })
+      gsap.set(trackEls, { autoAlpha: 1, yPercent: 0 })
       return
     }
 
-    const yOpts = { yPercent: 100 }
+    const fadeDur = 0.75
+    const fadeEase = 'power2.out'
     const beat = 0.04
-    const durY = 0.8
-    const yTo = { yPercent: 0, duration: durY, ease: 'power3.out' }
     const startDelay = 0.8
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ delay: startDelay })
       let t = 0
       trackEls.forEach((el) => {
-        tl.fromTo(el, yOpts, yTo, t)
+        tl.fromTo(
+          el,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: fadeDur, ease: fadeEase },
+          t
+        )
         t += beat
       })
     }, root)
@@ -249,7 +253,7 @@ export default function About() {
             <img
               src="/logo-white.svg"
               alt="DUPARK"
-              className="about-logo-mark"
+              className="about-logo-mark about-reveal-track"
               width={480}
               height={120}
               decoding="async"
