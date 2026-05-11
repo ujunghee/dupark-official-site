@@ -4,9 +4,18 @@ import gsap from 'gsap'
 import { client, urlFor } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import { DUPARK_M_SPA_OK } from '../lib/mobileGridSession'
+import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './Home.css'
 
 const MOBILE_MAX = 768
+const M_GRID_POSTER_W = 600
+
+function mobileCatVideoPoster(cat) {
+  if (!cat) return undefined
+  if (cat.coverImage) return urlFor(cat.coverImage).width(M_GRID_POSTER_W).url()
+  if (cat.hoverImage) return urlFor(cat.hoverImage).width(M_GRID_POSTER_W).url()
+  return undefined
+}
 
 function MobileCategoryItem({ cat }) {
   let media
@@ -14,14 +23,14 @@ function MobileCategoryItem({ cat }) {
     media = <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
   } else if (cat.coverVideoUrl) {
     media = (
-      <video
+      <SanityAutoplayVideo
         src={cat.coverVideoUrl}
-        autoPlay
-        muted
-        loop
-        playsInline
+        poster={mobileCatVideoPoster(cat)}
+        ariaLabel={cat.title}
         preload="metadata"
-        aria-label={cat.title}
+        loop
+        stopLinkClick
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
     )
   } else {
@@ -90,7 +99,7 @@ export default function HomeMobileGrid() {
     if (!allowed) return
     client.fetch(
       `*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc){
-        _id, title, slug, coverImage,
+        _id, title, slug, coverImage, hoverImage,
         "coverVideoUrl": coverVideo.asset->url
       }`
     ).then(setCategories)

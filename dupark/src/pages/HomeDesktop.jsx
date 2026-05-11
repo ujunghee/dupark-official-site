@@ -5,25 +5,47 @@ import { lenis } from '../lib/lenis'
 import { useIntroMedia } from '../context/IntroMediaContext'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './Home.css'
 
+const HOME_CARD_MEDIA_W = 700
+
+function catCoverVideoPoster(cat) {
+  if (!cat) return undefined
+  if (cat.coverImage) return urlFor(cat.coverImage).width(HOME_CARD_MEDIA_W).url()
+  if (cat.hoverImage) return urlFor(cat.hoverImage).width(HOME_CARD_MEDIA_W).url()
+  return undefined
+}
+
+function catHoverVideoPoster(cat) {
+  if (!cat) return undefined
+  if (cat.hoverImage) return urlFor(cat.hoverImage).width(HOME_CARD_MEDIA_W).url()
+  if (cat.coverImage) return urlFor(cat.coverImage).width(HOME_CARD_MEDIA_W).url()
+  return undefined
+}
+
 /** 카테고리 카드용 — 이미지 우선, 없으면 영상 폴백 (Home.css `.category-card-img > img` 스타일을 그대로 따름) */
-function CardMedia({ image, videoUrl, alt, hidden }) {
+function CardMedia({ image, videoUrl, posterUrl, alt, hidden }) {
   const style = hidden ? { opacity: 0 } : { opacity: 1 }
   if (image) {
-    return <img src={urlFor(image).width(700).url()} alt={alt} style={style} />
+    return <img src={urlFor(image).width(HOME_CARD_MEDIA_W).url()} alt={alt} style={style} />
   }
   if (videoUrl) {
     return (
-      <video
+      <SanityAutoplayVideo
         src={videoUrl}
-        autoPlay
-        muted
-        loop
-        playsInline
+        poster={posterUrl}
+        ariaLabel={alt}
         preload="metadata"
-        aria-label={alt}
-        style={style}
+        loop
+        stopLinkClick
+        style={{
+          width: '100%',
+          aspectRatio: '3/4',
+          objectFit: 'cover',
+          display: 'block',
+          ...style,
+        }}
       />
     )
   }
@@ -48,6 +70,7 @@ function CategoryCard({ cat }) {
           <CardMedia
             image={cat.coverImage}
             videoUrl={cat.coverVideoUrl}
+            posterUrl={catCoverVideoPoster(cat)}
             alt={cat.title}
             hidden={hovered && hasHover}
           />
@@ -56,6 +79,7 @@ function CategoryCard({ cat }) {
           <CardMedia
             image={cat.hoverImage}
             videoUrl={cat.hoverVideoUrl}
+            posterUrl={catHoverVideoPoster(cat)}
             alt={cat.title}
             hidden={!hovered}
           />

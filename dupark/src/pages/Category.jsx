@@ -5,6 +5,7 @@ import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
 import gsap from 'gsap'
+import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './Category.css'
 
 const MQL_MOBILE = '(max-width: 768px)'
@@ -22,11 +23,27 @@ const ROWS_PER_STEP = 2
 /** 데스크톱: 첫 화면·More 모두 4행 단위 (모바일은 2행) */
 const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
+const CARD_MEDIA_WIDTH = 400
+
+function coverVideoPosterUrl(project, width) {
+  if (!project) return undefined
+  if (project.coverImage) return urlFor(project.coverImage).width(width).url()
+  if (project.hoverImage) return urlFor(project.hoverImage).width(width).url()
+  return undefined
+}
+
+function hoverVideoPosterUrl(project, width) {
+  if (!project) return undefined
+  if (project.hoverImage) return urlFor(project.hoverImage).width(width).url()
+  if (project.coverImage) return urlFor(project.coverImage).width(width).url()
+  return undefined
+}
 
 /** 이미지가 있으면 이미지, 없고 영상 URL이 있으면 영상으로 폴백해 같은 자리에 그려주는 헬퍼 */
 function CoverMedia({
   image,
   videoUrl,
+  posterUrl,
   alt,
   layered,
   style,
@@ -56,14 +73,13 @@ function CoverMedia({
   }
   if (videoUrl) {
     return (
-      <video
+      <SanityAutoplayVideo
         src={videoUrl}
-        autoPlay
-        muted
-        loop
-        playsInline
+        poster={posterUrl}
+        ariaLabel={alt}
         preload={videoPreload}
-        aria-label={alt}
+        loop
+        stopLinkClick
         style={baseStyle}
       />
     )
@@ -118,6 +134,7 @@ function ProjectCard({ project, category }) {
             <CoverMedia
               image={project.coverImage}
               videoUrl={project.coverVideoUrl}
+              posterUrl={coverVideoPosterUrl(project, CARD_MEDIA_WIDTH)}
               alt={project.title}
               videoPreload={isVideoOnlyCover ? 'none' : 'metadata'}
               imgLoading="lazy"
@@ -131,6 +148,7 @@ function ProjectCard({ project, category }) {
           <CoverMedia
             image={project.hoverImage}
             videoUrl={project.hoverVideoUrl}
+            posterUrl={hoverVideoPosterUrl(project, CARD_MEDIA_WIDTH)}
             alt={project.title}
             layered
             videoPreload="none"

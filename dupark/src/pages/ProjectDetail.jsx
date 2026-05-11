@@ -5,6 +5,7 @@ import { client, urlFor } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
+import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './ProjectDetail.css'
 
 /* onLoad 전부를 기다리지 않고 상한으로 진입 — 흰 화면 최소화(나머지는 자연 로드) */
@@ -55,16 +56,15 @@ function NavThumbMedia({ project, side }) {
   }
   if (project?.coverVideoUrl) {
     return (
-      <video
+      <SanityAutoplayVideo
         src={project.coverVideoUrl}
+        poster={projectFileVideoPosterUrl(project)}
         className="detail-nav-thumb-img"
-        autoPlay
-        muted
-        loop
-        playsInline
+        ariaLabel={project.title}
         preload="metadata"
-        aria-label={project.title}
-        data-side={side}
+        loop
+        stopLinkClick={false}
+        dataSide={side}
       />
     )
   }
