@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import './Loader.css'
 
-const FALLBACK_TIMEOUT_MS = 6000
 const HOLD_AT_100_MS = 1000
 
 const PCT_BOOT = 25
@@ -14,7 +13,12 @@ const PCT_DONE = 100
 const STEP_DURATION_S = 0.45
 const FINAL_DURATION_S = 1.0
 
-/** waitForUrl: undefined 대기 | null/'' 영상 없음 | string 인트로 URL (probe로 진행률) */
+/** 인트로 URL이 있을 때: 50→70→85→100 단계를 이 간격(ms)으로만 올림 (비디오 metadata 대기 없음) */
+const SCHED_MS_DOWNLOAD = 160
+const SCHED_MS_METADATA = 400
+const SCHED_MS_DONE = 1000
+
+/** waitForUrl: undefined 대기 | null/'' 영상 없음 | string 인트로 URL */
 export default function Loader({ onComplete, waitForUrl }) {
   const wrapRef = useRef(null)
   const [num, setNum] = useState(0)
@@ -58,31 +62,14 @@ export default function Loader({ onComplete, waitForUrl }) {
 
     setTarget(PCT_URL)
 
-    const probe = document.createElement('video')
-    probe.muted = true
-    probe.preload = 'metadata'
-    probe.playsInline = true
-
-    const onLoadStart = () => setTarget(PCT_DOWNLOAD)
-    const onMetadata = () => setTarget(PCT_METADATA)
-    const onReady = () => setTarget(PCT_DONE)
-
-    probe.addEventListener('loadstart', onLoadStart, { once: true })
-    probe.addEventListener('loadedmetadata', onMetadata, { once: true })
-    probe.addEventListener('loadeddata', onReady, { once: true })
-    probe.addEventListener('error', onReady, { once: true })
-
-    probe.src = waitForUrl
-    const timeoutId = window.setTimeout(onReady, FALLBACK_TIMEOUT_MS)
+    const tDownload = window.setTimeout(() => setTarget(PCT_DOWNLOAD), SCHED_MS_DOWNLOAD)
+    const tMetadata = window.setTimeout(() => setTarget(PCT_METADATA), SCHED_MS_METADATA)
+    const tDone = window.setTimeout(() => setTarget(PCT_DONE), SCHED_MS_DONE)
 
     return () => {
-      probe.removeEventListener('loadstart', onLoadStart)
-      probe.removeEventListener('loadedmetadata', onMetadata)
-      probe.removeEventListener('loadeddata', onReady)
-      probe.removeEventListener('error', onReady)
-      probe.src = ''
-      probe.load?.()
-      window.clearTimeout(timeoutId)
+      window.clearTimeout(tDownload)
+      window.clearTimeout(tMetadata)
+      window.clearTimeout(tDone)
     }
   }, [waitForUrl, setTarget])
 
