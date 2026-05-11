@@ -402,6 +402,13 @@ export default function HomeDesktop() {
     return () => {
       ctxRef.current?.revert()
       ctxRef.current = null
+      /* 가로 pin 해제 직후 Lenis·문서 높이가 아직 크면 다음 라우트가 맨 아래부터 보일 수 있음 */
+      lenis.scrollTo(0, { immediate: true, force: true })
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      lenis.resize()
+      ScrollTrigger.refresh()
     }
   }, [categories])
 

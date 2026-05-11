@@ -39,18 +39,30 @@ function useImageDownloadGuard() {
   }, [])
 }
 
-/** 라우트·새로고침마다 세로 스크롤 맨 위 — 브라우저 복원 끈 뒤 Lenis·네이티브 동기화 */
+/** 라우트 바뀔 때마다 세로 스크롤 0 — 홈 가로 pin 등 이전 페이지 잔여 스크롤·ST 높이 반영 후 한 번 더 맞춤 */
 function ScrollToTop() {
   const { pathname, key } = useLocation()
   useLayoutEffect(() => {
-    lenis.start()
-    lenis.scrollTo(0, { immediate: true, force: true })
-    window.scrollTo(0, 0)
-    document.documentElement.scrollTop = 0
-    document.body.scrollTop = 0
-    lenis.resize()
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
-    return () => cancelAnimationFrame(id)
+    let cancelled = false
+    const reset = () => {
+      if (cancelled) return
+      lenis.start()
+      lenis.scrollTo(0, { immediate: true, force: true })
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      lenis.resize()
+      ScrollTrigger.refresh()
+    }
+    reset()
+    const id = requestAnimationFrame(() => {
+      reset()
+      requestAnimationFrame(reset)
+    })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(id)
+    }
   }, [pathname, key])
   return null
 }
