@@ -11,6 +11,13 @@ import './ProjectDetail.css'
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.02
 
+/** Sanity galleryColumns — 모바일은 CSS로 2열 고정 */
+function clampGalleryCols(raw) {
+  const v = Number(raw)
+  if (v === 3 || v === 4) return v
+  return 2
+}
+
 function collectProjectVideos(p) {
   if (!p) return { fileUrls: [], embedUrls: [] }
   const fileUrls = []
@@ -263,6 +270,7 @@ export default function ProjectDetail() {
             ...,
             "dims": asset->metadata.dimensions
           },
+          galleryColumns,
           "siblings": *[_type == "project" && category._ref == ^.category._ref] | order(coalesce(order, 0) desc, _createdAt desc){
             title, "slug": slug.current, coverImage,
             "coverVideoUrl": coverVideo.asset->url
@@ -447,6 +455,7 @@ export default function ProjectDetail() {
 
   const { fileUrls: detailFileUrls, embedUrls: detailEmbedUrls } =
     collectProjectVideos(project)
+  const detailGridCols = clampGalleryCols(project.galleryColumns)
 
   return (
     <main id="main-content" tabIndex={-1} ref={detailLayoutRef} className="detail-layout">
@@ -488,7 +497,7 @@ export default function ProjectDetail() {
         )}
       </aside>
 
-      <div className="detail-grid">
+      <div className={`detail-grid detail-grid--cols-${detailGridCols}`}>
         {detailFileUrls.map((src, i) => (
           <div
             key={`${project.slug}-vfile-${i}`}

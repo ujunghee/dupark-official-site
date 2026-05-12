@@ -91,9 +91,28 @@ export default defineType({
     defineField({
       name: 'images',
       title: '이미지 목록 (여러 파일 드래그 앤 드롭 가능)',
+      description:
+        '목록에서 위에서 아래 순서(또는 항목을 드래그해 바꾼 순서)가 사이트 상세 갤러리에 그대로 반영됩니다. 변경 후 반드시 발행(Publish) 하세요.',
       type: 'array',
       of: [{type: 'image', options: {hotspot: true}}],
       options: { layout: 'grid' },
+    }),
+    defineField({
+      name: 'galleryColumns',
+      title: '상세 갤러리 열 수 (데스크톱)',
+      description:
+        '프로젝트 상세 페이지 오른쪽 이미지 그리드 열 수입니다. 모바일은 항상 2열로 표시됩니다.',
+      type: 'number',
+      initialValue: 2,
+      options: {
+        list: [
+          {title: '2열', value: 2},
+          {title: '3열', value: 3},
+          {title: '4열', value: 4},
+        ],
+        layout: 'radio',
+      },
+      validation: (Rule) => Rule.integer().min(2).max(4),
     }),
     defineField({
       name: 'videoFile',

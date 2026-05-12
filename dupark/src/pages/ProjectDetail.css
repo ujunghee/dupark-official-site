@@ -108,13 +108,24 @@
   color: var(--site-text, #000);
 }
 
-/* ── 오른쪽 이미지 2열 그리드 ── */
+/* 오른쪽 이미지 그리드 — 열 수는 Sanity 프로젝트 galleryColumns (모바일은 2열 고정) */
 .detail-grid {
   padding: 2rem 2rem 4rem 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 0.4rem;
   align-content: start;
+}
+
+.detail-grid--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.detail-grid--cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.detail-grid--cols-4 {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .detail-img-wrap {
@@ -413,6 +424,7 @@ body.dupark-is-scrolling .detail-video-wrap.is-active iframe.detail-video {
     padding: 0 1.25rem;
     gap: 0.3rem;
     flex: 1;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   .detail-nav-outer {
