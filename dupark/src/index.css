@@ -179,7 +179,7 @@ video {
   padding-top: 8rem;
   padding-left: 2rem;
   padding-right: 2rem;
-  min-height: calc(100vh - 5rem);
+  min-height: calc(100vh - 4rem);
 }
 
 /* ── Category 페이지 반응형 그리드 ── */

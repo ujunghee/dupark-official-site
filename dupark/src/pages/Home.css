@@ -1,4 +1,6 @@
-/* ── 가로 스크롤 섹션 ── */
+/* ── 가로 스크롤 섹션 ──
+   PC: 뷰포트 전체(100dvh)를 쓰면 스크롤이 끝난 뒤에야 푸터가 보이므로,
+   `:root --dupark-footer-h`(index.css) 만큼 빼 두면 같은 문서 흐름 푸터가 끝에서 자연스럽게 맞닿음. */
 .h-scroll-section {
   position: relative;
   z-index: 1;
@@ -8,6 +10,19 @@
   display: flex;
   align-items: center;
   background: var(--site-bg, #fff);
+}
+
+@media (min-width: 769px) {
+  .h-scroll-section {
+    height: calc(100dvh - var(--dupark-footer-h, 4.125rem));
+    max-height: calc(100dvh - var(--dupark-footer-h, 4.125rem));
+    min-height: 0;
+  }
+}
+
+/* ScrollTrigger pin 시 생기는 pin-spacer — 스크롤 중 비는 영역 배경 */
+.pin-spacer:has(.h-scroll-section) {
+  background: #fff;
 }
 
 .h-scroll-track {

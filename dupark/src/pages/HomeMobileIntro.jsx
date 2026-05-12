@@ -16,6 +16,17 @@ export default function HomeMobileIntro() {
   const whiteRiseRef  = useRef(null)
   const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
 
+  /* URL 확정 직후 네트워크 버퍼 시작 — 로더 표시 중에도 백그라운드로 받아 두면 페이드 직후 첫 프레임이 빨라짐 */
+  useLayoutEffect(() => {
+    const video = videoRef.current
+    if (!video || !videoSrc) return
+    try {
+      video.load()
+    } catch {
+      /* ignore */
+    }
+  }, [videoSrc])
+
   useEffect(() => {
     const video = videoRef.current
     if (!video || !videoSrc) return
@@ -51,7 +62,7 @@ export default function HomeMobileIntro() {
         kickTid = 0
         if (cancelled || video.readyState === 0) return
         if (video.paused) tryPlay()
-      }, 400)
+      }, 200)
     }
 
     const cleanupMedia = () => {
@@ -61,18 +72,18 @@ export default function HomeMobileIntro() {
       video.removeEventListener('loadeddata', onMediaReady)
     }
 
+    /* 첫 방문이어도 로더 끝을 기다리지 않고 재생 시도(뮤트) → 버퍼 선행. 로더 종료 시 한 번 더 보정 */
+    queueMicrotask(() => armPlayback())
     const loaderActive = !sessionStorage.getItem('dupark_loaded')
-    if (!loaderActive) {
-      queueMicrotask(() => armPlayback())
-      return cleanupMedia
+    if (loaderActive) {
+      const onLoaderComplete = () => armPlayback()
+      window.addEventListener('loaderComplete', onLoaderComplete, { once: true })
+      return () => {
+        window.removeEventListener('loaderComplete', onLoaderComplete)
+        cleanupMedia()
+      }
     }
-
-    const onLoaderComplete = () => armPlayback()
-    window.addEventListener('loaderComplete', onLoaderComplete, { once: true })
-    return () => {
-      window.removeEventListener('loaderComplete', onLoaderComplete)
-      cleanupMedia()
-    }
+    return cleanupMedia
   }, [videoSrc])
 
   /* 스크롤 연장: 푸터 숨김 후에도 Lenis·ST에 최소 스크롤 거리 확보 (과도하면 빈 하단만 길어짐)
@@ -307,8 +318,11 @@ export default function HomeMobileIntro() {
       }}>
         <video
           ref={videoRef}
-          muted loop playsInline
+          muted
+          loop
+          playsInline
           preload="auto"
+          fetchPriority="high"
           poster={videoPoster || undefined}
           style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, pointerEvents: 'none' }}
         >

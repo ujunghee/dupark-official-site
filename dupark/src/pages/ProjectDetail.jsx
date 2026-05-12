@@ -8,8 +8,8 @@ import gsap from 'gsap'
 import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './ProjectDetail.css'
 
-/* onLoad 전부를 기다리지 않고 상한으로 진입 — 흰 화면 최소화(나머지는 자연 로드) */
-const MEDIA_ENTRANCE_CAP_MS = 550
+/* iframe·영상 등 로드가 멈출 때만 흰 진입 레이어 강제 해제(이미지는 decode까지 대기) */
+const MEDIA_ENTRANCE_CAP_MS = 60_000
 const ENTRANCE_FADE_S = 0.05
 /* 퇴장: 페이드 아웃 + 스태거 */
 const EXIT_DUR_S = 0.5
@@ -98,25 +98,40 @@ function detailGalleryImageDims(img) {
   return { width: d.width, height: d.height }
 }
 
-/** 갤러리: 로드 전 스켈레톤, 디코딩 후 페이드 인 (캐시 히트 시 onLoad 생략 대비) */
+/** 갤러리: 로드 전 스켈레톤 — 브라우저가 그릴 수 있을 때까지(`decode`) 유지 (대용량·캐시 동일) */
 function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
   const imgRef = useRef(null)
   const didBumpRef = useRef(false)
   const [loaded, setLoaded] = useState(false)
   const dims = detailGalleryImageDims(img)
 
-  const finish = useCallback(() => {
+  const markReady = useCallback(() => {
     if (didBumpRef.current) return
     didBumpRef.current = true
     setLoaded(true)
     bumpMedia()
   }, [bumpMedia])
 
+  const revealAfterDecode = useCallback(
+    (el) => {
+      if (!el || didBumpRef.current) return
+      const done = () => {
+        markReady()
+      }
+      if (typeof el.decode === 'function') {
+        el.decode().then(done).catch(done)
+      } else {
+        done()
+      }
+    },
+    [markReady]
+  )
+
   useLayoutEffect(() => {
     const el = imgRef.current
     if (!el) return
-    if (el.complete && el.naturalHeight > 0) finish()
-  }, [finish])
+    if (el.complete && el.naturalHeight > 0) revealAfterDecode(el)
+  }, [revealAfterDecode])
 
   return (
     <div
@@ -137,8 +152,8 @@ function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
         sizes="(max-width: 768px) 50vw, 33vw"
         loading={index < 2 ? 'eager' : 'lazy'}
         decoding="async"
-        onLoad={finish}
-        onError={finish}
+        onLoad={(e) => revealAfterDecode(e.currentTarget)}
+        onError={markReady}
       />
     </div>
   )
@@ -351,7 +366,7 @@ export default function ProjectDetail() {
     }
   }, [project, id])
 
-  /* onLoad 대기 + 상한(늦는 iframe/이미지로 흰 화면 무한 방지) */
+  /* 흰 진입 레이어: 미디어 bump 완료가 기본. iframe hang 등만 긴 상한으로 강제 해제 */
   useEffect(() => {
     if (!project) return
     const n = countProjectMedia(project)
