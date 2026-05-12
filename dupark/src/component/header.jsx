@@ -56,7 +56,8 @@ export default function Header() {
       )
   }, [])
 
-  const isHome      = location.pathname === '/' || location.pathname === '/m'
+  const isHome =
+    location.pathname === '/' || location.pathname === '/m' || location.pathname === '/main'
   // /:category 또는 /:category/:id 에서 첫 번째 세그먼트를 활성 카테고리로 사용
   const activeSlug  = !isHome ? location.pathname.split('/')[1] : null
 
@@ -317,6 +318,7 @@ export default function Header() {
   const useWhiteHeaderLogo =
     location.pathname === '/about' || (transparent && !isNarrow)
   const logoSrc = useWhiteHeaderLogo ? '/logo-white.svg' : '/logo-black.svg'
+  const homeLogoTo = '/main'
 
   return (
     <>
@@ -339,7 +341,7 @@ export default function Header() {
         }}
       >
         {/* 로고: 클리핑 래퍼 → 내부 img가 위에서 아래로 reveal */}
-        <NavLink to="/" className="logo">
+        <NavLink to={homeLogoTo} className="logo">
           <div className="header-clip">
             <img ref={headerLogoRef} src={logoSrc} alt="DUPARK" className="logo-img" />
           </div>
@@ -416,7 +418,7 @@ export default function Header() {
       <nav className={`drawer${isOpen ? ' open' : ''}`}>
         {/* 상단: 로고 + 닫기 버튼 */}
         <div className="drawer-header">
-          <NavLink to="/" className="logo" onClick={() => setIsOpen(false)}>
+          <NavLink to="/main" className="logo" onClick={() => setIsOpen(false)}>
             <img src="/logo-white.svg" alt="DUPARK" className="logo-img" />
           </NavLink>
           <button className="drawer-close" onClick={() => setIsOpen(false)} aria-label="닫기">

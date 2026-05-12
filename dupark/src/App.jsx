@@ -7,6 +7,7 @@ import { IntroMediaProvider, useIntroMedia } from './context/IntroMediaContext'
 import Header from './component/header'
 import Footer from './component/footer'
 import Home from './pages/Home'
+import HomeMain from './pages/HomeMain'
 import HomeMobileGrid from './pages/HomeMobileGrid'
 import Category from './pages/Category'
 import ProjectDetail from './pages/ProjectDetail'
@@ -119,6 +120,7 @@ function AppShell() {
           <Route path="/HOME" element={<Navigate to="/" replace />} />
           <Route path="/m" element={<HomeMobileGrid />} />
           <Route path="/" element={<Home />} />
+          <Route path="/main" element={<HomeMain />} />
           <Route
             path="/about"
             element={(

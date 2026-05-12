@@ -55,7 +55,6 @@ export default function SanityAutoplayVideo({
       style={style}
       data-side={dataSide}
       muted
-      defaultMuted
       loop={loop}
       playsInline
       autoPlay
