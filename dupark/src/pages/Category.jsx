@@ -25,6 +25,9 @@ const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
 const CARD_MEDIA_WIDTH = 400
 
+/** 커버가 영상만: 예전처럼 넓은 마진으로 한꺼번에 마운트되면 대역폭·디코더 경쟁 → 화면에 어느 정도 들어온 뒤에만 <video> 마운트 */
+const COVER_VIDEO_IO = { root: null, rootMargin: '24px 0px', threshold: 0.2 }
+
 function skeletonSlotCount(isMobile) {
   const cols = getColumnCount()
   const rows = isMobile ? ROWS_PER_STEP : ROWS_PER_MORE_DESKTOP
@@ -55,6 +58,7 @@ function CoverMedia({
   style,
   width = 400,
   videoPreload = 'metadata',
+  videoFetchPriority,
   imgLoading = 'lazy',
 }) {
   const baseStyle = {
@@ -84,6 +88,7 @@ function CoverMedia({
         poster={posterUrl}
         ariaLabel={alt}
         preload={videoPreload}
+        fetchPriority={videoFetchPriority}
         loop
         stopLinkClick
         style={baseStyle}
@@ -93,7 +98,12 @@ function CoverMedia({
   return null
 }
 
-function ProjectCard({ project, category }) {
+function ProjectCard({
+  project,
+  category,
+  coverImgLoading = 'lazy',
+  coverVideoPreloadBoost = false,
+}) {
   const { start: startEnter } = useRouteEnter()
   const cardRef = useRef(null)
   const [hovered, setHovered] = useState(false)
@@ -115,7 +125,7 @@ function ProjectCard({ project, category }) {
           io.disconnect()
         }
       },
-      { root: null, rootMargin: '240px 0px', threshold: 0 }
+      COVER_VIDEO_IO
     )
     io.observe(el)
     return () => io.disconnect()
@@ -142,8 +152,15 @@ function ProjectCard({ project, category }) {
               videoUrl={project.coverVideoUrl}
               posterUrl={coverVideoPosterUrl(project, CARD_MEDIA_WIDTH)}
               alt={project.title}
-              videoPreload={isVideoOnlyCover ? 'none' : 'metadata'}
-              imgLoading="lazy"
+              videoPreload={
+                isVideoOnlyCover
+                  ? coverVideoPreloadBoost
+                    ? 'auto'
+                    : 'metadata'
+                  : 'metadata'
+              }
+              videoFetchPriority={coverVideoPreloadBoost ? 'high' : 'low'}
+              imgLoading={coverImgLoading}
               style={{
                 opacity: !noDetail && hovered && hasHover ? 0 : 1,
               }}
@@ -157,7 +174,8 @@ function ProjectCard({ project, category }) {
             posterUrl={hoverVideoPosterUrl(project, CARD_MEDIA_WIDTH)}
             alt={project.title}
             layered
-            videoPreload="none"
+            videoPreload="metadata"
+            videoFetchPriority="low"
             imgLoading="lazy"
             style={{ opacity: 1 }}
           />
@@ -271,7 +289,10 @@ export default function Category() {
       cardAnimIndexRef.current = 0
     }
     const start = cardAnimIndexRef.current
-    if (start >= n) return
+    if (start >= n) {
+      gsap.set(cardEls, { autoAlpha: 1 })
+      return
+    }
     const batch = Array.from(cardEls).slice(start)
     if (batch.length === 0) return
 
@@ -284,6 +305,10 @@ export default function Category() {
       stagger: 0.02,
     })
     cardAnimIndexRef.current = n
+    return () => {
+      gsap.killTweensOf(batch)
+      gsap.set(batch, { autoAlpha: 1 })
+    }
   }, [displayedCount, category, projects.length])
 
   const loadMoreDesktop = useCallback(() => {
@@ -317,6 +342,10 @@ export default function Category() {
   }, [isMobile, projects.length, displayedCount, category])
 
   const visible = projects.slice(0, displayedCount)
+  const cols = getColumnCount()
+  const firstBatchRows = isMobile ? ROWS_PER_STEP : ROWS_PER_MORE_DESKTOP
+  const eagerCoverCount = cols * firstBatchRows
+
   const canShowMore = displayedCount < projects.length
   const showSkeleton = projectsLoadState === 'loading'
   const skeletonSlots = skeletonSlotCount(isMobile)
@@ -337,8 +366,14 @@ export default function Category() {
                   <div className="category-skeleton-line category-skeleton-line--narrow" />
                 </div>
               ))
-            : visible.map((project) => (
-                <ProjectCard key={project._id} project={project} category={category} />
+            : visible.map((project, index) => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  category={category}
+                  coverImgLoading={index < eagerCoverCount ? 'eager' : 'lazy'}
+                  coverVideoPreloadBoost={index < cols}
+                />
               ))}
         </div>
 

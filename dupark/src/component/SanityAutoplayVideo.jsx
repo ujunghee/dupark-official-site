@@ -17,12 +17,16 @@ export default function SanityAutoplayVideo({
   stopLinkClick = false,
   /** 상세 prev/next 썸네일 등 */
   dataSide,
+  /** 'high' | 'low' | undefined — 그리드 다수 영상 시 끝 카드는 low 권장 */
+  fetchPriority,
 }) {
   const ref = useRef(null)
 
   const tryPlay = useCallback(() => {
     const el = ref.current
     if (!el || !src) return
+    /* 반복 canplay/loadeddata 마다 play()를 다시 호출하면 일부 브라우저에서 재버퍼·끊김 유발 */
+    if (!el.paused) return
     el.muted = true
     void el.play().catch(() => {})
   }, [src])
@@ -51,6 +55,7 @@ export default function SanityAutoplayVideo({
     <video
       ref={ref}
       src={src}
+      fetchPriority={fetchPriority}
       className={className}
       style={style}
       data-side={dataSide}

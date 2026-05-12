@@ -87,4 +87,23 @@ function injectSiteMetaPlugin() {
 
 export default defineConfig({
   plugins: [react(), injectSiteMetaPlugin()],
+  build: {
+    /* 메인 번들(Sanity+GSAP+Lenis 등)이 500kB를 넘어 기본 경고가 남 — 배포는 정상, 상한만 완화 */
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        /* 큰 라이브러리만 별 파일로 — 캐시·병렬 로드에 유리, 메인 청크 경고 완화 */
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('gsap')) return 'gsap'
+          if (id.includes('@sanity')) return 'sanity'
+          if (id.includes('lenis')) return 'lenis'
+          if (id.includes('react-dom')) return 'react-dom'
+          if (id.includes('react-router')) return 'react-router'
+          if (id.includes('@fontsource')) return 'fonts'
+          return 'vendor'
+        },
+      },
+    },
+  },
 })

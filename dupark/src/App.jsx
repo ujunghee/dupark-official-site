@@ -1,11 +1,20 @@
-import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
-import { BrowserRouter, useLocation } from 'react-router-dom'
+import { useState, useCallback, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { lenis } from './lib/lenis'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { RouteEnterProvider } from './context/RouteEnterContext'
 import { IntroMediaProvider, useIntroMedia } from './context/IntroMediaContext'
 import Header from './component/header'
-import PageFadeShell from './component/PageFadeShell'
+import Footer from './component/footer'
+import Home from './pages/Home'
+import HomeMain from './pages/HomeMain'
+import HomeMobileGrid from './pages/HomeMobileGrid'
+import Category from './pages/Category'
+import ProjectDetail from './pages/ProjectDetail'
 import Loader from './component/Loader'
+
+const About = lazy(() => import('./pages/About'))
+
 /** 미디어 위 우클릭·드래그 저장 완화 (devtools 단축키는 막지 않음) */
 function useImageDownloadGuard() {
   useEffect(() => {
@@ -104,7 +113,29 @@ function AppShell() {
     <>
       <CustomScrollbar />
       <Header />
-      <PageFadeShell />    </>
+      <RouteEnterProvider>
+        <Routes>
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/HOME" element={<Navigate to="/" replace />} />
+          <Route path="/m" element={<HomeMobileGrid />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/main" element={<HomeMain />} />
+          <Route
+            path="/about"
+            element={(
+              <Suspense
+                fallback={<div className="about-route-suspense-fallback" aria-hidden />}
+              >
+                <About />
+              </Suspense>
+            )}
+          />
+          <Route path="/:category" element={<Category />} />
+          <Route path="/:category/:id" element={<ProjectDetail />} />
+        </Routes>
+      </RouteEnterProvider>
+      <Footer />
+    </>
   )
 }
 

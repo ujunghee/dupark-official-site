@@ -8,10 +8,6 @@ import gsap from 'gsap'
 import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 import './ProjectDetail.css'
 
-/* iframe·영상 등 로드가 멈출 때만 흰 진입 레이어 강제 해제(이미지는 decode까지 대기) */
-const MEDIA_ENTRANCE_CAP_MS = 60_000
-const ENTRANCE_FADE_S = 0.05
-/* 퇴장: 페이드 아웃 + 스태거 */
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.02
 
@@ -35,14 +31,6 @@ function collectProjectVideos(p) {
   return { fileUrls, embedUrls }
 }
 
-function countProjectMedia(p) {
-  if (!p) return 0
-  const nImg = p.images?.length || 0
-  const { fileUrls, embedUrls } = collectProjectVideos(p)
-  return nImg + fileUrls.length + embedUrls.length
-}
-
-/** prev/next: 이미지 없으면 coverVideo */
 function NavThumbMedia({ project, side }) {
   if (project?.coverImage) {
     return (
@@ -98,40 +86,27 @@ function detailGalleryImageDims(img) {
   return { width: d.width, height: d.height }
 }
 
-/** 갤러리: 로드 전 스켈레톤 — 브라우저가 그릴 수 있을 때까지(`decode`) 유지 (대용량·캐시 동일) */
-function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
+/** 갤러리: 텍스트·스켈레톤은 즉시, 로드 후 이미지 페이드 (레이아웃 높이는 로드 시 Lenis 갱신) */
+function DetailGalleryImageCell({ img, projectTitle, index, onMediaLayout }) {
   const imgRef = useRef(null)
-  const didBumpRef = useRef(false)
   const [loaded, setLoaded] = useState(false)
   const dims = detailGalleryImageDims(img)
+  const imgSrc = urlFor(img).width(900).url()
+
+  useEffect(() => {
+    setLoaded(false)
+  }, [imgSrc])
 
   const markReady = useCallback(() => {
-    if (didBumpRef.current) return
-    didBumpRef.current = true
     setLoaded(true)
-    bumpMedia()
-  }, [bumpMedia])
-
-  const revealAfterDecode = useCallback(
-    (el) => {
-      if (!el || didBumpRef.current) return
-      const done = () => {
-        markReady()
-      }
-      if (typeof el.decode === 'function') {
-        el.decode().then(done).catch(done)
-      } else {
-        done()
-      }
-    },
-    [markReady]
-  )
+    onMediaLayout()
+  }, [onMediaLayout])
 
   useLayoutEffect(() => {
     const el = imgRef.current
     if (!el) return
-    if (el.complete && el.naturalHeight > 0) revealAfterDecode(el)
-  }, [revealAfterDecode])
+    if (el.complete && el.naturalHeight > 0) markReady()
+  }, [markReady, imgSrc])
 
   return (
     <div
@@ -144,7 +119,7 @@ function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
       />
       <img
         ref={imgRef}
-        src={urlFor(img).width(900).url()}
+        src={imgSrc}
         alt={`${projectTitle} ${index + 1}`}
         className={`detail-img${loaded ? ' detail-img--loaded' : ''}`}
         width={dims?.width}
@@ -152,7 +127,7 @@ function DetailGalleryImageCell({ img, projectTitle, index, bumpMedia }) {
         sizes="(max-width: 768px) 50vw, 33vw"
         loading={index < 2 ? 'eager' : 'lazy'}
         decoding="async"
-        onLoad={(e) => revealAfterDecode(e.currentTarget)}
+        onLoad={markReady}
         onError={markReady}
       />
     </div>
@@ -187,19 +162,12 @@ function useLoadMediaWhenNear(eager) {
   return [ref, load]
 }
 
-function DetailLazyFileVideo({ src, eager, bumpMedia, poster }) {
+function DetailLazyFileVideo({ src, eager, onMediaLayout, poster }) {
   const [hostRef, load] = useLoadMediaWhenNear(eager)
-  const didBumpRef = useRef(false)
-
-  useEffect(() => {
-    didBumpRef.current = false
-  }, [src])
 
   const onVideoReady = useCallback(() => {
-    if (didBumpRef.current) return
-    didBumpRef.current = true
-    bumpMedia()
-  }, [bumpMedia])
+    onMediaLayout()
+  }, [onMediaLayout])
 
   return (
     <div ref={hostRef} className="detail-lazy-media-host">
@@ -223,8 +191,13 @@ function DetailLazyFileVideo({ src, eager, bumpMedia, poster }) {
   )
 }
 
-function DetailLazyEmbed({ embedSrc, title, bumpMedia, eager }) {
+function DetailLazyEmbed({ embedSrc, title, onMediaLayout, eager }) {
   const [hostRef, load] = useLoadMediaWhenNear(eager)
+
+  const onEmbedLoad = useCallback(() => {
+    onMediaLayout()
+  }, [onMediaLayout])
+
   return (
     <div ref={hostRef} className="detail-lazy-media-host">
       {load ? (
@@ -233,7 +206,7 @@ function DetailLazyEmbed({ embedSrc, title, bumpMedia, eager }) {
           className="detail-video"
           allow="fullscreen; picture-in-picture"
           allowFullScreen
-          onLoad={bumpMedia}
+          onLoad={onEmbedLoad}
           title={title}
         />
       ) : null}
@@ -248,12 +221,8 @@ export default function ProjectDetail() {
   const [prev, setPrev]         = useState(null)
   const [next, setNext]         = useState(null)
   const [entranceComplete, setEntranceComplete] = useState(false)
-  const [mediaAllLoaded, setMediaAllLoaded] = useState(false)
   const navRef     = useRef(null)
   const detailLayoutRef = useRef(null)
-  const entranceOverlayRef = useRef(null)
-  const mediaDoneRef = useRef(0)
-  const expectedMediaRef = useRef(0)
   const detailStageRef = useRef(null)
   const exitNavInProgressRef = useRef(false)
   /* Strict Mode: 언마운트 시뮬 후 ref가 유지되면 false만 남는 경우가 있어, 마운트마다 true로 둔다 */
@@ -272,15 +241,12 @@ export default function ProjectDetail() {
     exitNavInProgressRef.current = false
     const el = detailLayoutRef.current
     if (el) el.style.removeProperty('pointer-events')
-    expectedMediaRef.current = 0
-    mediaDoneRef.current = 0
     /* flushSync + lifecycle 금지(React 19). 스택 끝에서 리셋 — 마이크로태스크는 페인트 직전에 흡수됨 */
     queueMicrotask(() => {
       setProject(null)
       setPrev(null)
       setNext(null)
       setEntranceComplete(false)
-      setMediaAllLoaded(false)
     })
   }, [id, category, endEnter])
 
@@ -319,6 +285,7 @@ export default function ProjectDetail() {
           return
         }
         setProject(data)
+        setEntranceComplete(true)
         const siblings = (data.siblings || []).filter(
           (s) => !isComingSoonTitle(s.title)
         )
@@ -338,88 +305,17 @@ export default function ProjectDetail() {
     }
   }, [])
 
-  const bumpMedia = useCallback(() => {
-    const exp = expectedMediaRef.current
-    /* onLoad가 useLayout(기대 수 확정)보다 먼저 나면 1 >= 0으로 잘못 완료됨 → 본문 깜빡임 */
-    if (exp < 1) return
-    mediaDoneRef.current += 1
-    /* 미디어 한 개 로드될 때마다 문서 높이 변화 → Lenis가 새 max scroll을 알 수 있도록 갱신 */
+  const notifyMediaLayout = useCallback(() => {
     lenis.resize()
-    if (mediaDoneRef.current >= exp) {
-      setMediaAllLoaded(true)
-    }
   }, [])
 
-  /* paint 전에 기대 수 확정(캐시된 이미지 onLoad 레이스 방지) */
-  useLayoutEffect(() => {
-    if (!project) {
-      expectedMediaRef.current = 0
-      return
-    }
-    const t = countProjectMedia(project)
-    expectedMediaRef.current = t
-    mediaDoneRef.current = 0
-    if (t === 0) {
-      queueMicrotask(() => setMediaAllLoaded(true))
-    } else {
-      queueMicrotask(() => setMediaAllLoaded(false))
-    }
-  }, [project, id])
-
-  /* 흰 진입 레이어: 미디어 bump 완료가 기본. iframe hang 등만 긴 상한으로 강제 해제 */
-  useEffect(() => {
-    if (!project) return
-    const n = countProjectMedia(project)
-    if (n === 0 || mediaAllLoaded) return
-    const tid = window.setTimeout(() => {
-      setMediaAllLoaded(true)
-    }, MEDIA_ENTRANCE_CAP_MS)
-    return () => window.clearTimeout(tid)
-  }, [project, id, mediaAllLoaded])
-
-  /* 흰 오버레이 페이드: 미디어 onLoad 완료 또는 CAP 도달 후 */
-  useEffect(() => {
-    if (!project || !mediaAllLoaded) return
-    if (entranceComplete) return
-    /* 진입 직전 한번 더 — 늦게 합쳐진 이미지/iframe 사이즈까지 반영해 max scroll 정확히 잡기 */
-    lenis.resize()
-
-    const total = countProjectMedia(project)
-    if (total === 0) {
-      queueMicrotask(() => setEntranceComplete(true))
-      return
-    }
-
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const el = entranceOverlayRef.current
-    if (reduce) {
-      if (el) gsap.set(el, { autoAlpha: 0 })
-      queueMicrotask(() => setEntranceComplete(true))
-      return
-    }
-    if (!el) {
-      queueMicrotask(() => setEntranceComplete(true))
-      return
-    }
-    gsap.killTweensOf(el)
-    gsap.fromTo(
-      el,
-      { autoAlpha: 1 },
-      {
-        autoAlpha: 0,
-        duration: ENTRANCE_FADE_S,
-        ease: 'power2.out',
-        onComplete: () => setEntranceComplete(true),
-      }
-    )
-  }, [project, mediaAllLoaded, entranceComplete, id])
-
-  /* 본문·그리드: 흰 오버레이 제거 뒤 페이드 인 스태거 */
+  /* 본문·그리드: 데이터 도착 후 페이드 인 스태거 (이미지는 셀별 스켈레톤·로컬 페이드) */
   useLayoutEffect(() => {
     if (!entranceComplete || !project) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const root = detailStageRef.current
     if (!root) return
+    lenis.resize()
     const textEls = root.querySelectorAll('.detail-reveal-track')
     const cells = root.querySelectorAll('.detail-grid-cell')
     const all = gsap.utils.toArray([...textEls, ...cells])
@@ -543,28 +439,12 @@ export default function ProjectDetail() {
     )
   }
 
-  const mediaCount = countProjectMedia(project)
-  const showEntranceLayer = mediaCount > 0 && !entranceComplete
-  const mainContentVisible = entranceComplete
   const { fileUrls: detailFileUrls, embedUrls: detailEmbedUrls } =
     collectProjectVideos(project)
 
   return (
     <main id="main-content" tabIndex={-1} ref={detailLayoutRef} className="detail-layout">
-      {showEntranceLayer && (
-        <div
-          ref={entranceOverlayRef}
-          className="detail-entrance-overlay"
-          aria-hidden
-        />
-      )}
-
-      {/* aside+그리드만 가림: prev/next는 stage 밖 — 호버·프리뷰가 막히지 않게 */}
-      <div
-        ref={detailStageRef}
-        className={`detail-stage${!mainContentVisible ? ' detail-stage--conceal' : ''}`}
-        aria-hidden={!mainContentVisible}
-      >
+      <div ref={detailStageRef} className="detail-stage">
       {/* ── 왼쪽: sticky 정보 ── */}
       <aside className="detail-info">
         {project.category && (
@@ -608,7 +488,7 @@ export default function ProjectDetail() {
             <DetailLazyFileVideo
               src={src}
               eager={i === 0}
-              bumpMedia={bumpMedia}
+              onMediaLayout={notifyMediaLayout}
               poster={projectFileVideoPosterUrl(project)}
             />
           </div>
@@ -621,7 +501,7 @@ export default function ProjectDetail() {
             <DetailLazyEmbed
               embedSrc={toEmbedUrl(url)}
               title={`${project.title} 영상 ${i + 1}`}
-              bumpMedia={bumpMedia}
+              onMediaLayout={notifyMediaLayout}
               eager={detailFileUrls.length === 0 && i === 0}
             />
             {/* 클릭 캐처: iframe 위에 깔린 투명 버튼.
@@ -643,7 +523,7 @@ export default function ProjectDetail() {
             img={img}
             projectTitle={project.title}
             index={i}
-            bumpMedia={bumpMedia}
+            onMediaLayout={notifyMediaLayout}
           />
         ))}
       </div>
