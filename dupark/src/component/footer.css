@@ -23,6 +23,11 @@
   color: var(--site-text, #000);
 }
 
+.footer-link:hover {
+  color: var(--site-accent, #aaff00);
+  transition: color 0.2s ease;
+}
+
 .footer-copy {
   color: var(--site-text, #000);
   text-transform: uppercase;

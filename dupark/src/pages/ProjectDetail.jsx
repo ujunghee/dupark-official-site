@@ -93,10 +93,6 @@ function DetailGalleryImageCell({ img, projectTitle, index, onMediaLayout }) {
   const dims = detailGalleryImageDims(img)
   const imgSrc = urlFor(img).width(900).url()
 
-  useEffect(() => {
-    setLoaded(false)
-  }, [imgSrc])
-
   const markReady = useCallback(() => {
     setLoaded(true)
     onMediaLayout()
@@ -330,8 +326,18 @@ export default function ProjectDetail() {
     })
     return () => {
       gsap.killTweensOf(all)
+      gsap.set(all, { autoAlpha: 1 })
     }
   }, [entranceComplete, project])
+
+  /* prev/next 바: 퇴장 GSAP 잔여·다른 경로로 autoAlpha 가 남지 않도록 프로젝트마다 확실히 복구 */
+  useLayoutEffect(() => {
+    if (!project) return
+    const nav = navRef.current
+    if (!nav) return
+    gsap.killTweensOf(nav)
+    gsap.set(nav, { autoAlpha: 1 })
+  }, [project, id])
 
   const goToSibling = useCallback(
     (slug) => {
@@ -366,8 +372,8 @@ export default function ProjectDetail() {
       const textEls = root.querySelectorAll('.detail-reveal-track')
       const cells = root.querySelectorAll('.detail-grid-cell')
       const all = gsap.utils.toArray([...textEls, ...cells])
-      const navEl = navRef.current
-      if (navEl) all.push(navEl)
+      /* nav(prev/next)는 여기서 페이드아웃하지 않음 — 진입 스태거가 stage 안만 다시 켜서
+         nav에 autoAlpha:0 이 영구 남는 버그가 난다 */
 
       if (all.length === 0) {
         navigateOnly()
@@ -449,8 +455,11 @@ export default function ProjectDetail() {
       <aside className="detail-info">
         {project.category && (
           <div className="detail-reveal-clip">
-            <p className="detail-category detail-reveal-track">
+            {/* <p className="detail-category detail-reveal-track">
               {project.category} / WORK
+            </p> */}
+            <p className="detail-category detail-reveal-track">
+              WORK
             </p>
           </div>
         )}
@@ -517,15 +526,21 @@ export default function ProjectDetail() {
             />
           </div>
         ))}
-        {project.images?.map((img, i) => (
+        {project.images?.map((img, i) => {
+          const imgAssetRef = img?.asset?._ref
+          const cellKey = imgAssetRef
+            ? `${project.slug}-img-${img?._key ?? i}-${imgAssetRef}`
+            : `${project.slug}-img-${img?._key ?? i}-${urlFor(img).width(900).url()}`
+          return (
           <DetailGalleryImageCell
-            key={`${project.slug}-img-${img?._key ?? i}`}
+            key={cellKey}
             img={img}
             projectTitle={project.title}
             index={i}
             onMediaLayout={notifyMediaLayout}
           />
-        ))}
+          )
+        })}
       </div>
       </div>
 
