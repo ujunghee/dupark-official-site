@@ -14,23 +14,39 @@ body.dupark-about-page #root {
   background: #000;
 }
 
-/* fixed 헤더 아래·푸터 위: index.css --dupark-header-h, --dupark-footer-h (모바일은 푸터 높이 별도) */
+/* fixed 헤더 아래·푸터 위 — 인트로 영상이 있으면 세로 스크롤 허용 */
 .about-page {
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  min-height: 0;
-  /* svh 먼저, dvh로 덮기 — 뷰포트·safe-area 틈에 흰 선 생기는 경우 완화 */
-  height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
   min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-  max-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-  height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
   min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-  max-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
   padding: var(--dupark-header-h) 0 0;
   background: #000;
   color: #fff;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+/* 인트로 영상: 가로 풀(여백 없이), 세로는 뷰포트 비율 */
+.about-intro-video-wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  line-height: 0;
+}
+
+.about-intro-video {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  background: #0a0a0a;
+  border-radius: 0;
 }
 
 /* 최상단 풀뷰포트 검정 → 페이드아웃 후 about 본문 노출 (헤더/푸터 위) */
@@ -65,9 +81,8 @@ body.dupark-about-page #root {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: minmax(0, 1fr);
   box-sizing: border-box;
-  min-height: 0;
-  height: 100%;
-  padding-top: 2rem;
+  min-height: calc(100svh - var(--dupark-footer-h));
+  padding-bottom: var(--dupark-footer-h);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -217,12 +232,19 @@ body.dupark-about-page #root {
 
 @media (max-width: 768px) {
   .about-page {
-    height: auto;
-    max-height: none;
     min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
     min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
+    padding: var(--dupark-header-h) 0 0;
     overflow-x: clip;
-    overflow-y: visible;
+    overflow-y: auto;
+  }
+
+  .about-intro-video-wrap {
+    width: 100%;
+  }
+
+  .about-intro-video {
+    min-height: min(56vh, 32rem);
   }
 
   .about-page-inner {

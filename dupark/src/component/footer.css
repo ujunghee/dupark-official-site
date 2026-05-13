@@ -37,8 +37,11 @@
 
 /* About: 본문과 맞춘 검정 푸터 */
 body.dupark-about-page .site-footer {
-  background: #000;
+  background: transparent;
   color: #fff;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

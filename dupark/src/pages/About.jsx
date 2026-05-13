@@ -1,7 +1,9 @@
 import { useEffect, useRef, useLayoutEffect, useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { lenis } from '../lib/lenis.js'
+import { useIntroMedia } from '../context/IntroMediaContext'
 import { client } from '../lib/sanity'
 import './About.css'
 
@@ -145,7 +147,11 @@ function mergeAboutContent(remote) {
 
 export default function About() {
   const pageInnerRef = useRef(null)
+  const introVideoWrapRef = useRef(null)
+  const introVideoRef = useRef(null)
+  const { videoUrl: videoSrc, posterUrl: videoPoster } = useIntroMedia()
   const [remoteAbout, setRemoteAbout] = useState(undefined)
+  const [introVideoInView, setIntroVideoInView] = useState(false)
 
   const content = useMemo(() => mergeAboutContent(remoteAbout), [remoteAbout])
 
@@ -167,6 +173,51 @@ export default function About() {
       ].join('\u0001'),
     [content]
   )
+
+  useEffect(() => {
+    const video = introVideoRef.current
+    if (!video || typeof videoSrc !== 'string' || !videoSrc) return
+    try {
+      video.load()
+    } catch {
+      /* ignore */
+    }
+  }, [videoSrc, videoPoster])
+
+  useEffect(() => {
+    if (typeof videoSrc !== 'string' || !videoSrc) return
+    queueMicrotask(() => {
+      lenis.resize()
+      ScrollTrigger.refresh()
+    })
+  }, [videoSrc])
+
+  useEffect(() => {
+    if (typeof videoSrc !== 'string' || !videoSrc) return
+    const el = introVideoWrapRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        setIntroVideoInView(entries.some((e) => e.isIntersecting))
+      },
+      { root: null, rootMargin: '80px 0px', threshold: 0.08 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [videoSrc])
+
+  useEffect(() => {
+    const v = introVideoRef.current
+    if (!v) return
+    if (introVideoInView) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      v.muted = true
+      void v.play().catch(() => {})
+    } else {
+      v.pause()
+    }
+    queueMicrotask(() => lenis.resize())
+  }, [introVideoInView])
 
   useLayoutEffect(() => {
     document.body.classList.add('dupark-about-page')
@@ -334,6 +385,26 @@ export default function About() {
           </div>
         </div>
       </div>
+
+      {typeof videoSrc === 'string' && videoSrc ? (
+        <section
+          ref={introVideoWrapRef}
+          className="about-intro-video-wrap"
+          aria-label="인트로 영상"
+        >
+          <video
+            ref={introVideoRef}
+            className="about-intro-video"
+            src={videoSrc}
+            poster={videoPoster || undefined}
+            muted
+            playsInline
+            autoPlay
+            loop
+            preload="auto"
+          />
+        </section>
+      ) : null}
     </main>
   )
 }

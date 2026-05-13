@@ -27,7 +27,9 @@
 .category-load-more:hover {
   color: var(--site-accent, #aaff00);
 }
-
+.project-card-cover {
+  border-radius: .2rem;
+}
 .project-card-cover img,
 .project-card-cover video {
   transform: translateZ(0) scale(1.02);

@@ -32,7 +32,7 @@ body.dupark-about-page .header {
 }
 
 body.dupark-about-page .header.header--scrolled {
-  background: #000;
+  background: transparent;
 }
 
 body.dupark-about-page .header .nav-link {
@@ -311,7 +311,7 @@ body.dupark-about-page .header.header--about-retracted {
   body.dupark-about-page .header,
   body.dupark-about-page .header.at-top,
   body.dupark-about-page .header.header--scrolled {
-    background: #000;
+    background: transparent;
   }
 
   /* 흰 헤더 위 홈 히어로: 햄버거·at-top 콘트라스트 */

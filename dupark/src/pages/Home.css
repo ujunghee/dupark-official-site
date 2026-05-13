@@ -64,6 +64,7 @@
   aspect-ratio: 3 / 4;
   position: relative;
   overflow: hidden;
+  border-radius: .2rem;
 }
 
 .category-card-img img,
