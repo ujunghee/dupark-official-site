@@ -27,8 +27,7 @@
 
 /* ── About: 검은 콘텐츠 위 — 민트 active는 항상 var(--site-accent, #aaff00) (filter/invert 사용 안 함) ── */
 body.dupark-about-page .header {
-  background: transparent;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
 }
 
 body.dupark-about-page .header.header--scrolled {
@@ -311,7 +310,7 @@ body.dupark-about-page .header.header--about-retracted {
   body.dupark-about-page .header,
   body.dupark-about-page .header.at-top,
   body.dupark-about-page .header.header--scrolled {
-    background: transparent;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
   }
 
   /* 흰 헤더 위 홈 히어로: 햄버거·at-top 콘트라스트 */

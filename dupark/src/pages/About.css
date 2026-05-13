@@ -1,9 +1,25 @@
+/* About: 모바일(768↓)은 커스텀 스크롤바 숨김 — 769↑ 에서만 표시, 썸은 자동 페이드 없이 유지 */
 body.dupark-about-page .custom-scrollbar {
   display: none;
 }
 
-/* 틈·서브픽셀에 흰 배경이 비치지 않게 */
-html:has(body.dupark-about-page),
+@media (min-width: 769px) {
+  body.dupark-about-page .custom-scrollbar {
+    display: block;
+  }
+
+  body.dupark-about-page .custom-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.28);
+    opacity: 1;
+    transition: none;
+  }
+
+  body.dupark-about-page .custom-scrollbar.active .custom-scrollbar-thumb {
+    opacity: 1;
+  }
+}
+
+/* 틈·서브픽셀에 흰 배경이 비치지 않게 */html:has(body.dupark-about-page),
 body.dupark-about-page {
   background: #000;
 }
@@ -14,34 +30,95 @@ body.dupark-about-page #root {
   background: #000;
 }
 
-/* fixed 헤더 아래·푸터 위 — 인트로 영상이 있으면 세로 스크롤 허용 */
-.about-page {
+/*
+ * Slides Pinning — Overscroll Solution (GreenSock CodePen)
+ * https://codepen.io/GreenSock/pen/bGRdvMy
+ * CodePen 의 slides-wrapper margin-top(네비 아래 여백) 은 사용하지 않음 — 슬라이드는 화면 최상단부터.
+ * 헤더는 fixed 오버레이, 본문만 .about-page-inner 에 padding-top 으로 밀어 가독성 유지.
+ */
+.slides-wrapper.slides-wrapper--about {
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-  min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-  padding: var(--dupark-header-h) 0 0;
-  background: #000;
-  color: #fff;
-  overflow-x: clip;
-  overflow-y: auto;
-}
-
-/* 인트로 영상: 가로 풀(여백 없이), 세로는 뷰포트 비율 */
-.about-intro-video-wrap {
-  width: 100%;
-  max-width: none;
   margin: 0;
   padding: 0;
+  background: #000;
+}
+
+.slides-wrapper--about > .section {
   box-sizing: border-box;
+  width: 100%;
+  height: 100svh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+
+.slides-wrapper--about > .about-page.section-01 {
+  padding-top: 0;
+}
+
+.slides-wrapper--about > .about-page.section-01 .about-page-inner {
+  padding-top: calc(var(--dupark-header-h) + env(safe-area-inset-top, 0px));
+  box-sizing: border-box;
+}
+
+.slides-wrapper--about > .about-intro-video-wrap.section-02 {
+  padding-top: 0;
   line-height: 0;
 }
 
-.about-intro-video {
+/* 모바일(768 이하): 인트로 영상 슬라이드 비표시 — JSX 도 미마운트, CSS 는 이중 방지 */
+@media (max-width: 768px) {
+  .slides-wrapper--about > .about-intro-video-wrap.section.section-02 {
+    display: none !important;
+  }
+}
+
+
+.slides-wrapper--about .section-content {
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-width: none;
-  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
+}
+
+.slides-wrapper--about .section-inner {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* pen: .section-2 .section-inner — 본문이 뷰포트보다 길 때 fake scroll */
+.slides-wrapper--about > .about-page.section-01 .section-inner {
+  height: auto;
+  min-height: 100%;
+  padding-bottom: 20vh;
+}
+
+.slides-wrapper--about > .about-intro-video-wrap.section-02 .section-inner {
+  height: 100%;
+  flex: 1 1 auto;
+  position: relative;
+  padding-bottom: 0;
+}
+
+.about-intro-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
   object-fit: cover;
   object-position: center;
@@ -81,7 +158,9 @@ body.dupark-about-page #root {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: minmax(0, 1fr);
   box-sizing: border-box;
-  min-height: calc(100svh - var(--dupark-footer-h));
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
   padding-bottom: var(--dupark-footer-h);
 }
 
@@ -90,6 +169,13 @@ body.dupark-about-page #root {
     animation: none;
     opacity: 0;
     visibility: hidden;
+  }
+
+  .about-logo-mark,
+  .about-content-reveal .about-reveal-track {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -121,6 +207,24 @@ body.dupark-about-page #root {
   display: block;
   object-fit: contain;
   object-position: center;
+  opacity: 0;
+  transform: translate3d(0, 6px, 0) scale(1);
+  animation: about-logo-reveal 1.55s cubic-bezier(0.33, 1, 0.68, 1) 0.15s forwards;
+}
+
+@keyframes about-logo-reveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(1);
+  }
+  18% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
 }
 
 /* ── 오른쪽: 내용 — 클립 + 텍스트 페이드 인(.about-reveal-track) ── */
@@ -146,6 +250,21 @@ body.dupark-about-page #root {
 .about-reveal-clip {
   overflow: hidden;
   width: 100%;
+}
+
+/* --about-reveal-i 는 AboutRevealColumn 이 각 .about-reveal-clip 에 부여 (0,1,2,…) */
+.about-content-reveal .about-reveal-track {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  animation: about-track-reveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(0.72s + (var(--about-reveal-i, 0) * 42ms));
+}
+
+@keyframes about-track-reveal {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .about-section {
@@ -231,22 +350,6 @@ body.dupark-about-page #root {
 }
 
 @media (max-width: 768px) {
-  .about-page {
-    min-height: calc(100svh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-    min-height: calc(100dvh - var(--dupark-footer-h) - env(safe-area-inset-bottom, 0px));
-    padding: var(--dupark-header-h) 0 0;
-    overflow-x: clip;
-    overflow-y: auto;
-  }
-
-  .about-intro-video-wrap {
-    width: 100%;
-  }
-
-  .about-intro-video {
-    min-height: min(56vh, 32rem);
-  }
-
   .about-page-inner {
     height: auto;
     grid-template-columns: 1fr;
@@ -262,13 +365,13 @@ body.dupark-about-page #root {
   }
 
   .about-logo-mark {
-  display: none;
+    display: none;
   }
 
   .about-content {
-    padding: 4.25rem 1.5rem 4rem;
+    padding: 3rem 1.5rem 4rem;
     border-left: none;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .about-content-reveal {
@@ -288,6 +391,12 @@ body.dupark-about-page #root {
 
   .about-contact-label {
     min-width: 0;
+  }
+  .slides-wrapper--about > .section  {
+    height: auto;
+  }
+  .slides-wrapper--about > .about-page.section-01 .section-inner {
+    padding-bottom: 0;
   }
 }
 

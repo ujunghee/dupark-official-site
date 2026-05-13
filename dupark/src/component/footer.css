@@ -35,13 +35,14 @@
   font-size: 0.65rem;
 }
 
-/* About: 본문과 맞춘 검정 푸터 */
+/* 인트로 영상(150) 위·헤더(200) 아래 — 하단 링크·인디케이터 클릭 가능 */
 body.dupark-about-page .site-footer {
-  background: transparent;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   color: #fff;
   position: fixed;
   width: 100%;
   bottom: 0;
+  z-index: 180;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
