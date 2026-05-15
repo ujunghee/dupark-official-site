@@ -293,13 +293,13 @@ body.dupark-about-page .header.header--about-retracted {
   color: var(--site-accent, #aaff00);
 }
 
-/* ── 모바일 카테고리 탭바 ── */
+/* ── 카테고리 탭바(1200px 미만에서만 표시) ── */
 .mobile-subnav {
-  display: none; /* 모바일에서만 표시 */
+  display: none;
 }
 
-/* ── 모바일 브레이크포인트 ── */
-@media (max-width: 768px) {
+/* ── 좁은 뷰포트(1200px 미만): 햄버거·드로어·모바일 탭바 ── */
+@media (max-width: 1199px) {
   /* 투명 → 스크롤 시 칠해지는 느낌이 아니라, 처음부터 흰 바(라이트) / About은 검정 */
   .header,
   .header.at-top,
@@ -385,8 +385,8 @@ body.dupark-about-page .header.header--about-retracted {
   }
 }
 
-/* 모바일 전용(≤768)과 겹치지 않게, 넓힌 뒤에도 JS 상태가 남아 있을 때 대비 */
-@media (min-width: 769px) {
+/* 1200px 이상: 햄버거·드로어 강제 숨김 (좁은 화면에서 열린 뒤 넓혔을 때 대비) */
+@media (min-width: 1200px) {
   .hamburger {
     display: none !important;
   }

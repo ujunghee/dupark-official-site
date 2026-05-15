@@ -4,11 +4,12 @@ import { useRouteEnter } from '../context/RouteEnterContext'
 import HomeDesktopHorizontal from './HomeDesktopHorizontal'
 import HomeMainMobileGrid from './HomeMainMobileGrid'
 
-const MOBILE_BREAKPOINT = 768
+/** `/main` — 뷰포트 1200px 미만이면 2열 그리드, 그 이상은 가로 스크롤 홈 */
+const MAIN_GRID_MAX_PX = 1199
 
 const narrowMediaQuery = () =>
   typeof window !== 'undefined'
-    ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+    ? window.matchMedia(`(max-width: ${MAIN_GRID_MAX_PX}px)`)
     : null
 
 const CATEGORY_QUERY = `*[_type == "category"] | order(coalesce(order, 0) desc, _createdAt desc){
@@ -17,7 +18,7 @@ const CATEGORY_QUERY = `*[_type == "category"] | order(coalesce(order, 0) desc, 
   "hoverVideoUrl": hoverVideo.asset->url
 }`
 
-/** `/main` — PC는 가로 그리드, 모바일은 `/m`과 같은 카테고리 그리드. 리다이렉트 없음. */
+/** `/main` — 넓은 화면은 가로 그리드, 1200px 미만은 `/m`과 같은 2열 카테고리 그리드. 리다이렉트 없음. */
 export default function HomeMain() {
   const { end: endEnter } = useRouteEnter()
   const [isNarrow, setIsNarrow] = useState(() => narrowMediaQuery()?.matches ?? false)

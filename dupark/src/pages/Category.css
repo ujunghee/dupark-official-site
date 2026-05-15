@@ -98,3 +98,10 @@ a{
   width: 52%;
   margin-top: 0.35rem;
 }
+
+
+@media (max-width: 768px) {
+  .category-page-inner {
+    padding-bottom: 0;
+  }
+}

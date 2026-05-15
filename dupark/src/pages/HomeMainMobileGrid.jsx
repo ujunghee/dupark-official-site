@@ -4,7 +4,7 @@ import { lenis } from '../lib/lenis'
 import { MobileCategoryItem } from './MobileCategoryItem'
 import './Home.css'
 
-/** `/main` 모바일 — `/m`과 동일 그리드·애니, 인트로 게이트 없음 */
+/** `/main` 좁은 뷰포트(<1200px) — `/m`과 동일 2열 그리드·애니, 인트로 게이트 없음 */
 export default function HomeMainMobileGrid({ categories }) {
   const gridSectionRef = useRef(null)
 

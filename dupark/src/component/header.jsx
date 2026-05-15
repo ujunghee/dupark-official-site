@@ -4,9 +4,10 @@ import { client } from '../lib/sanity'
 import gsap from 'gsap'
 import './header.css'
 
-/** header.css: 모바일 레이아웃은 (max-width:768px) — 768px에서도 `min-width:769` 아님 */
-const MQL_DESKTOP = '(min-width: 769px)'
-const MQL_NARROW = '(max-width: 768px)'
+/** header.css: 좁은 레이아웃(햄버거·드로어)은 (max-width:1199px) = 1200px 미만 */
+const HEADER_WIDE_MIN_PX = 1200
+const MQL_DESKTOP = `(min-width: ${HEADER_WIDE_MIN_PX}px)`
+const MQL_NARROW = `(max-width: ${HEADER_WIDE_MIN_PX - 1}px)`
 
 /** 홈 인트로(`/`)에서만 영상 히어로일 때 헤더 숨김 — `/m`·다른 경로는 해당 없음 */
 const getHomeVideoHeroShouldHideHeader = () => {
@@ -14,7 +15,7 @@ const getHomeVideoHeroShouldHideHeader = () => {
   return !document.body.classList.contains('dupark-home-content')
 }
 
-/** About: /about 진입할 때마다 ABOUT_AUTO_HIDE_MS 뒤 자동 축소 — 769px 이상(PC)만. 모바일(≤768px)은 기본 헤더 */
+/** About: /about 진입마다 ABOUT_AUTO_HIDE_MS 뒤 자동 축소 — 1200px 이상만. 그 미만은 기본 헤더 */
 const ABOUT_AUTO_HIDE_MS = 2000
 const ABOUT_PEEK_EDGE_PX = 80
 const ABOUT_PEEK_COLLAPSE_DEBOUNCE_MS = 100
@@ -72,7 +73,7 @@ export default function Header() {
 
   const isAboutPage = location.pathname === '/about'
 
-  /* About: /about 진입할 때마다 타이머 후 자동 숨김 — 769px+ 만. 모바일은 타이머·피크 미적용
+  /* About: /about 진입마다 타이머 후 자동 숨김 — 1200px+ 만. 그 미만은 타이머·피크 미적용
      (동기 setState in effect 린트 회피: startTransition — hidden 은 아래 스크롤 onScroll()에서 /about+PC 일 때 해제) */
   useEffect(() => {
     if (!isAboutPage) {
@@ -158,7 +159,7 @@ export default function Header() {
 
       setAtTop(current < 10)
 
-      /* About + 데스크톱(769px+): 스크롤 기반 hidden 끔 — 피크만 사용. 진입 시 타 페이지 hidden 해제 */
+      /* About + 넓은 뷰포트(1200px+): 스크롤 기반 hidden 끔 — 피크만 사용. 진입 시 타 페이지 hidden 해제 */
       if (location.pathname === '/about' && !isNarrow) {
         setHidden(false)
         lastScrollY.current = current
@@ -222,7 +223,7 @@ export default function Header() {
     }
   }, [isHome, isNarrow, location.pathname])
 
-  /* ── 뷰포트를 데스크톱(769+)으로 키우면 모바일 드로어/스크롤 잠금 정리 (resize 대신 matchMedia change) ── */
+  /* ── 뷰포트를 1200px+으로 키우면 좁은 화면 드로어/스크롤 잠금 정리 (matchMedia change) ── */
   useEffect(() => {
     const mq = window.matchMedia(MQL_DESKTOP)
     const onViewport = () => {
