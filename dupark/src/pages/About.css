@@ -161,7 +161,7 @@ body.dupark-about-page #root {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  padding-bottom: var(--dupark-footer-h);
+  /* padding-bottom: var(--dupark-footer-h); */
 }
 
 @media (prefers-reduced-motion: reduce) {
