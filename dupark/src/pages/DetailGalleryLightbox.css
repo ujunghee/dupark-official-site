@@ -1,0 +1,248 @@
+/* ── 프로젝트 디테일 갤러리 라이트박스 (portal → body) ── */
+body.dupark-detail-lightbox-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.detail-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 450;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: 100svh;
+  background: #000;
+  font-family: inherit;
+}
+
+.detail-lightbox__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.detail-lightbox__viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* 이미지 전체 영역 — cover 로 뷰포트 꽉 채움 */
+.detail-lightbox__fills {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.detail-lightbox__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+.detail-lightbox__img--preview {
+  z-index: 1;
+  transition: opacity 0.4s ease;
+}
+
+.detail-lightbox__img--high {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.detail-lightbox--sharp-loaded .detail-lightbox__img--high {
+  opacity: 1;
+}
+
+.detail-lightbox--sharp-loaded .detail-lightbox__img--preview {
+  opacity: 0;
+}
+
+.detail-lightbox__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background-color: #1c1c20;
+  background-image: linear-gradient(
+    100deg,
+    #1c1c20 0%,
+    #2e2e34 42%,
+    #222228 52%,
+    #1c1c20 100%
+  );
+  background-size: 220% 100%;
+  animation: detail-lb-skel 0.95s ease-in-out infinite;
+}
+
+.detail-lightbox--base-loaded .detail-lightbox__skeleton {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.28s ease,
+    visibility 0s linear 0.28s;
+}
+
+@keyframes detail-lb-skel {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* SVG 아이콘만 — 테두리·배경 없음 */
+.detail-lightbox__icon-btn {
+  position: absolute;
+  z-index: 20;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.detail-lightbox__icon-btn:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.detail-lightbox__icon-btn:disabled {
+  opacity: 0.22;
+  cursor: default;
+  pointer-events: none;
+}
+
+.detail-lightbox__icon-btn svg {
+  display: block;
+}
+
+.detail-lightbox__close {
+  top: max(0.55rem, env(safe-area-inset-top));
+  right: max(0.55rem, env(safe-area-inset-right));
+  width: 2.75rem;
+  height: 2.75rem;
+  z-index: 40;
+}
+
+.detail-lightbox__nav {
+  top: 50%;
+  translate: 0 -50%;
+  width: 3rem;
+  height: 3rem;
+}
+
+.detail-lightbox__nav--prev {
+  left: max(0.25rem, env(safe-area-inset-left));
+}
+
+.detail-lightbox__nav--next {
+  right: max(0.25rem, env(safe-area-inset-right));
+}
+
+/* 하단 썸네일 목록 */
+.detail-lightbox__thumb-rail {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem 0.65rem calc(0.55rem + env(safe-area-inset-bottom));
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.65rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.55) 70%, transparent 100%);
+}
+
+.detail-lightbox__thumb-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.detail-lightbox__thumb {
+  flex: 0 0 auto;
+  position: relative;
+  width: 3.1rem;
+  height: 3.1rem;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.42;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  scroll-snap-align: center;
+}
+
+.detail-lightbox__thumb:hover {
+  opacity: 0.75;
+}
+
+.detail-lightbox__thumb.is-current {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.detail-lightbox__thumb.is-current::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--site-accent, #aaff00);
+  pointer-events: none;
+}
+
+.detail-lightbox__thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-lightbox__skeleton {
+    animation: none;
+    background-image: none;
+  }
+
+  .detail-lightbox--base-loaded .detail-lightbox__skeleton {
+    transition: none;
+  }
+
+  .detail-lightbox__img--preview,
+  .detail-lightbox__img--high {
+    transition: none;
+  }
+
+  .detail-lightbox__thumb {
+    transition: none;
+  }
+}

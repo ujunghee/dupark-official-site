@@ -181,6 +181,30 @@
   z-index: 2;
 }
 
+/* 좁은 뷰포트: 갤러리 셀 탭 → 라이트박스 (ProjectDetail.jsx) */
+.detail-img-zoom-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  cursor: zoom-in;
+  appearance: none;
+  background: transparent;
+  border-radius: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.detail-img-zoom-hit:focus-visible {
+  outline: 2px solid var(--site-accent, #aaff00);
+  outline-offset: 2px;
+}
+
+.detail-img-zoom-hit:active {
+  background: color-mix(in srgb, var(--site-text, #000) 6%, transparent);
+}
+
 /* .detail-img-wrap:hover .detail-img {
   transform: scale(1.05);
 } */

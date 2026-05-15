@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react'
+import { useEffect, useState, useRef, useCallback, useLayoutEffect, startTransition } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
 import { client, urlFor } from '../lib/sanity'
@@ -6,7 +6,15 @@ import { isComingSoonTitle } from '../lib/projectComingSoon'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
+import DetailGalleryLightbox from './DetailGalleryLightbox'
 import './ProjectDetail.css'
+
+/** 갤러리 라이트박스: 헤더·메인과 동일 1200px 미만 */
+const DETAIL_LIGHTBOX_MAX_PX = 1199
+const lightboxNarrowMql = () =>
+  typeof window !== 'undefined'
+    ? window.matchMedia(`(max-width: ${DETAIL_LIGHTBOX_MAX_PX}px)`)
+    : null
 
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.02
@@ -94,7 +102,14 @@ function detailGalleryImageDims(img) {
 }
 
 /** 갤러리: 텍스트·스켈레톤은 즉시, 로드 후 이미지 페이드 (레이아웃 높이는 로드 시 Lenis 갱신) */
-function DetailGalleryImageCell({ img, projectTitle, index, onMediaLayout }) {
+function DetailGalleryImageCell({
+  img,
+  projectTitle,
+  index,
+  onMediaLayout,
+  enableLightbox,
+  onOpenLightbox,
+}) {
   const imgRef = useRef(null)
   const [loaded, setLoaded] = useState(false)
   const dims = detailGalleryImageDims(img)
@@ -127,12 +142,24 @@ function DetailGalleryImageCell({ img, projectTitle, index, onMediaLayout }) {
         className={`detail-img${loaded ? ' detail-img--loaded' : ''}`}
         width={dims?.width}
         height={dims?.height}
-        sizes="(max-width: 768px) 50vw, 33vw"
+        sizes="(max-width: 1199px) 50vw, 33vw"
         loading={index < 2 ? 'eager' : 'lazy'}
         decoding="async"
         onLoad={markReady}
         onError={markReady}
       />
+      {enableLightbox && onOpenLightbox ? (
+        <button
+          type="button"
+          className="detail-img-zoom-hit"
+          aria-label={`${projectTitle} 이미지 ${index + 1} 크게 보기`}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onOpenLightbox(index)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -224,6 +251,10 @@ export default function ProjectDetail() {
   const [prev, setPrev]         = useState(null)
   const [next, setNext]         = useState(null)
   const [entranceComplete, setEntranceComplete] = useState(false)
+  const [galleryLbIndex, setGalleryLbIndex] = useState(null)
+  const [lightboxNarrow, setLightboxNarrow] = useState(
+    () => lightboxNarrowMql()?.matches ?? false
+  )
   const navRef     = useRef(null)
   const detailLayoutRef = useRef(null)
   const detailStageRef = useRef(null)
@@ -250,8 +281,21 @@ export default function ProjectDetail() {
       setPrev(null)
       setNext(null)
       setEntranceComplete(false)
+      startTransition(() => setGalleryLbIndex(null))
     })
   }, [id, category, endEnter])
+
+  useEffect(() => {
+    const mq = lightboxNarrowMql()
+    if (!mq) return
+    const onChange = () => {
+      setLightboxNarrow(mq.matches)
+      if (!mq.matches) startTransition(() => setGalleryLbIndex(null))
+    }
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   /* ── 데이터 패칭 (project 비움은 useLayout) ── */
   useEffect(() => {
@@ -547,6 +591,8 @@ export default function ProjectDetail() {
             projectTitle={project.title}
             index={i}
             onMediaLayout={notifyMediaLayout}
+            enableLightbox={lightboxNarrow}
+            onOpenLightbox={setGalleryLbIndex}
           />
           )
         })}
@@ -612,6 +658,18 @@ export default function ProjectDetail() {
           )}
         </div>
       </div>
+
+      {lightboxNarrow &&
+        galleryLbIndex !== null &&
+        project.images?.length > 0 && (
+          <DetailGalleryLightbox
+            images={project.images}
+            projectTitle={project.title}
+            index={galleryLbIndex}
+            onClose={() => setGalleryLbIndex(null)}
+            onIndexChange={setGalleryLbIndex}
+          />
+        )}
     </main>
   )
 }
