@@ -29,7 +29,7 @@
   display: flex;
   align-items: flex-start;
   will-change: transform;
-  padding-top: 2rem;
+  padding-top: 4rem;
   padding-left: 2rem;
   padding-right: 2rem;
   gap: .8rem;
@@ -64,7 +64,6 @@
   aspect-ratio: 3 / 4;
   position: relative;
   overflow: hidden;
-  border-radius: .2rem;
 }
 
 .category-card-img img,

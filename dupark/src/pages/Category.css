@@ -3,6 +3,7 @@
   flex-direction: column;
   width: 100%;
   align-items: stretch;
+  padding-bottom: 4rem;
 }
 
 /* MORE — PC(769px 이상)에서만 JSX로 렌더 */
@@ -26,9 +27,6 @@
 
 .category-load-more:hover {
   color: var(--site-accent, #aaff00);
-}
-.project-card-cover {
-  border-radius: .2rem;
 }
 .project-card-cover img,
 .project-card-cover video {

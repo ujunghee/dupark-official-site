@@ -270,7 +270,7 @@ body.dupark-about-page #root {
 .about-section {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.4rem;
 }
 
 .about-section-title {
@@ -293,7 +293,7 @@ body.dupark-about-page #root {
 .about-body-lines {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0;
 }
 
 .about-list {
@@ -302,7 +302,6 @@ body.dupark-about-page #root {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .about-list__line {
