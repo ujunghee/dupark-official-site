@@ -316,7 +316,7 @@ body.dupark-about-page #root {
 .about-contact-row {
   display: flex;
   align-items: baseline;
-  gap: 1.25rem;
+  gap: .8rem;
   position: relative;
   z-index: 1;
 }
