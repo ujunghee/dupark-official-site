@@ -44,7 +44,29 @@ const ABOUT_PAGE_QUERY = `*[_type == "aboutPage" && _id == "aboutPage"][0]{
   headingServices,
   headingContact,
   labelEmail,
-  labelInstagram
+  labelInstagram,
+  typography{
+    sectionHeadingSizeRem,
+    descriptionSizeRem,
+    titleToDescriptionGapRem,
+    bodySizeRem,
+    supportSizeRem,
+    lineScale,
+    spaceScale,
+    letterSpacingEm,
+    titleFontSizeRem,
+    titleLineHeight,
+    sectionTitleBodyGapRem,
+    bodyFontSizeRem,
+    bodyLineHeight,
+    bodyLetterSpacingEm,
+    bodyLineGapEm,
+    listLineHeight,
+    listItemGapEm,
+    sectionStackGapRem,
+    contactLabelFontSizeRem,
+    contactLinkFontSizeRem
+  }
 }`
 
 /** 인트로 영상: 768px 이하 비표시 — 769px 이상만 */
@@ -93,6 +115,177 @@ function labelFromInstagramUrl(url) {
   }
 }
 
+/** Studio typography 미입력 시 — 기존 About.css 와 맞춘 기본값 */
+const DEFAULT_ABOUT_TYPOGRAPHY = {
+  titleFontSizeRem: 0.85,
+  titleLineHeight: 1.25,
+  sectionTitleBodyGapRem: 0.4,
+  bodyFontSizeRem: 0.9,
+  bodyLineHeight: 1.65,
+  bodyLetterSpacingEm: 0.03,
+  bodyLineGapEm: 0.35,
+  listLineHeight: 1.5,
+  listItemGapEm: 0.2,
+  sectionStackGapRem: 2.25,
+  contactLabelFontSizeRem: 0.65,
+  contactLinkFontSizeRem: 0.9,
+}
+
+function toFiniteNumberOrNull(value) {
+  if (value == null || value === '') return null
+  const n = typeof value === 'number' ? value : Number(String(value).trim())
+  return Number.isFinite(n) ? n : null
+}
+
+function pickInRange(value, min, max, fallback) {
+  const n = toFiniteNumberOrNull(value)
+  if (n == null) return fallback
+  return Math.min(max, Math.max(min, n))
+}
+
+/** 예전 Studio(항목별 숫자) 문서 — 하나라도 있으면 세트로 해석 */
+const LEGACY_TYPOGRAPHY_KEYS = [
+  'titleFontSizeRem',
+  'titleLineHeight',
+  'sectionTitleBodyGapRem',
+  'bodyFontSizeRem',
+  'bodyLineHeight',
+  'bodyLetterSpacingEm',
+  'bodyLineGapEm',
+  'listLineHeight',
+  'listItemGapEm',
+  'sectionStackGapRem',
+  'contactLabelFontSizeRem',
+  'contactLinkFontSizeRem',
+]
+
+function hasLegacyTypographyNumbers(t) {
+  if (!t || typeof t !== 'object') return false
+  return LEGACY_TYPOGRAPHY_KEYS.some((k) => toFiniteNumberOrNull(t[k]) != null)
+}
+
+/** Studio 단순 모드: 줄간·블록 간격을 같은 배율로 (lineScale, 예전 spaceScale 호환) */
+function unifiedTypographyScale(raw) {
+  return pickInRange(raw?.lineScale ?? raw?.spaceScale, 0.65, 3, 1)
+}
+
+function expandSimpleTypography(t) {
+  const d = DEFAULT_ABOUT_TYPOGRAPHY
+  const descRaw = t.descriptionSizeRem ?? t.supportSizeRem ?? t.bodySizeRem
+  const desc = pickInRange(descRaw, 0.5, 2.5, d.bodyFontSizeRem)
+  const heading = pickInRange(t.sectionHeadingSizeRem, 0.5, 2.5, d.titleFontSizeRem)
+  const scale = unifiedTypographyScale(t)
+  return {
+    titleFontSizeRem: heading,
+    bodyFontSizeRem: desc,
+    supportFontSizeRem: desc,
+    contactLinkFontSizeRem: desc,
+    contactLabelFontSizeRem: desc,
+    titleLineHeight: pickInRange(d.titleLineHeight * scale, 1, 2.5, d.titleLineHeight),
+    bodyLineHeight: pickInRange(d.bodyLineHeight * scale, 1, 3, d.bodyLineHeight),
+    listLineHeight: pickInRange(d.listLineHeight * scale, 1, 3, d.listLineHeight),
+    bodyLetterSpacingEm: pickInRange(t.letterSpacingEm, -0.05, 0.3, d.bodyLetterSpacingEm),
+    bodyLineGapEm: pickInRange(d.bodyLineGapEm * scale, 0, 3, d.bodyLineGapEm),
+    listItemGapEm: pickInRange(d.listItemGapEm * scale, 0, 2, d.listItemGapEm),
+    sectionTitleBodyGapRem: pickInRange(d.sectionTitleBodyGapRem * scale, 0, 4, d.sectionTitleBodyGapRem),
+    sectionStackGapRem: pickInRange(d.sectionStackGapRem * scale, 0, 16, d.sectionStackGapRem),
+  }
+}
+
+/** 레거시 병합 뒤 Studio 배율(줄간·간격 동일) */
+function applyTypographyScales(merged, raw) {
+  const s = unifiedTypographyScale(raw)
+  return {
+    ...merged,
+    titleLineHeight: pickInRange(merged.titleLineHeight * s, 1, 2.5, merged.titleLineHeight),
+    bodyLineHeight: pickInRange(merged.bodyLineHeight * s, 1, 3, merged.bodyLineHeight),
+    listLineHeight: pickInRange(merged.listLineHeight * s, 1, 3, merged.listLineHeight),
+    bodyLineGapEm: pickInRange(merged.bodyLineGapEm * s, 0, 3, merged.bodyLineGapEm),
+    listItemGapEm: pickInRange(merged.listItemGapEm * s, 0, 2, merged.listItemGapEm),
+    sectionTitleBodyGapRem: pickInRange(merged.sectionTitleBodyGapRem * s, 0, 4, merged.sectionTitleBodyGapRem),
+    sectionStackGapRem: pickInRange(merged.sectionStackGapRem * s, 0, 16, merged.sectionStackGapRem),
+  }
+}
+
+/** 비어 있지 않으면 제목↔설명 세로 간격만 이 rem으로 고정 (배율보다 우선) */
+function applyOptionalTitleToDescriptionGap(merged, raw) {
+  const v = toFiniteNumberOrNull(raw?.titleToDescriptionGapRem)
+  if (v == null) return merged
+  const d = DEFAULT_ABOUT_TYPOGRAPHY
+  return {
+    ...merged,
+    sectionTitleBodyGapRem: pickInRange(v, 0, 6, d.sectionTitleBodyGapRem),
+  }
+}
+
+/** Studio `letterSpacingEm`가 있으면 자간만 덮어씀 (레거시 bodyLetterSpacingEm보다 우선) */
+function applyOptionalLetterSpacing(merged, raw) {
+  const v = toFiniteNumberOrNull(raw?.letterSpacingEm)
+  if (v == null) return merged
+  const d = DEFAULT_ABOUT_TYPOGRAPHY
+  return {
+    ...merged,
+    bodyLetterSpacingEm: pickInRange(v, -0.05, 0.3, d.bodyLetterSpacingEm),
+  }
+}
+
+/** Studio typography — 레거시면 항목 숫자 + 배율, 아니면 단순 모드(배율 포함) */
+function mergeAboutTypography(raw) {
+  const t = raw && typeof raw === 'object' ? raw : {}
+  let merged
+  if (hasLegacyTypographyNumbers(t)) {
+    merged = applyTypographyScales(mergeLegacyTypographyFromObject(t), t)
+  } else {
+    merged = expandSimpleTypography(t)
+  }
+  merged = applyOptionalTitleToDescriptionGap(merged, t)
+  return applyOptionalLetterSpacing(merged, t)
+}
+
+/** 예전 Studio 객체 → 안전한 숫자 맵 (위치·목록은 예전과 같이 본문과 같은 글자 크기) */
+function mergeLegacyTypographyFromObject(t) {
+  const d = DEFAULT_ABOUT_TYPOGRAPHY
+  const bodyRem = pickInRange(t.bodyFontSizeRem, 0.5, 2.5, d.bodyFontSizeRem)
+  return {
+    titleFontSizeRem: pickInRange(t.titleFontSizeRem, 0.5, 3, d.titleFontSizeRem),
+    titleLineHeight: pickInRange(t.titleLineHeight, 1, 2.5, d.titleLineHeight),
+    sectionTitleBodyGapRem: pickInRange(t.sectionTitleBodyGapRem, 0, 4, d.sectionTitleBodyGapRem),
+    bodyFontSizeRem: bodyRem,
+    bodyLineHeight: pickInRange(t.bodyLineHeight, 1, 3, d.bodyLineHeight),
+    bodyLetterSpacingEm: pickInRange(t.bodyLetterSpacingEm, -0.05, 0.3, d.bodyLetterSpacingEm),
+    bodyLineGapEm: pickInRange(t.bodyLineGapEm, 0, 3, d.bodyLineGapEm),
+    listLineHeight: pickInRange(t.listLineHeight, 1, 3, d.listLineHeight),
+    listItemGapEm: pickInRange(t.listItemGapEm, 0, 2, d.listItemGapEm),
+    sectionStackGapRem: pickInRange(t.sectionStackGapRem, 0, 16, d.sectionStackGapRem),
+    contactLabelFontSizeRem: pickInRange(t.contactLabelFontSizeRem, 0.4, 1.5, d.contactLabelFontSizeRem),
+    contactLinkFontSizeRem: pickInRange(t.contactLinkFontSizeRem, 0.5, 2, d.contactLinkFontSizeRem),
+    supportFontSizeRem: bodyRem,
+  }
+}
+
+/** .about-content 인라인 — CSS 변수로 타이포 전달 */
+function aboutTypographyCssVars(typo) {
+  const d = DEFAULT_ABOUT_TYPOGRAPHY
+  const lineHeightRatio =
+    d.bodyLineHeight > 0 ? typo.bodyLineHeight / d.bodyLineHeight : 1
+  const contactRowsGapRem = typo.sectionTitleBodyGapRem * lineHeightRatio
+  return {
+    '--about-title-fs': `${typo.titleFontSizeRem}rem`,
+    '--about-title-lh': String(typo.titleLineHeight),
+    '--about-section-title-body-gap': `${typo.sectionTitleBodyGapRem}rem`,
+    '--about-body-fs': `${typo.bodyFontSizeRem}rem`,
+    '--about-body-lh': String(typo.bodyLineHeight),
+    '--about-body-ls': `${typo.bodyLetterSpacingEm}em`,
+    '--about-body-line-gap': `${typo.bodyLineGapEm}em`,
+    '--about-list-lh': String(typo.listLineHeight),
+    '--about-list-item-gap': `${typo.listItemGapEm}em`,
+    '--about-section-stack-gap': `${typo.sectionStackGapRem}rem`,
+    '--about-contact-label-fs': `${typo.contactLabelFontSizeRem}rem`,
+    '--about-contact-link-fs': `${typo.contactLinkFontSizeRem}rem`,
+    '--about-contact-rows-gap': `${contactRowsGapRem}rem`,
+  }
+}
+
 function mergeAboutContent(remote) {
   const doc = remote && typeof remote === 'object' ? remote : null
 
@@ -132,6 +325,8 @@ function mergeAboutContent(remote) {
   const labelInstagram =
     (typeof doc?.labelInstagram === 'string' && doc.labelInstagram.trim()) || 'Instagram'
 
+  const typography = mergeAboutTypography(doc?.typography)
+
   return {
     bodyLines,
     location,
@@ -145,6 +340,7 @@ function mergeAboutContent(remote) {
     headingContact,
     labelEmail,
     labelInstagram,
+    typography,
   }
 }
 
@@ -162,7 +358,7 @@ function AboutRevealColumn({ content, onMailtoClick }) {
         <div className="about-body-lines">
           {content.bodyLines.map((line, idx) => (
             <div key={`${idx}-${line}`} className="about-reveal-clip" {...clipProps()}>
-              <p className="about-section-body about-reveal-track">{line}</p>
+              <p className="about-section-body about-description about-reveal-track">{line}</p>
             </div>
           ))}
         </div>
@@ -173,7 +369,7 @@ function AboutRevealColumn({ content, onMailtoClick }) {
           <p className="about-section-title about-reveal-track">{content.headingLocation}</p>
         </div>
         <div className="about-reveal-clip" {...clipProps()}>
-          <p className="about-section-body about-reveal-track">{content.location}</p>
+          <p className="about-section-body about-description about-reveal-track">{content.location}</p>
         </div>
       </section>
 
@@ -196,30 +392,32 @@ function AboutRevealColumn({ content, onMailtoClick }) {
         <div className="about-reveal-clip" {...clipProps()}>
           <p className="about-section-title about-reveal-track">{content.headingContact}</p>
         </div>
-        <div className="about-reveal-clip" {...clipProps()}>
-          <div className="about-reveal-track about-contact-row">
-            <span className="about-contact-label">{content.labelEmail}</span>
-            <a
-              className="about-contact-link"
-              href={content.mailtoContact}
-              title="설정된 기본 메일 앱에서 열기 (Windows·Mac)"
-              onClick={onMailtoClick}
-            >
-              {content.contactEmail}
-            </a>
+        <div className="about-contact-rows">
+          <div className="about-reveal-clip" {...clipProps()}>
+            <div className="about-reveal-track about-contact-row">
+              <span className="about-contact-label">{content.labelEmail}</span>
+              <a
+                className="about-contact-link"
+                href={content.mailtoContact}
+                title="설정된 기본 메일 앱에서 열기 (Windows·Mac)"
+                onClick={onMailtoClick}
+              >
+                {content.contactEmail}
+              </a>
+            </div>
           </div>
-        </div>
-        <div className="about-reveal-clip" {...clipProps()}>
-          <div className="about-reveal-track about-contact-row">
-            <span className="about-contact-label">{content.labelInstagram}</span>
-            <a
-              className="about-contact-link"
-              href={content.instagram.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {content.instagram.label}
-            </a>
+          <div className="about-reveal-clip" {...clipProps()}>
+            <div className="about-reveal-track about-contact-row">
+              <span className="about-contact-label">{content.labelInstagram}</span>
+              <a
+                className="about-contact-link"
+                href={content.instagram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {content.instagram.label}
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -267,8 +465,14 @@ export default function About() {
         content.headingContact,
         content.labelEmail,
         content.labelInstagram,
+        JSON.stringify(content.typography),
       ].join('\u0001'),
     [content]
+  )
+
+  const aboutContentStyle = useMemo(
+    () => aboutTypographyCssVars(content.typography),
+    [content.typography]
   )
 
   useEffect(() => {
@@ -493,7 +697,7 @@ export default function About() {
           </div>
         </div>
 
-        <div className="about-content">
+        <div className="about-content" style={aboutContentStyle}>
           <AboutRevealColumn content={content} onMailtoClick={handleMailtoClick} />
         </div>
               </div>

@@ -237,12 +237,26 @@ body.dupark-about-page #root {
   min-height: 0;
   position: relative;
   z-index: 1;
+  /* Sanity typography — About.jsx 가 덮어씀 */
+  --about-title-fs: 0.85rem;
+  --about-title-lh: 1.25;
+  --about-section-title-body-gap: 0.4rem;
+  --about-body-fs: 0.9rem;
+  --about-body-lh: 1.65;
+  --about-body-ls: 0.03em;
+  --about-body-line-gap: 0.35em;
+  --about-list-lh: 1.5;
+  --about-list-item-gap: 0.2em;
+  --about-section-stack-gap: 2.25rem;
+  --about-contact-label-fs: 0.65rem;
+  --about-contact-link-fs: 0.9rem;
+  --about-contact-rows-gap: 0.4rem;
 }
 
 .about-content-reveal {
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2.5svh, 2.5rem);
+  gap: var(--about-section-stack-gap);
   min-width: 0;
   min-height: 0;
 }
@@ -270,30 +284,36 @@ body.dupark-about-page #root {
 .about-section {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--about-section-title-body-gap);
 }
 
 .about-section-title {
-  font-size: 0.85rem;
+  font-size: var(--about-title-fs);
   font-weight: 700;
   color: #fff;
   text-transform: uppercase;
   margin: 0;
+  line-height: var(--about-title-lh);
+  letter-spacing: var(--about-body-ls);
+}
+
+.about-description,
+.about-list__line {
+  font-size: var(--about-body-fs);
 }
 
 .about-section-body {
-  font-size: clamp(0.8rem, 1.1svh, 0.9rem);
   font-weight: 500;
   color: #fff;
-  line-height: 1.65;
-  letter-spacing: 0.03em;
+  line-height: var(--about-body-lh);
+  letter-spacing: var(--about-body-ls);
   margin: 0;
 }
 
 .about-body-lines {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--about-body-line-gap);
 }
 
 .about-list {
@@ -302,15 +322,22 @@ body.dupark-about-page #root {
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: var(--about-list-item-gap);
 }
 
 .about-list__line {
   display: block;
-  font-size: clamp(0.8rem, 1.1svh, 0.9rem);
   font-weight: 500;
   color: #fff;
-  line-height: 1.5;
-  letter-spacing: 0.03em;
+  line-height: var(--about-list-lh);
+  letter-spacing: var(--about-body-ls);
+}
+
+.about-contact-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--about-contact-rows-gap);
+  min-width: 0;
 }
 
 .about-contact-row {
@@ -322,16 +349,17 @@ body.dupark-about-page #root {
 }
 
 .about-contact-label {
-  font-size: 0.65rem;
+  font-size: var(--about-contact-label-fs);
   font-weight: 700;
   color: #fff;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--about-body-ls);
   min-width: 5rem;
   text-transform: uppercase;
+  line-height: var(--about-body-lh);
 }
 
 .about-contact-link {
-  font-size: clamp(0.8rem, 1.1svh, 0.9rem);
+  font-size: var(--about-contact-link-fs);
   font-weight: 500;
   color: #fff;
   text-decoration: none;
@@ -339,9 +367,10 @@ body.dupark-about-page #root {
   transition: opacity 0.2s ease;
   position: relative;
   z-index: 2;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--about-body-ls);
   pointer-events: auto;
   touch-action: manipulation;
+  line-height: var(--about-body-lh);
 }
 
 .about-contact-link:hover {
@@ -374,11 +403,11 @@ body.dupark-about-page #root {
   }
 
   .about-content-reveal {
-    gap: 2.2rem;
+    gap: var(--about-section-stack-gap);
   }
 
   .about-section-title {
-    font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+    font-size: var(--about-title-fs);
   }
 
   /* 라벨 고정폭 + baseline 정렬 → 좁은 화면에서 링크와 어긋남·줄바꿈 깨짐 */
@@ -404,9 +433,5 @@ body.dupark-about-page #root {
   .about-content {
     padding-top: 1rem;
     padding-bottom: 1rem;
-  }
-
-  .about-section {
-    gap: 0.35rem;
   }
 }
