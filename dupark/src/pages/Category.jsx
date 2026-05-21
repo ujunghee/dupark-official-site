@@ -25,9 +25,6 @@ const ROWS_PER_MORE_DESKTOP = 4
 const MOBILE_COLS = 2
 const CARD_MEDIA_WIDTH = 400
 
-/** 커버가 영상만: 예전처럼 넓은 마진으로 한꺼번에 마운트되면 대역폭·디코더 경쟁 → 화면에 어느 정도 들어온 뒤에만 <video> 마운트 */
-const COVER_VIDEO_IO = { root: null, rootMargin: '24px 0px', threshold: 0.2 }
-
 function skeletonSlotCount(isMobile) {
   const cols = getColumnCount()
   const rows = isMobile ? ROWS_PER_STEP : ROWS_PER_MORE_DESKTOP
@@ -110,62 +107,24 @@ function ProjectCard({
   const noDetail = isComingSoonTitle(project.title)
   const hasCover = Boolean(project.coverImage || project.coverVideoUrl)
   const hasHover = Boolean(project.hoverImage || project.hoverVideoUrl)
-  const isVideoOnlyCover = Boolean(project.coverVideoUrl && !project.coverImage)
-  const [coverVideoUnlocked, setCoverVideoUnlocked] = useState(() => !isVideoOnlyCover)
-
-  /* 커버가 ‘영상만’인 카드: 뷰포트 근처에서만 <video> 마운트 — 카테고리 진입 시 N개 동시 디코딩 방지 */
-  useEffect(() => {
-    if (!isVideoOnlyCover) return
-    const el = cardRef.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setCoverVideoUnlocked(true)
-          io.disconnect()
-        }
-      },
-      COVER_VIDEO_IO
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [isVideoOnlyCover, project._id])
 
   const inner = (
     <>
       <div className="project-card-cover" style={{ position: 'relative', overflow: 'hidden' }}>
-        {hasCover &&
-          (isVideoOnlyCover && !coverVideoUnlocked ? (
-            <div
-              className="project-card-cover-skeleton"
-              style={{
-                width: '100%',
-                aspectRatio: '3/4',
-                background:
-                  'color-mix(in srgb, var(--site-text, #000) 6%, var(--site-bg, #fff))',
-              }}
-              aria-hidden
-            />
-          ) : (
+        {hasCover && (
             <CoverMedia
               image={project.coverImage}
               videoUrl={project.coverVideoUrl}
               posterUrl={coverVideoPosterUrl(project, CARD_MEDIA_WIDTH)}
               alt={project.title}
-              videoPreload={
-                isVideoOnlyCover
-                  ? coverVideoPreloadBoost
-                    ? 'auto'
-                    : 'metadata'
-                  : 'metadata'
-              }
+              videoPreload={coverVideoPreloadBoost ? 'auto' : 'metadata'}
               videoFetchPriority={coverVideoPreloadBoost ? 'high' : 'low'}
               imgLoading={coverImgLoading}
               style={{
                 opacity: !noDetail && hovered && hasHover ? 0 : 1,
               }}
             />
-          ))}
+          )}
         {/* 호버 에셋: 올렸을 때만 마운트 → 보이지 않는 카드까지 호버 영상 전부 prefetch 되던 부담 제거 */}
         {hasHover && hovered && !noDetail && (
           <CoverMedia

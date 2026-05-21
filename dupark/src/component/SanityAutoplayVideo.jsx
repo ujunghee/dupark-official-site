@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+
+const LAZY_IO = { root: null, rootMargin: '240px 0px', threshold: 0.01 }
 
 /**
- * Sanity에서 올린 무음 루프 인라인 영상용.
- * 모바일 자동재생 정책: 소리 없는(muted) 영상만 autoplay 허용 → `muted`를 마크업+IDL로 고정.
- * iOS: 자동재생이 막혀도 poster + 탭(클릭)으로 재시도. `<Link>` 안에 있을 땐 stopLinkClick 으로 네비와 충돌 완화.
+ * Sanity 무음 루프 인라인 영상.
+ * preload='auto' → 즉시 로드 (첫 화면).
+ * 그 외 → preload none + 뷰포트 근처에서만 src·metadata 로드.
  */
 export default function SanityAutoplayVideo({
   src,
@@ -13,47 +15,95 @@ export default function SanityAutoplayVideo({
   ariaLabel,
   preload = 'metadata',
   loop = true,
-  /** true면 클릭이 상위 `<Link>`로 버블되지 않음(카드 영상 탭 = 재생만) */
   stopLinkClick = false,
-  /** 상세 prev/next 썸네일 등 */
   dataSide,
-  /** 'high' | 'low' | undefined — 그리드 다수 영상 시 끝 카드는 low 권장 */
   fetchPriority,
 }) {
+  const wrapRef = useRef(null)
   const ref = useRef(null)
+  const eager = preload === 'auto'
+  const [shouldLoad, setShouldLoad] = useState(() => eager)
+
+  useEffect(() => {
+    if (shouldLoad) return undefined
+    const el = wrapRef.current
+    if (!el) return undefined
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShouldLoad(true)
+          io.disconnect()
+        }
+      },
+      LAZY_IO
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [shouldLoad])
 
   const tryPlay = useCallback(() => {
     const el = ref.current
     if (!el || !src) return
-    /* 반복 canplay/loadeddata 마다 play()를 다시 호출하면 일부 브라우저에서 재버퍼·끊김 유발 */
     if (!el.paused) return
     el.muted = true
     void el.play().catch(() => {})
   }, [src])
 
   useEffect(() => {
+    if (!shouldLoad) return
     tryPlay()
-  }, [src, tryPlay])
+  }, [shouldLoad, src, tryPlay])
 
-  /* 첫 페인트 전에 muted 고정 — DOM에 muted 없으면 WebKit이 autoplay 무시하고 재생 버튼만 노출 */
   useLayoutEffect(() => {
     const el = ref.current
-    if (!el || !src) return
+    if (!el || !src || !shouldLoad) return
     el.defaultMuted = true
     el.muted = true
     el.setAttribute('muted', '')
     el.setAttribute('playsinline', '')
     el.setAttribute('webkit-playsinline', '')
-  }, [src])
+  }, [src, shouldLoad])
 
   const onVideoClick = (e) => {
     if (stopLinkClick) e.stopPropagation()
     tryPlay()
   }
 
+  if (!shouldLoad) {
+    return (
+      <div
+        ref={wrapRef}
+        className={className}
+        style={style}
+        data-side={dataSide}
+        aria-label={ariaLabel}
+        role="img"
+      >
+        {poster ? (
+          <img
+            src={poster}
+            alt=""
+            aria-hidden
+            decoding="async"
+            fetchPriority={fetchPriority === 'high' ? 'high' : 'auto'}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   return (
     <video
-      ref={ref}
+      ref={(node) => {
+        ref.current = node
+        wrapRef.current = node
+      }}
       src={src}
       fetchPriority={fetchPriority}
       className={className}
@@ -63,7 +113,7 @@ export default function SanityAutoplayVideo({
       loop={loop}
       playsInline
       autoPlay
-      preload={preload}
+      preload={eager ? 'auto' : 'metadata'}
       poster={poster || undefined}
       aria-label={ariaLabel}
       onLoadedData={tryPlay}
