@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react
 import { flushSync } from 'react-dom'
 import { Link, useParams } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
-import { client, urlFor } from '../lib/sanity'
+import { client, imageUrl } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
 import gsap from 'gsap'
 import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
@@ -36,15 +36,15 @@ function skeletonSlotCount(isMobile) {
 
 function coverVideoPosterUrl(project, width) {
   if (!project) return undefined
-  if (project.coverImage) return urlFor(project.coverImage).width(width).url()
-  if (project.hoverImage) return urlFor(project.hoverImage).width(width).url()
+  if (project.coverImage) return imageUrl(project.coverImage, width)
+  if (project.hoverImage) return imageUrl(project.hoverImage, width)
   return undefined
 }
 
 function hoverVideoPosterUrl(project, width) {
   if (!project) return undefined
-  if (project.hoverImage) return urlFor(project.hoverImage).width(width).url()
-  if (project.coverImage) return urlFor(project.coverImage).width(width).url()
+  if (project.hoverImage) return imageUrl(project.hoverImage, width)
+  if (project.coverImage) return imageUrl(project.coverImage, width)
   return undefined
 }
 
@@ -75,7 +75,7 @@ function CoverMedia({
       <img
         loading={imgLoading}
         decoding="async"
-        src={urlFor(image).width(width).url()}
+        src={imageUrl(image, width)}
         alt={alt}
         style={baseStyle}
       />

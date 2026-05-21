@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { urlFor } from '../lib/sanity'
+import { imageUrl } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -11,22 +11,22 @@ const HOME_CARD_MEDIA_W = 700
 
 function catCoverVideoPoster(cat) {
   if (!cat) return undefined
-  if (cat.coverImage) return urlFor(cat.coverImage).width(HOME_CARD_MEDIA_W).url()
-  if (cat.hoverImage) return urlFor(cat.hoverImage).width(HOME_CARD_MEDIA_W).url()
+  if (cat.coverImage) return imageUrl(cat.coverImage, HOME_CARD_MEDIA_W)
+  if (cat.hoverImage) return imageUrl(cat.hoverImage, HOME_CARD_MEDIA_W)
   return undefined
 }
 
 function catHoverVideoPoster(cat) {
   if (!cat) return undefined
-  if (cat.hoverImage) return urlFor(cat.hoverImage).width(HOME_CARD_MEDIA_W).url()
-  if (cat.coverImage) return urlFor(cat.coverImage).width(HOME_CARD_MEDIA_W).url()
+  if (cat.hoverImage) return imageUrl(cat.hoverImage, HOME_CARD_MEDIA_W)
+  if (cat.coverImage) return imageUrl(cat.coverImage, HOME_CARD_MEDIA_W)
   return undefined
 }
 
 function CardMedia({ image, videoUrl, posterUrl, alt, hidden }) {
   const style = hidden ? { opacity: 0 } : { opacity: 1 }
   if (image) {
-    return <img src={urlFor(image).width(HOME_CARD_MEDIA_W).url()} alt={alt} style={style} />
+    return <img src={imageUrl(image, HOME_CARD_MEDIA_W)} alt={alt} style={style} />
   }
   if (videoUrl) {
     return (
