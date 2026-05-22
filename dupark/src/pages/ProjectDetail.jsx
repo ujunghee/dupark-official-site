@@ -19,6 +19,9 @@ const lightboxNarrowMql = () =>
 const EXIT_DUR_S = 0.5
 const EXIT_STAGGER_S = 0.02
 
+/** 갤러리·영상 로드마다 즉시 lenis.resize() 하면 스크롤이 끊김 → 짧게 묶어서 한 번만 반영 */
+const DETAIL_LENIS_RESIZE_DEBOUNCE_MS = 500
+
 /** Sanity galleryColumns — 모바일은 CSS로 2열 고정 */
 function clampGalleryCols(raw) {
   const v = Number(raw)
@@ -261,6 +264,7 @@ export default function ProjectDetail() {
   const exitNavInProgressRef = useRef(false)
   /* Strict Mode: 언마운트 시뮬 후 ref가 유지되면 false만 남는 경우가 있어, 마운트마다 true로 둔다 */
   const isMountedRef = useRef(true)
+  const lenisResizeTimerRef = useRef(0)
   const { end: endEnter } = useRouteEnter()
 
   /* slug( id )·카테고리가 바뀌면: 헤더/푸터 유지, 본면만 리셋 (전체 리마운트 X) */
@@ -354,7 +358,18 @@ export default function ProjectDetail() {
   }, [])
 
   const notifyMediaLayout = useCallback(() => {
-    lenis.resize()
+    window.clearTimeout(lenisResizeTimerRef.current)
+    lenisResizeTimerRef.current = window.setTimeout(() => {
+      lenisResizeTimerRef.current = 0
+      lenis.resize()
+    }, DETAIL_LENIS_RESIZE_DEBOUNCE_MS)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(lenisResizeTimerRef.current)
+      lenisResizeTimerRef.current = 0
+    }
   }, [])
 
   /* 본문·그리드: 데이터 도착 후 페이드 인 스태거 (이미지는 셀별 스켈레톤·로컬 페이드) */
@@ -456,22 +471,27 @@ export default function ProjectDetail() {
     [navigate, category, entranceComplete]
   )
 
-  /* 스크롤 중에는 iframe(YouTube/Vimeo) 위에서도 휠이 부모로 전달되도록 pointer-events 차단 — 멈추면 다시 활성화 */
+  /* 스크롤 중에는 iframe(YouTube/Vimeo) 위에서도 휠이 부모로 전달되도록 pointer-events 차단 — 멈추면 다시 활성화
+     Lenis만 구독(window 중복 제거). 클래스는 최초 1회만 add로 프레임당 DOM 작업 최소화 */
   useEffect(() => {
-    let timeoutId
+    let idleTimer = 0
+    let scrollingClassOn = false
     const onScroll = () => {
-      document.body.classList.add('dupark-is-scrolling')
-      clearTimeout(timeoutId)
-      timeoutId = window.setTimeout(() => {
+      if (!scrollingClassOn) {
+        scrollingClassOn = true
+        document.body.classList.add('dupark-is-scrolling')
+      }
+      window.clearTimeout(idleTimer)
+      idleTimer = window.setTimeout(() => {
+        idleTimer = 0
+        scrollingClassOn = false
         document.body.classList.remove('dupark-is-scrolling')
       }, 180)
     }
     lenis.on('scroll', onScroll)
-    window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       lenis.off('scroll', onScroll)
-      window.removeEventListener('scroll', onScroll)
-      clearTimeout(timeoutId)
+      window.clearTimeout(idleTimer)
       document.body.classList.remove('dupark-is-scrolling')
     }
   }, [])
