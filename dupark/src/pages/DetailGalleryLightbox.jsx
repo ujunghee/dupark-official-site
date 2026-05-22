@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState, useLayoutEffect, startTransition } from 'react'
 import { createPortal } from 'react-dom'
-import { urlFor } from '../lib/sanity'
+import { imageUrl } from '../lib/sanity'
 import { lenis } from '../lib/lenis'
 import './DetailGalleryLightbox.css'
 
@@ -11,7 +11,7 @@ const LB_THUMB_W = 112
 
 function lbUrl(img, w, q) {
   if (!img) return ''
-  return urlFor(img).width(w).quality(q).url()
+  return imageUrl(img, w, q)
 }
 
 function IconClose() {

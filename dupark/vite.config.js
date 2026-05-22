@@ -39,7 +39,7 @@ function injectSiteMetaPlugin() {
         const title = data.ogTitle || 'DUPARK STUDIO'
         const description = data.ogDescription || ''
         const ogImageUrl = data.ogImage
-          ? sanityImageBuilder.image(data.ogImage).width(1200).url()
+          ? sanityImageBuilder.image(data.ogImage).width(1200).quality(82).format('jpg').url()
           : ''
         const faviconUrl = data.favicon?.asset?.url || ''
         const rawSiteUrl =

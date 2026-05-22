@@ -1,4 +1,4 @@
-import { client, urlFor } from './sanity'
+import { client, ogImageUrl } from './sanity'
 
 const SITE_FONT_FACE_STYLE_ID = 'dupark-site-font-face'
 const SITE_CUSTOM_FONT_FAMILY = 'DuparkSiteCustom'
@@ -123,7 +123,7 @@ export function applySiteSettingsFromSanity(data) {
   if (data.ogTitle) document.title = data.ogTitle
   setMeta('og:title', data.ogTitle)
   setMeta('og:description', data.ogDescription)
-  if (data.ogImage) setMeta('og:image', urlFor(data.ogImage).width(1200).url())
+  if (data.ogImage) setMeta('og:image', ogImageUrl(data.ogImage))
 }
 
 export async function fetchSiteSettings() {

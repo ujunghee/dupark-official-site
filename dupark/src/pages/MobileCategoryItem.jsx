@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom'
-import { urlFor } from '../lib/sanity'
+import { imageUrl } from '../lib/sanity'
 import SanityAutoplayVideo from '../component/SanityAutoplayVideo'
 
 const M_GRID_POSTER_W = 600
 
 function mobileCatVideoPoster(cat) {
   if (!cat) return undefined
-  if (cat.coverImage) return urlFor(cat.coverImage).width(M_GRID_POSTER_W).url()
-  if (cat.hoverImage) return urlFor(cat.hoverImage).width(M_GRID_POSTER_W).url()
+  if (cat.coverImage) return imageUrl(cat.coverImage, M_GRID_POSTER_W, 76)
+  if (cat.hoverImage) return imageUrl(cat.hoverImage, M_GRID_POSTER_W, 76)
   return undefined
 }
 
@@ -15,7 +15,7 @@ function mobileCatVideoPoster(cat) {
 export function MobileCategoryItem({ cat }) {
   let media
   if (cat.coverImage) {
-    media = <img src={urlFor(cat.coverImage).width(600).url()} alt={cat.title} />
+    media = <img src={imageUrl(cat.coverImage, 600, 76)} alt={cat.title} />
   } else if (cat.coverVideoUrl) {
     media = (
       <SanityAutoplayVideo

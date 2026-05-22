@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useLayoutEffect, startTransition } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useRouteEnter } from '../context/RouteEnterContext'
-import { client, urlFor } from '../lib/sanity'
+import { client, imageUrl } from '../lib/sanity'
 import { isComingSoonTitle } from '../lib/projectComingSoon'
 import { lenis } from '../lib/lenis'
 import gsap from 'gsap'
@@ -50,7 +50,7 @@ function NavThumbMedia({ project, side }) {
   if (project?.coverImage) {
     return (
       <img
-        src={urlFor(project.coverImage).width(200).url()}
+        src={imageUrl(project.coverImage, 200, 72)}
         alt={project.title}
         className="detail-nav-thumb-img"
       />
@@ -88,8 +88,8 @@ function toEmbedUrl(url) {
 /** 파일 `<video>`용 포스터: CMS 커버 → 갤러리 첫 장 (모바일에서 흰 화면 완화) */
 function projectFileVideoPosterUrl(project) {
   if (!project) return undefined
-  if (project.coverImage) return urlFor(project.coverImage).width(1200).quality(82).url()
-  if (project.images?.[0]) return urlFor(project.images[0]).width(1200).quality(82).url()
+  if (project.coverImage) return imageUrl(project.coverImage, 1200, 80)
+  if (project.images?.[0]) return imageUrl(project.images[0], 1200, 80)
   return undefined
 }
 
@@ -113,7 +113,7 @@ function DetailGalleryImageCell({
   const imgRef = useRef(null)
   const [loaded, setLoaded] = useState(false)
   const dims = detailGalleryImageDims(img)
-  const imgSrc = urlFor(img).width(900).url()
+  const imgSrc = imageUrl(img, 900, 76)
 
   const markReady = useCallback(() => {
     setLoaded(true)
@@ -480,12 +480,12 @@ export default function ProjectDetail() {
     if (prev?.coverImage) {
       const im = new Image()
       im.decoding = 'async'
-      im.src = urlFor(prev.coverImage).width(400).url()
+      im.src = imageUrl(prev.coverImage, 400, 76)
     }
     if (next?.coverImage) {
       const im2 = new Image()
       im2.decoding = 'async'
-      im2.src = urlFor(next.coverImage).width(400).url()
+      im2.src = imageUrl(next.coverImage, 400, 76)
     }
   }, [prev, next, id])
 
@@ -583,7 +583,7 @@ export default function ProjectDetail() {
           const imgAssetRef = img?.asset?._ref
           const cellKey = imgAssetRef
             ? `${project.slug}-img-${img?._key ?? i}-${imgAssetRef}`
-            : `${project.slug}-img-${img?._key ?? i}-${urlFor(img).width(900).url()}`
+            : `${project.slug}-img-${img?._key ?? i}-${imageUrl(img, 900, 76)}`
           return (
           <DetailGalleryImageCell
             key={cellKey}
